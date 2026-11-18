@@ -1,0 +1,3641 @@
+{
+ "meta": {
+  "source": "NPSTX Helpdesk Prototype v2 (https://claude.ai/artifact/Un8JViH2fZm4LxjTg7Uh4J)",
+  "demoClockStart": "2026-11-04T11:46:00+05:30",
+  "extractedAt": "2026-11-13"
+ },
+ "users": [
+  {
+   "id": "u1",
+   "name": "Arjun Kumar",
+   "dept": "Engineering",
+   "title": "Software Engineer",
+   "location": "Mumbai HQ",
+   "managerId": "u6",
+   "isQueue": false,
+   "roles": [
+    "EMP"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u2",
+   "name": "Neha Shah",
+   "dept": "Sales",
+   "title": "SFO Sales Rep",
+   "location": "Mumbai HQ",
+   "managerId": "u7",
+   "isQueue": false,
+   "roles": [
+    "EMP"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u3",
+   "name": "Priya Rao",
+   "dept": "HR",
+   "title": "HR Executive",
+   "location": "Mumbai HQ",
+   "managerId": "u9",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "HR_AGENT"
+   ],
+   "hrCategories": [
+    "PAY",
+    "LEAVE"
+   ]
+  },
+  {
+   "id": "u4",
+   "name": "Meera Iyer",
+   "dept": "HR (L&D)",
+   "title": "L&D Head",
+   "location": "Bengaluru",
+   "managerId": "u13",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "LND_HEAD"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u5",
+   "name": "Rohan Das",
+   "dept": "Sales",
+   "title": "SFO Case Admin",
+   "location": "Pune",
+   "managerId": "u7",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "SF_ADMIN"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u6",
+   "name": "Sanjay Menon",
+   "dept": "Engineering",
+   "title": "Engineering Manager",
+   "location": "Mumbai HQ",
+   "managerId": "u13",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "MANAGER"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u7",
+   "name": "Vikram Joshi",
+   "dept": "Sales",
+   "title": "Regional Sales Manager",
+   "location": null,
+   "managerId": "u13",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "MANAGER"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u8",
+   "name": "Kavya Nair",
+   "dept": "HR (L&D)",
+   "title": "HR / L&D Admin",
+   "location": "Mumbai HQ",
+   "managerId": "u4",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "LND_COORD",
+    "HRLND_ADMIN"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u9",
+   "name": "Anil Gupta",
+   "dept": "HR",
+   "title": "HR Manager",
+   "location": null,
+   "managerId": "u13",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "HR_AGENT"
+   ],
+   "hrCategories": [
+    "REC",
+    "POL",
+    "ONB",
+    "PERF",
+    "OTHER"
+   ]
+  },
+  {
+   "id": "u10",
+   "name": "Farah Khan",
+   "dept": "HR",
+   "title": "HR Executive",
+   "location": null,
+   "managerId": "u9",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "HR_AGENT"
+   ],
+   "hrCategories": [
+    "BEN",
+    "REIMB"
+   ]
+  },
+  {
+   "id": "u12",
+   "name": "Deepa Pillai",
+   "dept": "Engineering",
+   "title": "QA Engineer",
+   "location": null,
+   "managerId": "u6",
+   "isQueue": false,
+   "roles": [
+    "EMP"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u13",
+   "name": "Lata Verma",
+   "dept": "HR",
+   "title": "HR Head",
+   "location": null,
+   "managerId": null,
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "HR_AGENT",
+    "MANAGER"
+   ],
+   "hrCategories": [
+    "GRV"
+   ]
+  },
+  {
+   "id": "u15",
+   "name": "Imran Sheikh",
+   "dept": "Presales",
+   "title": "Presales Consultant",
+   "location": null,
+   "managerId": "u7",
+   "isQueue": false,
+   "roles": [
+    "EMP"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u16",
+   "name": "Kiran Bose",
+   "dept": "Solutions",
+   "title": "Solutions Architect",
+   "location": null,
+   "managerId": "u7",
+   "isQueue": false,
+   "roles": [
+    "EMP"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u20",
+   "name": "Asha Kulkarni",
+   "dept": "HR Operations",
+   "title": "Helpdesk Admin",
+   "location": "Mumbai HQ",
+   "managerId": "u13",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "HD_ADMIN"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u21",
+   "name": "Nikhil Rane",
+   "dept": "IT",
+   "title": "IT Support Engineer",
+   "location": "Mumbai HQ",
+   "managerId": "u23",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "IT_AGENT"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u22",
+   "name": "Farhan Ali",
+   "dept": "IT",
+   "title": "IT Security and Access Engineer",
+   "location": "Pune",
+   "managerId": "u23",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "IT_AGENT"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u23",
+   "name": "Suresh Pai",
+   "dept": "IT",
+   "title": "IT Head",
+   "location": "Mumbai HQ",
+   "managerId": "u13",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "IT_HEAD",
+    "MANAGER"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u24",
+   "name": "Pooja Shetty",
+   "dept": "Administration",
+   "title": "Admin Desk Executive",
+   "location": "Mumbai HQ",
+   "managerId": "u25",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "ADM_AGENT"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u25",
+   "name": "Rahul Kapoor",
+   "dept": "Administration",
+   "title": "Admin Head",
+   "location": "Mumbai HQ",
+   "managerId": "u13",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "ADM_HEAD",
+    "MANAGER"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "u26",
+   "name": "Ritu Desai",
+   "dept": "Internal Audit",
+   "title": "Internal Auditor",
+   "location": "Mumbai HQ",
+   "managerId": "u13",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "AUDITOR"
+   ],
+   "hrCategories": []
+  },
+  {
+   "id": "q_lnd",
+   "name": "L&D Support queue",
+   "dept": null,
+   "title": null,
+   "location": null,
+   "managerId": null,
+   "isQueue": true,
+   "roles": [],
+   "hrCategories": []
+  },
+  {
+   "id": "q_sf",
+   "name": "SF Ops queue",
+   "dept": null,
+   "title": null,
+   "location": null,
+   "managerId": null,
+   "isQueue": true,
+   "roles": [],
+   "hrCategories": []
+  },
+  {
+   "id": "q_sf_sr",
+   "name": "Senior admin queue",
+   "dept": null,
+   "title": null,
+   "location": null,
+   "managerId": null,
+   "isQueue": true,
+   "roles": [],
+   "hrCategories": []
+  },
+  {
+   "id": "q_it",
+   "name": "IT Service Desk queue",
+   "dept": null,
+   "title": null,
+   "location": null,
+   "managerId": null,
+   "isQueue": true,
+   "roles": [],
+   "hrCategories": []
+  },
+  {
+   "id": "q_it_sec",
+   "name": "IT Security queue",
+   "dept": null,
+   "title": null,
+   "location": null,
+   "managerId": null,
+   "isQueue": true,
+   "roles": [],
+   "hrCategories": []
+  },
+  {
+   "id": "q_adm",
+   "name": "Admin Desk queue",
+   "dept": null,
+   "title": null,
+   "location": null,
+   "managerId": null,
+   "isQueue": true,
+   "roles": [],
+   "hrCategories": []
+  },
+  {
+   "id": "q_travel",
+   "name": "Travel desk queue",
+   "dept": null,
+   "title": null,
+   "location": null,
+   "managerId": null,
+   "isQueue": true,
+   "roles": [],
+   "hrCategories": []
+  }
+ ],
+ "tickets": [
+  {
+   "key": "HR-000123",
+   "helpdesk": "HR",
+   "categoryKey": "PAY",
+   "subCategory": "Salary credit",
+   "title": "October salary not credited",
+   "description": "Salary for October has not reached my HDFC account. Colleagues in my team received it on 31 Oct.",
+   "priority": "High",
+   "status": "In Progress",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u1",
+   "assigneeId": "u3",
+   "createdAt": "2026-11-02T10:12",
+   "updatedAt": "2026-11-03T16:40",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-02T14:12",
+   "resolutionDue": "2026-11-06T18:00",
+   "responseMet": true,
+   "confidential": true,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "payMonth": "October 2026",
+    "location": "Mumbai HQ"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [
+    {
+     "n": "bank-statement-oct.pdf",
+     "s": "412 KB"
+    }
+   ],
+   "comments": [
+    {
+     "authorId": "u3",
+     "body": "Hi Arjun, I've picked this up. Checking the October payout file with the bank now.",
+     "internal": false,
+     "createdAt": "2026-11-02T11:00"
+    },
+    {
+     "authorId": "u3",
+     "body": "Bank file rejected for 3 employees due to IFSC mismatch after the branch merger. Re-run scheduled for 05 Nov.",
+     "internal": true,
+     "createdAt": "2026-11-03T16:30"
+    },
+    {
+     "authorId": "u1",
+     "body": "Thanks Priya. Will it be credited before 7 Nov? My EMI is due.",
+     "internal": false,
+     "createdAt": "2026-11-03T16:40"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-11-02T10:12",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-02T10:13",
+     "text": "Routed to Priya Rao (category lead, Payroll and salary)",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-02T11:00",
+     "text": "Status: Open → In Progress",
+     "kind": "status"
+    },
+    {
+     "at": "2026-11-02T11:00",
+     "text": "First response sent · response SLA met",
+     "kind": "sla"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "HR-000127",
+   "helpdesk": "HR",
+   "categoryKey": "LEAVE",
+   "subCategory": "Leave balance",
+   "title": "Earned leave balance shows 4 days less than expected",
+   "description": "My earned leave balance dropped from 14 to 10 after the October run, but I only took 2 days in October.",
+   "priority": "Medium",
+   "status": "Waiting for employee",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u1",
+   "assigneeId": "u3",
+   "createdAt": "2026-11-03T09:20",
+   "updatedAt": "2026-11-03T15:05",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-03T17:20",
+   "resolutionDue": "2026-11-06T09:20",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": true,
+   "relatedKey": null,
+   "fields": {
+    "datesAffected": "Jan–Oct 2026",
+    "location": "Mumbai HQ"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [
+    {
+     "authorId": "u3",
+     "body": "Could you share the leave dates you believe were deducted twice? A screenshot of your leave history page will help.",
+     "internal": false,
+     "createdAt": "2026-11-03T15:05"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-11-03T09:20",
+     "text": "Raised by Arjun Kumar · CC: Sanjay Menon (manager)",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-03T09:21",
+     "text": "Routed to Priya Rao (Leave and attendance)",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-03T14:50",
+     "text": "Status: Open → In Progress",
+     "kind": "status"
+    },
+    {
+     "at": "2026-11-03T15:05",
+     "text": "Status: In Progress → Waiting for employee",
+     "kind": "status"
+    },
+    {
+     "at": "2026-11-03T15:05",
+     "text": "SLA resolution clock paused",
+     "kind": "sla"
+    }
+   ],
+   "followers": [
+    {
+     "userId": "u6",
+     "relation": "CC",
+     "addedById": "u1"
+    }
+   ]
+  },
+  {
+   "key": "HR-000121",
+   "helpdesk": "HR",
+   "categoryKey": "LEAVE",
+   "subCategory": "Attendance regularisation",
+   "title": "Marked absent on 27 Oct while on client visit",
+   "description": "I was at the client site in Pune on 27 Oct. Attendance shows absent because I could not punch in at the office.",
+   "priority": "Medium",
+   "status": "Open",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u12",
+   "assigneeId": "u3",
+   "createdAt": "2026-10-30T09:00",
+   "updatedAt": "2026-11-03T09:00",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-10-30T17:00",
+   "resolutionDue": "2026-11-02T09:00",
+   "responseMet": false,
+   "confidential": false,
+   "escalationLevel": 2,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "datesAffected": "27 Oct 2026",
+    "location": "Pune"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-30T09:00",
+     "text": "Raised by Deepa Pillai",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-30T09:01",
+     "text": "Routed to Priya Rao (Leave and attendance)",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-10-30T17:00",
+     "text": "Response SLA breached · lead notified",
+     "kind": "sla"
+    },
+    {
+     "at": "2026-10-31T21:00",
+     "text": "Escalated to Level 1 · Priya Rao (category lead)",
+     "kind": "esc"
+    },
+    {
+     "at": "2026-11-01T15:00",
+     "text": "Escalated to Level 2 · Anil Gupta (HR manager)",
+     "kind": "esc"
+    }
+   ],
+   "followers": [
+    {
+     "userId": "u6",
+     "relation": "FOLLOWER",
+     "addedById": "u6"
+    }
+   ]
+  },
+  {
+   "key": "HR-000126",
+   "helpdesk": "HR",
+   "categoryKey": "PAY",
+   "subCategory": "Payslip",
+   "title": "October payslip shows wrong HRA",
+   "description": "HRA on my October payslip is calculated on the old basic pay.",
+   "priority": "High",
+   "status": "In Progress",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u12",
+   "assigneeId": "u3",
+   "createdAt": "2026-11-03T10:00",
+   "updatedAt": "2026-11-03T12:10",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-03T14:00",
+   "resolutionDue": "2026-11-05T10:00",
+   "responseMet": true,
+   "confidential": true,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "payMonth": "October 2026",
+    "location": "Pune"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-03T10:00",
+     "text": "Raised by Deepa Pillai",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-03T10:01",
+     "text": "Routed to Priya Rao (category lead, Payroll and salary)",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-03T12:10",
+     "text": "Status: Open → In Progress",
+     "kind": "status"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "IT-000041",
+   "helpdesk": "IT",
+   "categoryKey": "HW",
+   "subCategory": "Replacement or repair",
+   "title": "Laptop keyboard keys not responding",
+   "description": "Keys E, R and T stopped working on my laptop this morning.",
+   "priority": "Medium",
+   "status": "In Progress",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u12",
+   "assigneeId": "u21",
+   "createdAt": "2026-11-02T14:00",
+   "updatedAt": "2026-11-03T12:00",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-02T22:00",
+   "resolutionDue": "2026-11-05T14:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "deviceType": "Laptop",
+    "assetTag": "NPX-LT-0412",
+    "impact": "Only me",
+    "location": "Pune"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [
+    {
+     "authorId": "u12",
+     "body": "@Arjun Kumar can I borrow your spare keyboard until this is fixed?",
+     "internal": false,
+     "createdAt": "2026-11-02T14:20"
+    },
+    {
+     "authorId": "u21",
+     "body": "Replacement keyboard ordered. Pick it up at the Pune IT desk on 5 Nov.",
+     "internal": false,
+     "createdAt": "2026-11-03T12:00"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-11-02T14:00",
+     "text": "Raised by Deepa Pillai · CC: Sanjay Menon (manager)",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-02T14:01",
+     "text": "Routed to Farah Khan (HR · IT asset and facilities)",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-03T09:00",
+     "text": "Moved to IT and Support as IT-000041 (was HR-000119) in the category clean-up · reassigned to Nikhil Rane",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-03T12:00",
+     "text": "Status: Open → In Progress",
+     "kind": "status"
+    }
+   ],
+   "followers": [
+    {
+     "userId": "u6",
+     "relation": "CC",
+     "addedById": "u12"
+    },
+    {
+     "userId": "u1",
+     "relation": "TAGGED",
+     "addedById": "u12"
+    }
+   ]
+  },
+  {
+   "key": "HR-000129",
+   "helpdesk": "HR",
+   "categoryKey": "BEN",
+   "subCategory": "Wellness",
+   "title": "Gym reimbursement under wellness benefit",
+   "description": "Is a quarterly gym membership covered under the wellness benefit? If yes, how do I claim it?",
+   "priority": "Low",
+   "status": "Open",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u2",
+   "assigneeId": "u10",
+   "createdAt": "2026-11-04T09:10",
+   "updatedAt": "2026-11-04T09:10",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-05T09:10",
+   "resolutionDue": "2026-11-09T09:10",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "location": "Mumbai HQ"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-04T09:10",
+     "text": "Raised by Neha Shah",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-04T09:11",
+     "text": "Routed to Farah Khan (Benefits and insurance)",
+     "kind": "assign"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "HR-000117",
+   "helpdesk": "HR",
+   "categoryKey": "PERF",
+   "subCategory": "Review cycle",
+   "title": "Mid-year review form not opening for two reports",
+   "description": "The mid-year review form shows a blank page for two of my direct reports.",
+   "priority": "Medium",
+   "status": "In Progress",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u6",
+   "assigneeId": "u9",
+   "createdAt": "2026-11-01T11:00",
+   "updatedAt": "2026-11-02T10:00",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-01T19:00",
+   "resolutionDue": "2026-11-04T11:00",
+   "responseMet": true,
+   "confidential": true,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "location": "Mumbai HQ"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-01T11:00",
+     "text": "Raised by Sanjay Menon",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-01T11:01",
+     "text": "Routed to Anil Gupta (category lead)",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-02T10:00",
+     "text": "Status: Open → In Progress",
+     "kind": "status"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "HR-000098",
+   "helpdesk": "HR",
+   "categoryKey": "LEAVE",
+   "subCategory": "Leave balance",
+   "title": "Comp-off for Diwali weekend not added",
+   "description": "Worked on 18–19 Oct for the release; comp-off not credited.",
+   "priority": "Low",
+   "status": "Closed",
+   "closeResponse": "Resolved",
+   "closeMessage": "Comp-off of 2 days credited to your leave balance.",
+   "requesterId": "u1",
+   "assigneeId": "u3",
+   "createdAt": "2026-10-21T10:00",
+   "updatedAt": "2026-10-23T17:30",
+   "closedAt": "2026-10-23T17:30",
+   "closedById": "u3",
+   "responseDue": "2026-10-22T10:00",
+   "resolutionDue": "2026-10-26T10:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "location": "Mumbai HQ"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-21T10:00",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-23T17:30",
+     "text": "Closed · Resolved by Priya Rao",
+     "kind": "close"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "HR-000105",
+   "helpdesk": "HR",
+   "categoryKey": "REC",
+   "subCategory": "Employment letter",
+   "title": "Employment verification letter for home loan",
+   "description": "Need a signed employment letter addressed to SBI for my home loan.",
+   "priority": "Medium",
+   "status": "Closed",
+   "closeResponse": "Resolved",
+   "closeMessage": "Signed letter uploaded to your documents.",
+   "requesterId": "u1",
+   "assigneeId": "u9",
+   "createdAt": "2026-10-20T12:00",
+   "updatedAt": "2026-10-22T16:00",
+   "closedAt": "2026-10-22T16:00",
+   "closedById": "u9",
+   "responseDue": "2026-10-20T20:00",
+   "resolutionDue": "2026-10-23T12:00",
+   "responseMet": true,
+   "confidential": true,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "location": "Mumbai HQ"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-20T12:00",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-22T16:00",
+     "text": "Closed · Resolved by Anil Gupta",
+     "kind": "close"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "HR-000088",
+   "helpdesk": "HR",
+   "categoryKey": "POL",
+   "subCategory": "Policy clarification",
+   "title": "Hybrid work policy for new joiners",
+   "description": "Do new joiners need 3 office days a week in the first month?",
+   "priority": "Low",
+   "status": "Closed",
+   "closeResponse": "Cancelled",
+   "closeMessage": "Cancelled by requester; answered in the HR policy FAQ.",
+   "requesterId": "u1",
+   "assigneeId": "u9",
+   "createdAt": "2026-09-15T10:00",
+   "updatedAt": "2026-09-15T15:00",
+   "closedAt": "2026-09-15T15:00",
+   "closedById": "u1",
+   "responseDue": "2026-09-16T10:00",
+   "resolutionDue": "2026-09-20T10:00",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "location": "Mumbai HQ"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-09-15T10:00",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-09-15T15:00",
+     "text": "Closed · Cancelled by Arjun Kumar",
+     "kind": "close"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "HR-000110",
+   "helpdesk": "HR",
+   "categoryKey": "BEN",
+   "subCategory": "Medical insurance",
+   "title": "Add spouse to medical insurance",
+   "description": "Married on 28 Sep; please add my spouse to the group medical policy.",
+   "priority": "Medium",
+   "status": "Closed",
+   "closeResponse": "Resolved",
+   "closeMessage": "Spouse added; e-card sent to your email.",
+   "requesterId": "u4",
+   "assigneeId": "u10",
+   "createdAt": "2026-10-05T10:00",
+   "updatedAt": "2026-10-08T12:00",
+   "closedAt": "2026-10-08T12:00",
+   "closedById": "u10",
+   "responseDue": "2026-10-05T18:00",
+   "resolutionDue": "2026-10-08T10:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "location": "Bengaluru"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-05T10:00",
+     "text": "Raised by Meera Iyer",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-08T12:00",
+     "text": "Closed · Resolved by Farah Khan",
+     "kind": "close"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "LND-000045",
+   "helpdesk": "LND",
+   "categoryKey": "CONTENT",
+   "subCategory": "Content not loading",
+   "title": "Kubernetes Essentials video stuck at 0%",
+   "description": "The course page opens but the video player spins at 0:00. Tried Edge as well.",
+   "priority": "Medium",
+   "status": "New",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u1",
+   "assigneeId": "q_lnd",
+   "createdAt": "2026-11-03T18:02",
+   "updatedAt": "2026-11-03T18:02",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-04T13:00",
+   "resolutionDue": "2026-11-07T18:00",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "requestType": "Portal problem",
+    "learningSource": "LinkedIn Learning",
+    "learningItem": "Kubernetes Essentials",
+    "problem": "Course page → Lesson 1. Player spins at 0:00, no error shown. Cleared cache.",
+    "device": "Chrome 130 · Windows 11"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [
+    {
+     "n": "player-stuck.png",
+     "s": "188 KB"
+    }
+   ],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-03T18:02",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-03T18:02",
+     "text": "Placed in L&D Support queue",
+     "kind": "assign"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "LND-000048",
+   "helpdesk": "LND",
+   "categoryKey": "COURSE",
+   "subCategory": "Request a LinkedIn Learning licence",
+   "title": "LinkedIn Learning licence for Cloud Architecture path",
+   "description": "Need access for the cloud architecture learning path before the December client project.",
+   "priority": "Medium",
+   "status": "Pending approval",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u1",
+   "assigneeId": "u8",
+   "createdAt": "2026-11-03T12:30",
+   "updatedAt": "2026-11-03T12:30",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-03T20:30",
+   "resolutionDue": "2026-11-10T18:00",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "requestType": "Course request",
+    "learningSource": "LinkedIn Learning",
+    "learningItem": "Cloud Architecture Learning Path",
+    "justification": "Joining the client migration project in December; need AWS and Azure architecture basics."
+   },
+   "approval": {
+    "mgr": "Pending",
+    "lnd": "Pending"
+   },
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-03T12:30",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-03T12:30",
+     "text": "Status: New → Pending approval · manager approval requested from Sanjay Menon",
+     "kind": "status"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "LND-000047",
+   "helpdesk": "LND",
+   "categoryKey": "COURSE",
+   "subCategory": "Request a LinkedIn Learning licence",
+   "title": "LinkedIn Learning licence for Solution Selling",
+   "description": "Requesting a licence for the Solution Selling course ahead of the December presales bootcamp.",
+   "priority": "Medium",
+   "status": "Pending approval",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u15",
+   "assigneeId": "u8",
+   "createdAt": "2026-11-03T15:00",
+   "updatedAt": "2026-11-04T10:30",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-03T23:00",
+   "resolutionDue": "2026-11-10T15:00",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "requestType": "Course request",
+    "learningSource": "LinkedIn Learning",
+    "learningItem": "Solution Selling Fundamentals",
+    "justification": "Presales bootcamp in December; needs discovery and value-mapping basics."
+   },
+   "approval": {
+    "mgr": "Approved",
+    "mgrBy": "u7",
+    "mgrAt": "2026-11-04T10:30",
+    "lnd": "Pending"
+   },
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-03T15:00",
+     "text": "Raised by Imran Sheikh",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-04T10:30",
+     "text": "Manager approval: Approved by Vikram Joshi",
+     "kind": "status"
+    },
+    {
+     "at": "2026-11-04T10:30",
+     "text": "L&D approval requested (L&D Head or HR / L&D admin)",
+     "kind": "assign"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "LND-000049",
+   "helpdesk": "LND",
+   "categoryKey": "COURSE",
+   "subCategory": "Request a new course or learning path",
+   "title": "ISTQB Advanced Test Analyst prep course",
+   "description": "Requesting the ISTQB Advanced Test Analyst preparation course for my certification goal this year.",
+   "priority": "Medium",
+   "status": "Pending approval",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u12",
+   "assigneeId": "u8",
+   "createdAt": "2026-11-02T11:00",
+   "updatedAt": "2026-11-02T18:00",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-02T19:00",
+   "resolutionDue": "2026-11-09T11:00",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "requestType": "Course request",
+    "learningSource": "Internal course",
+    "learningItem": "ISTQB Advanced Test Analyst – Prep",
+    "justification": "Certification goal in my 2026 performance plan."
+   },
+   "approval": {
+    "mgr": "Approved",
+    "mgrBy": "u6",
+    "mgrAt": "2026-11-02T18:00",
+    "lnd": "Pending"
+   },
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-02T11:00",
+     "text": "Raised by Deepa Pillai",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-02T18:00",
+     "text": "Manager approval: Approved by Sanjay Menon",
+     "kind": "status"
+    },
+    {
+     "at": "2026-11-02T18:00",
+     "text": "L&D approval requested from Meera Iyer",
+     "kind": "assign"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "LND-000051",
+   "helpdesk": "LND",
+   "categoryKey": "SESSION",
+   "subCategory": "Not mapped to my session",
+   "title": "Not mapped to Spring Boot workshop on 6 Nov",
+   "description": "I registered for the Spring Boot Microservices workshop but did not get the calendar invite and am not on the attendee list.",
+   "priority": "High",
+   "status": "In progress",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u12",
+   "assigneeId": "u8",
+   "createdAt": "2026-11-03T17:30",
+   "updatedAt": "2026-11-04T09:30",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-03T21:30",
+   "resolutionDue": "2026-11-05T17:30",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "requestType": "Portal problem",
+    "learningSource": "Instructor-led training session",
+    "learningItem": "Spring Boot Microservices Workshop",
+    "sessionAt": "06 Nov 2026, 10:00"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [
+    {
+     "authorId": "u8",
+     "body": "Found it: your registration was mapped to the 13 Nov batch. Moving you to 6 Nov now.",
+     "internal": false,
+     "createdAt": "2026-11-04T09:30"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-11-03T17:30",
+     "text": "Raised by Deepa Pillai",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-03T17:31",
+     "text": "Routed to Kavya Nair (L&D coordinator)",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-04T09:30",
+     "text": "Status: New → In progress",
+     "kind": "status"
+    }
+   ],
+   "followers": [
+    {
+     "userId": "u6",
+     "relation": "FOLLOWER",
+     "addedById": "u6"
+    }
+   ]
+  },
+  {
+   "key": "LND-000052",
+   "helpdesk": "LND",
+   "categoryKey": "ACCESS",
+   "subCategory": "LinkedIn Learning duplicate email",
+   "title": "LinkedIn Learning says my account already exists",
+   "description": "After SSO sign-in LinkedIn Learning says an account with my email already exists and stops.",
+   "priority": "High",
+   "status": "In progress",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u2",
+   "assigneeId": "q_lnd",
+   "createdAt": "2026-11-04T08:40",
+   "updatedAt": "2026-11-04T10:05",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-04T12:40",
+   "resolutionDue": "2026-11-06T08:40",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "requestType": "Portal problem",
+    "learningSource": "LinkedIn Learning",
+    "learningItem": "—",
+    "problem": "SSO login → \"account already exists\" message.",
+    "device": "Safari 18 · macOS"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-04T08:40",
+     "text": "Raised by Neha Shah",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-04T10:05",
+     "text": "Status: New → In progress",
+     "kind": "status"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "LND-000046",
+   "helpdesk": "LND",
+   "categoryKey": "COURSE",
+   "subCategory": "Request a Skillup Lounge",
+   "title": "Join Skillup Lounge: Data storytelling",
+   "description": "Would like to join the November Data storytelling lounge.",
+   "priority": "Low",
+   "status": "In progress",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u3",
+   "assigneeId": "u8",
+   "createdAt": "2026-10-28T10:00",
+   "updatedAt": "2026-11-01T11:00",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-10-29T10:00",
+   "resolutionDue": "2026-11-07T10:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "requestType": "Course request",
+    "learningSource": "Skillup Lounge",
+    "learningItem": "Data storytelling (Nov)",
+    "justification": "Monthly HR dashboards for leadership."
+   },
+   "approval": {
+    "mgr": "Approved",
+    "mgrBy": "u9",
+    "lnd": "Approved"
+   },
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-28T10:00",
+     "text": "Raised by Priya Rao",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-01T11:00",
+     "text": "Approved by manager and L&D · Status: Pending approval → In progress",
+     "kind": "status"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "LND-000039",
+   "helpdesk": "LND",
+   "categoryKey": "CERT",
+   "subCategory": "Certificate not generated",
+   "title": "Certificate missing for CRM Admin Basics",
+   "description": "Completed the course on 25 Oct but no certificate in my learning history.",
+   "priority": "Medium",
+   "status": "Resolved",
+   "closeResponse": null,
+   "closeMessage": "Completion re-synced from LinkedIn Learning; certificate now in your learning history.",
+   "requesterId": "u5",
+   "assigneeId": "u8",
+   "createdAt": "2026-10-27T10:00",
+   "updatedAt": "2026-10-30T15:00",
+   "closedAt": "2026-10-30T15:00",
+   "closedById": "u8",
+   "responseDue": "2026-10-27T18:00",
+   "resolutionDue": "2026-10-30T10:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "requestType": "Portal problem",
+    "learningSource": "LinkedIn Learning",
+    "learningItem": "CRM Admin Basics"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-27T10:00",
+     "text": "Raised by Rohan Das",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-30T15:00",
+     "text": "Resolved by Kavya Nair · awaiting requester confirmation",
+     "kind": "close"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "LND-000020",
+   "helpdesk": "LND",
+   "categoryKey": "COURSE",
+   "subCategory": "Request a training session",
+   "title": "Seat in Advanced Negotiation workshop",
+   "description": "Requesting a seat in the Q4 Advanced Negotiation workshop.",
+   "priority": "Medium",
+   "status": "Rejected",
+   "closeResponse": null,
+   "closeMessage": "Workshop is full for Q4; added you to the Q1 waitlist.",
+   "requesterId": "u2",
+   "assigneeId": "u8",
+   "createdAt": "2026-10-14T10:00",
+   "updatedAt": "2026-10-20T12:00",
+   "closedAt": "2026-10-20T12:00",
+   "closedById": "u4",
+   "responseDue": "2026-10-14T18:00",
+   "resolutionDue": "2026-10-21T10:00",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "requestType": "Course request",
+    "learningSource": "Instructor-led training session",
+    "learningItem": "Advanced Negotiation",
+    "justification": "Two enterprise renewals in Q1."
+   },
+   "approval": {
+    "mgr": "Approved",
+    "mgrBy": "u7",
+    "lnd": "Rejected"
+   },
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-14T10:00",
+     "text": "Raised by Neha Shah",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-20T12:00",
+     "text": "L&D approval: Rejected by Meera Iyer",
+     "kind": "close"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "IT-000052",
+   "helpdesk": "IT",
+   "categoryKey": "HW",
+   "subCategory": "Laptop or desktop issue",
+   "title": "Laptop screen flickers after Windows update",
+   "description": "Since this morning the screen flickers every few seconds and sometimes goes black. It started after last night's update.",
+   "priority": "High",
+   "status": "Waiting for user",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u1",
+   "assigneeId": "u21",
+   "createdAt": "2026-11-04T09:05",
+   "updatedAt": "2026-11-04T10:10",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-04T11:05",
+   "resolutionDue": "2026-11-04T17:05",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": true,
+   "relatedKey": null,
+   "fields": {
+    "deviceType": "Laptop",
+    "assetTag": "NPX-LT-0388",
+    "errorMsg": "Screen flickers, then goes black for a second",
+    "impact": "Only me",
+    "location": "Mumbai HQ"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [
+    {
+     "authorId": "u21",
+     "body": "Hi Arjun, can you plug in an external monitor and tell me if it flickers too? That tells us whether it is the panel or the driver.",
+     "internal": false,
+     "createdAt": "2026-11-04T10:10"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-11-04T09:05",
+     "text": "Raised by Arjun Kumar · CC: Sanjay Menon (manager)",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-04T09:06",
+     "text": "Placed in IT Service Desk queue · picked up by Nikhil Rane",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-04T09:40",
+     "text": "Status: New → In Progress",
+     "kind": "status"
+    },
+    {
+     "at": "2026-11-04T10:10",
+     "text": "Status: In Progress → Waiting for user",
+     "kind": "status"
+    },
+    {
+     "at": "2026-11-04T10:10",
+     "text": "SLA resolution clock paused",
+     "kind": "sla"
+    }
+   ],
+   "followers": [
+    {
+     "userId": "u6",
+     "relation": "CC",
+     "addedById": "u1"
+    }
+   ]
+  },
+  {
+   "key": "IT-000050",
+   "helpdesk": "IT",
+   "categoryKey": "NET",
+   "subCategory": "VPN not connecting",
+   "title": "VPN disconnects every 10 minutes from home",
+   "description": "The VPN drops every 10 minutes when I work from home. My home internet is stable.",
+   "priority": "Medium",
+   "status": "In Progress",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u1",
+   "assigneeId": "u21",
+   "createdAt": "2026-11-02T10:00",
+   "updatedAt": "2026-11-03T16:00",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-02T14:00",
+   "resolutionDue": "2026-11-03T10:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 2,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "connType": "VPN",
+    "location": "Remote",
+    "affected": "Only me"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [
+    {
+     "authorId": "u21",
+     "body": "Collected the client logs. It looks like a gateway timeout; checking with the network team.",
+     "internal": false,
+     "createdAt": "2026-11-02T12:30"
+    },
+    {
+     "authorId": "u21",
+     "body": "Gateway idle timeout is 600 s on the Pune gateway. Raised with the vendor.",
+     "internal": true,
+     "createdAt": "2026-11-03T16:00"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-11-02T10:00",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-02T10:01",
+     "text": "Placed in IT Service Desk queue · picked up by Nikhil Rane",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-02T12:30",
+     "text": "Status: New → In Progress",
+     "kind": "status"
+    },
+    {
+     "at": "2026-11-02T22:00",
+     "text": "Escalated to Level 1 · Nikhil Rane (category lead)",
+     "kind": "esc"
+    },
+    {
+     "at": "2026-11-03T04:00",
+     "text": "Escalated to Level 2 · Suresh Pai (IT Head)",
+     "kind": "esc"
+    },
+    {
+     "at": "2026-11-03T10:00",
+     "text": "Resolution SLA breached",
+     "kind": "sla"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "IT-000055",
+   "helpdesk": "IT",
+   "categoryKey": "SW",
+   "subCategory": "Install new software",
+   "title": "Install Postman for API testing",
+   "description": "Need Postman on my laptop to test the payments APIs in the new sprint.",
+   "priority": "Medium",
+   "status": "Pending approval",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u12",
+   "assigneeId": "u21",
+   "createdAt": "2026-11-04T08:30",
+   "updatedAt": "2026-11-04T08:30",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-04T12:30",
+   "resolutionDue": "2026-11-05T08:30",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "swName": "Postman",
+    "swVersion": "Latest",
+    "justification": "API testing for the payments sprint; the free tier is enough.",
+    "assetTag": "NPX-LT-0412"
+   },
+   "approval": {
+    "chain": [
+     "mgr"
+    ],
+    "mgrId": "u6",
+    "mgr": "Pending"
+   },
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-04T08:30",
+     "text": "Raised by Deepa Pillai",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-04T08:30",
+     "text": "Status: New → Pending approval · manager approval requested from Sanjay Menon",
+     "kind": "status"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "IT-000047",
+   "helpdesk": "IT",
+   "categoryKey": "ACC",
+   "subCategory": "Shared folder access",
+   "title": "Write access to the Sales forecast folder",
+   "description": "Need write access to the Q4 forecast folder to update the West region numbers.",
+   "priority": "Medium",
+   "status": "Pending approval",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u2",
+   "assigneeId": "u22",
+   "createdAt": "2026-11-03T15:20",
+   "updatedAt": "2026-11-03T15:20",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-03T19:20",
+   "resolutionDue": "2026-11-04T15:20",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "accSystem": "Shared drive",
+    "folderPath": "\\\\fs01\\Sales\\Forecast-Q4",
+    "accessLevel": "Write",
+    "duration": "90 days",
+    "approver": "Vikram Joshi"
+   },
+   "approval": {
+    "chain": [
+     "mgr"
+    ],
+    "mgrId": "u7",
+    "mgr": "Pending"
+   },
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-03T15:20",
+     "text": "Raised by Neha Shah",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-03T15:20",
+     "text": "Status: New → Pending approval · manager approval requested from Vikram Joshi",
+     "kind": "status"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "IT-000044",
+   "helpdesk": "IT",
+   "categoryKey": "SEC",
+   "subCategory": "Phishing email reported",
+   "title": "Email pretending to be the payroll vendor",
+   "description": "Got an email asking me to re-enter bank details on a look-alike payroll site. I did not click the link.",
+   "priority": "Critical",
+   "status": "In Progress",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u3",
+   "assigneeId": "u22",
+   "createdAt": "2026-11-04T07:50",
+   "updatedAt": "2026-11-04T08:20",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-04T08:20",
+   "resolutionDue": "2026-11-04T11:50",
+   "responseMet": true,
+   "confidential": true,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "incidentAt": "2026-11-04 07:40"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [
+    {
+     "authorId": "u22",
+     "body": "Thanks Priya. The sender domain is blocked and the email was pulled from 214 mailboxes. Please do not forward it.",
+     "internal": false,
+     "createdAt": "2026-11-04T08:20"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-11-04T07:50",
+     "text": "Raised by Priya Rao",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-04T07:50",
+     "text": "Routed to Farhan Ali (IT security, confidential)",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-04T08:05",
+     "text": "Status: New → In Progress",
+     "kind": "status"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "IT-000057",
+   "helpdesk": "IT",
+   "categoryKey": "NET",
+   "subCategory": "Wi-Fi",
+   "title": "Wi-Fi drops on the 3rd floor, Tower B",
+   "description": "Wi-Fi keeps dropping near the training room since yesterday. Several people are affected.",
+   "priority": "High",
+   "status": "New",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u8",
+   "assigneeId": "q_it",
+   "createdAt": "2026-11-04T10:40",
+   "updatedAt": "2026-11-04T10:40",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-04T12:40",
+   "resolutionDue": "2026-11-04T18:40",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "connType": "Wi-Fi",
+    "location": "Mumbai HQ",
+    "floor": "3",
+    "affected": "Whole floor"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-04T10:40",
+     "text": "Raised by Kavya Nair",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-04T10:40",
+     "text": "Placed in IT Service Desk queue (category lead Nikhil Rane)",
+     "kind": "assign"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "IT-000058",
+   "helpdesk": "IT",
+   "categoryKey": "NJ",
+   "subCategory": "Laptop and accounts for a new joiner",
+   "title": "IT setup for new joiner Rhea Kapoor",
+   "description": "Rhea joins the QA team on 10 Nov. She needs a developer laptop, email, VPN and Jira access.",
+   "priority": "Medium",
+   "status": "New",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u6",
+   "assigneeId": "u21",
+   "createdAt": "2026-11-04T11:10",
+   "updatedAt": "2026-11-04T11:10",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-04T19:10",
+   "resolutionDue": "2026-11-07T11:10",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": "ADM-000063",
+   "fields": {
+    "njName": "Rhea Kapoor",
+    "njDate": "2026-11-10",
+    "njRole": "QA Engineer, Payments",
+    "laptopType": "Developer"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-04T11:10",
+     "text": "Raised by Sanjay Menon",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-04T11:10",
+     "text": "Routed to Nikhil Rane (category lead, New joiner IT setup)",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-04T11:10",
+     "text": "Linked to related ticket ADM-000063",
+     "kind": "assign"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "IT-000035",
+   "helpdesk": "IT",
+   "categoryKey": "EMAIL",
+   "subCategory": "Teams or meetings",
+   "title": "Teams calls drop audio after 20 minutes",
+   "description": "Audio cuts out on Teams calls after about 20 minutes. Video stays on.",
+   "priority": "Medium",
+   "status": "In Progress",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u2",
+   "assigneeId": "u21",
+   "createdAt": "2026-10-29T10:00",
+   "updatedAt": "2026-11-03T11:30",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-10-29T14:00",
+   "resolutionDue": "2026-11-04T11:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "tool": "Teams"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [
+    {
+     "authorId": "u21",
+     "body": "Updated the Teams client and the audio driver. Please test on your next call.",
+     "internal": false,
+     "createdAt": "2026-10-30T12:00"
+    },
+    {
+     "authorId": "u2",
+     "body": "Reopen note: It happened again today on a client call.",
+     "internal": false,
+     "createdAt": "2026-11-03T11:00"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-10-29T10:00",
+     "text": "Raised by Neha Shah",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-30T12:00",
+     "text": "Resolved by Nikhil Rane",
+     "kind": "close"
+    },
+    {
+     "at": "2026-11-03T11:00",
+     "text": "Reopened by Neha Shah (was Resolved) · SLA clocks restarted",
+     "kind": "status"
+    },
+    {
+     "at": "2026-11-03T11:30",
+     "text": "Status: Reopened → In Progress",
+     "kind": "status"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "IT-000038",
+   "helpdesk": "IT",
+   "categoryKey": "ACCT",
+   "subCategory": "Password reset",
+   "title": "Outlook keeps asking for my password",
+   "description": "Outlook prompts for my password every hour since the password change.",
+   "priority": "High",
+   "status": "Resolved",
+   "closeResponse": null,
+   "closeMessage": "Cleared the cached credentials and re-registered MFA. Confirm it is fixed, or reopen within 7 days.",
+   "requesterId": "u1",
+   "assigneeId": "u22",
+   "createdAt": "2026-11-03T09:00",
+   "updatedAt": "2026-11-03T13:00",
+   "closedAt": "2026-11-03T13:00",
+   "closedById": "u22",
+   "responseDue": "2026-11-03T11:00",
+   "resolutionDue": "2026-11-03T17:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "acctSystem": "Microsoft 365",
+    "username": "arjun.kumar@npstx.com"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [
+    {
+     "authorId": "u22",
+     "body": "Cleared the cached credentials and re-registered MFA. Confirm it is fixed, or reopen within 7 days.",
+     "internal": false,
+     "createdAt": "2026-11-03T13:00"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-11-03T09:00",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-03T13:00",
+     "text": "Resolved by Farhan Ali · awaiting requester confirmation",
+     "kind": "close"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "IT-000031",
+   "helpdesk": "IT",
+   "categoryKey": "HW",
+   "subCategory": "Peripheral request",
+   "title": "Second monitor for home office",
+   "description": "Requesting a 24-inch monitor for working from home.",
+   "priority": "Low",
+   "status": "Closed",
+   "closeResponse": null,
+   "closeMessage": "Monitor NPX-MN-1120 delivered to your home address.",
+   "requesterId": "u1",
+   "assigneeId": "u21",
+   "createdAt": "2026-10-14T10:00",
+   "updatedAt": "2026-10-18T12:00",
+   "closedAt": "2026-10-18T12:00",
+   "closedById": "u21",
+   "responseDue": "2026-10-14T18:00",
+   "resolutionDue": "2026-10-17T10:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "deviceType": "Monitor",
+    "impact": "Only me",
+    "location": "Remote"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-14T10:00",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-18T12:00",
+     "text": "Resolved and confirmed · closed by Nikhil Rane",
+     "kind": "close"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "IT-000025",
+   "helpdesk": "IT",
+   "categoryKey": "ACC",
+   "subCategory": "Admin rights on my laptop",
+   "title": "Admin rights to install Docker",
+   "description": "I need local admin rights to install Docker Desktop.",
+   "priority": "Medium",
+   "status": "Rejected",
+   "closeResponse": null,
+   "closeMessage": "Use the approved developer image, which has Docker preinstalled. Raise a Software and installation ticket for it.",
+   "requesterId": "u1",
+   "assigneeId": "u22",
+   "createdAt": "2026-10-24T10:00",
+   "updatedAt": "2026-10-25T09:00",
+   "closedAt": "2026-10-25T09:00",
+   "closedById": "u6",
+   "responseDue": "2026-10-24T14:00",
+   "resolutionDue": "2026-10-25T10:00",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "accSystem": "Other",
+    "accessLevel": "Admin",
+    "duration": "Permanent",
+    "approver": "Sanjay Menon"
+   },
+   "approval": {
+    "chain": [
+     "mgr",
+     "ith"
+    ],
+    "mgrId": "u6",
+    "mgr": "Rejected",
+    "mgrAt": "2026-10-25T09:00",
+    "ith": "Pending"
+   },
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-24T10:00",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-25T09:00",
+     "text": "Manager approval: Rejected by Sanjay Menon",
+     "kind": "close"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "ADM-000061",
+   "helpdesk": "ADM",
+   "categoryKey": "FAC",
+   "subCategory": "Air conditioning",
+   "title": "AC leaking near meeting room Everest",
+   "description": "Water is dripping from the AC vent onto the carpet near meeting room Everest.",
+   "priority": "High",
+   "status": "Scheduled",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u1",
+   "assigneeId": "u24",
+   "createdAt": "2026-11-04T09:30",
+   "updatedAt": "2026-11-04T10:15",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-04T11:30",
+   "resolutionDue": "2026-11-05T09:30",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "building": "Mumbai HQ · Tower A",
+    "floor": "5",
+    "spot": "Near meeting room Everest",
+    "urgency": "Today"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [
+    {
+     "authorId": "u24",
+     "body": "Technician booked for 3 pm today. Housekeeping will put out a wet-floor sign until then.",
+     "internal": false,
+     "createdAt": "2026-11-04T10:15"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-11-04T09:30",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-04T09:31",
+     "text": "Routed to Pooja Shetty (category lead, Facilities and maintenance)",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-04T10:15",
+     "text": "Status: New → Scheduled · technician at 15:00",
+     "kind": "status"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "ADM-000058",
+   "helpdesk": "ADM",
+   "categoryKey": "TRAVEL",
+   "subCategory": "Flight booking",
+   "title": "Travel: Mumbai to Bengaluru, 18–20 Nov",
+   "description": "Client workshop at Kestrel Logistics, Whitefield. I need flights and two nights at a hotel near Whitefield.",
+   "priority": "Medium",
+   "status": "Pending approval",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u1",
+   "assigneeId": "q_travel",
+   "createdAt": "2026-11-04T08:50",
+   "updatedAt": "2026-11-04T08:50",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-04T12:50",
+   "resolutionDue": "2026-11-06T08:50",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "fromCity": "Mumbai",
+    "toCity": "Bengaluru",
+    "departDate": "2026-11-18",
+    "returnDate": "2026-11-20",
+    "purpose": "Client visit",
+    "travellers": "1",
+    "approver": "Sanjay Menon"
+   },
+   "approval": {
+    "chain": [
+     "mgr"
+    ],
+    "mgrId": "u6",
+    "mgr": "Pending"
+   },
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-04T08:50",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-04T08:50",
+     "text": "Status: New → Pending approval · manager approval requested from Sanjay Menon",
+     "kind": "status"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "ADM-000055",
+   "helpdesk": "ADM",
+   "categoryKey": "TRANS",
+   "subCategory": "Parking slot",
+   "title": "Parking slot for my new car",
+   "description": "I bought a new car and need a parking slot at Mumbai HQ from next week.",
+   "priority": "Low",
+   "status": "Waiting for employee",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u2",
+   "assigneeId": "u24",
+   "createdAt": "2026-11-03T10:00",
+   "updatedAt": "2026-11-03T15:00",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-03T18:00",
+   "resolutionDue": "2026-11-07T10:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": true,
+   "relatedKey": null,
+   "fields": {
+    "location": "Mumbai HQ",
+    "vehicleNo": "MH 02 CD 4521"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [
+    {
+     "authorId": "u24",
+     "body": "Please upload a copy of the RC so we can issue the parking sticker.",
+     "internal": false,
+     "createdAt": "2026-11-03T15:00"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-11-03T10:00",
+     "text": "Raised by Neha Shah",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-03T10:01",
+     "text": "Routed to Pooja Shetty (category lead, Transport and parking)",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-03T15:00",
+     "text": "Status: New → Waiting for employee",
+     "kind": "status"
+    },
+    {
+     "at": "2026-11-03T15:00",
+     "text": "SLA resolution clock paused",
+     "kind": "sla"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "ADM-000052",
+   "helpdesk": "ADM",
+   "categoryKey": "IDC",
+   "subCategory": "Lost card",
+   "title": "Replacement ID card, lost in a cab",
+   "description": "I lost my ID card in a cab on Thursday. I am using a temporary pass from reception.",
+   "priority": "Medium",
+   "status": "In Progress",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u12",
+   "assigneeId": "u24",
+   "createdAt": "2026-10-30T09:00",
+   "updatedAt": "2026-11-02T10:00",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-10-30T13:00",
+   "resolutionDue": "2026-11-01T09:00",
+   "responseMet": false,
+   "confidential": false,
+   "escalationLevel": 2,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "building": "Pune · Hinjewadi",
+    "cardNo": "PN-20877"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [
+    {
+     "authorId": "u24",
+     "body": "Old card deactivated. The new card is with the printing vendor.",
+     "internal": false,
+     "createdAt": "2026-11-02T10:00"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-10-30T09:00",
+     "text": "Raised by Deepa Pillai",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-30T13:00",
+     "text": "Response SLA breached · lead notified",
+     "kind": "sla"
+    },
+    {
+     "at": "2026-10-31T09:00",
+     "text": "Escalated to Level 1 · Pooja Shetty (category lead)",
+     "kind": "esc"
+    },
+    {
+     "at": "2026-10-31T21:00",
+     "text": "Escalated to Level 2 · Rahul Kapoor (Admin Head)",
+     "kind": "esc"
+    },
+    {
+     "at": "2026-11-02T10:00",
+     "text": "Status: New → In Progress",
+     "kind": "status"
+    }
+   ],
+   "followers": [
+    {
+     "userId": "u6",
+     "relation": "FOLLOWER",
+     "addedById": "u6"
+    }
+   ]
+  },
+  {
+   "key": "ADM-000063",
+   "helpdesk": "ADM",
+   "categoryKey": "SEAT",
+   "subCategory": "New seat request",
+   "title": "Seat for new joiner Rhea Kapoor near the QA team",
+   "description": "Rhea joins on 10 Nov. Please allocate a seat near the QA team on the 4th floor.",
+   "priority": "Low",
+   "status": "New",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u6",
+   "assigneeId": "u24",
+   "createdAt": "2026-11-04T11:12",
+   "updatedAt": "2026-11-04T11:12",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-04T19:12",
+   "resolutionDue": "2026-11-08T11:12",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": "IT-000058",
+   "fields": {
+    "building": "Mumbai HQ · Tower A",
+    "floor": "4",
+    "zone": "Near the QA team",
+    "neededFrom": "2026-11-10"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-04T11:12",
+     "text": "Raised by Sanjay Menon",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-04T11:12",
+     "text": "Routed to Pooja Shetty (category lead, Seating and workspace)",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-04T11:12",
+     "text": "Linked to related ticket IT-000058",
+     "kind": "assign"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "ADM-000049",
+   "helpdesk": "ADM",
+   "categoryKey": "PUR",
+   "subCategory": "New purchase",
+   "title": "Four standing desks for the QA team",
+   "description": "Four height-adjustable desks for the QA team; two members have back-care advice from their doctor.",
+   "priority": "Medium",
+   "status": "Pending approval",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u6",
+   "assigneeId": "u25",
+   "createdAt": "2026-11-02T12:00",
+   "updatedAt": "2026-11-03T09:30",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-02T20:00",
+   "resolutionDue": "2026-11-07T12:00",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "itemService": "Height-adjustable standing desk × 4",
+    "cost": "96000",
+    "vendor": "Featherlite",
+    "justification": "Medical advice for two team members; the others rotate.",
+    "neededBy": "2026-11-30"
+   },
+   "approval": {
+    "chain": [
+     "mgr",
+     "adm"
+    ],
+    "mgrId": "u13",
+    "mgr": "Approved",
+    "mgrBy": "u13",
+    "mgrAt": "2026-11-03T09:30",
+    "adm": "Pending"
+   },
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-02T12:00",
+     "text": "Raised by Sanjay Menon",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-03T09:30",
+     "text": "Manager approval: Approved by Lata Verma",
+     "kind": "status"
+    },
+    {
+     "at": "2026-11-03T09:30",
+     "text": "Admin head approval requested from Rahul Kapoor",
+     "kind": "assign"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "ADM-000065",
+   "helpdesk": "ADM",
+   "categoryKey": "HK",
+   "subCategory": "Spill or hygiene issue",
+   "title": "Spill near the 4th floor pantry, Tower A",
+   "description": "Large coffee spill near the pantry door. It is slippery.",
+   "priority": "High",
+   "status": "New",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u3",
+   "assigneeId": "q_adm",
+   "createdAt": "2026-11-04T11:20",
+   "updatedAt": "2026-11-04T11:20",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-04T13:20",
+   "resolutionDue": "2026-11-05T11:20",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "building": "Mumbai HQ · Tower A",
+    "floor": "4",
+    "spot": "Pantry door"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-04T11:20",
+     "text": "Raised by Priya Rao",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-04T11:20",
+     "text": "Placed in Admin Desk queue (category lead Pooja Shetty)",
+     "kind": "assign"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "ADM-000040",
+   "helpdesk": "ADM",
+   "categoryKey": "COUR",
+   "subCategory": "Send a courier",
+   "title": "Courier signed loan documents to SBI, Fort",
+   "description": "Signed home-loan documents to go to the SBI Fort branch.",
+   "priority": "Low",
+   "status": "Closed",
+   "closeResponse": null,
+   "closeMessage": "Sent by Blue Dart, AWB 70214455321. Delivered 24 Oct.",
+   "requesterId": "u1",
+   "assigneeId": "u24",
+   "createdAt": "2026-10-22T11:00",
+   "updatedAt": "2026-10-25T10:00",
+   "closedAt": "2026-10-25T10:00",
+   "closedById": "u24",
+   "responseDue": "2026-10-22T19:00",
+   "resolutionDue": "2026-10-26T11:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "recipient": "SBI Home Loans, Fort branch",
+    "destCity": "Mumbai",
+    "weightKg": "0.5"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-22T11:00",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-25T10:00",
+     "text": "Resolved and confirmed · closed by Pooja Shetty",
+     "kind": "close"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "ADM-000044",
+   "helpdesk": "ADM",
+   "categoryKey": "VIS",
+   "subCategory": "Visitor pass",
+   "title": "Visitor passes for the Kestrel Logistics team",
+   "description": "Three visitors from Kestrel Logistics for a workshop on 29 Oct.",
+   "priority": "Medium",
+   "status": "Closed",
+   "closeResponse": null,
+   "closeMessage": "Passes ready at reception, Tower A.",
+   "requesterId": "u2",
+   "assigneeId": "u24",
+   "createdAt": "2026-10-27T10:00",
+   "updatedAt": "2026-10-28T16:00",
+   "closedAt": "2026-10-28T16:00",
+   "closedById": "u24",
+   "responseDue": "2026-10-27T14:00",
+   "resolutionDue": "2026-10-29T10:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "building": "Mumbai HQ · Tower A",
+    "visitDate": "2026-10-29",
+    "visitorNames": "R. Menon, S. Das, P. Gill"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-27T10:00",
+     "text": "Raised by Neha Shah",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-28T16:00",
+     "text": "Resolved and confirmed · closed by Pooja Shetty",
+     "kind": "close"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "ADM-000046",
+   "helpdesk": "ADM",
+   "categoryKey": "HK",
+   "subCategory": "Coffee or water machine",
+   "title": "Coffee machine on the 2nd floor not working",
+   "description": "The coffee machine shows an error and does not dispense.",
+   "priority": "Low",
+   "status": "Cancelled",
+   "closeResponse": null,
+   "closeMessage": "Cancelled by requester: the vendor fixed it during a routine visit.",
+   "requesterId": "u1",
+   "assigneeId": "q_adm",
+   "createdAt": "2026-10-30T09:00",
+   "updatedAt": "2026-10-30T12:00",
+   "closedAt": "2026-10-30T12:00",
+   "closedById": "u1",
+   "responseDue": "2026-10-30T17:00",
+   "resolutionDue": "2026-11-03T09:00",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "building": "Mumbai HQ · Tower A",
+    "floor": "2"
+   },
+   "approval": null,
+   "sf": null,
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-30T09:00",
+     "text": "Raised by Arjun Kumar",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-30T12:00",
+     "text": "Cancelled by Arjun Kumar (was New)",
+     "kind": "close"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "SF-00330",
+   "helpdesk": "SF",
+   "categoryKey": "ACCESS",
+   "subCategory": "Profile or permission change",
+   "title": "Cannot edit opportunities in the West region",
+   "description": "Since Monday I get \"insufficient privileges\" when editing West region opportunities that I own.",
+   "priority": "High",
+   "status": "Working",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u2",
+   "assigneeId": "u5",
+   "createdAt": "2026-11-03T11:05",
+   "updatedAt": "2026-11-04T09:40",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-03T15:05",
+   "resolutionDue": "2026-11-05T11:05",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "account": "Kestrel Logistics Pvt Ltd",
+    "oppId": "006Kx00000AbC12XYZ",
+    "record": "npstx.my.salesforce.com/lightning/r/Opportunity/006Kx00000AbC12XYZ/view"
+   },
+   "approval": null,
+   "sf": {
+    "caseNo": "00330",
+    "ent": "Internal Sales Support",
+    "ms": [
+     [
+      "First response",
+      "Compliant"
+     ],
+     [
+      "Resolution",
+      "In progress · due 05 Nov, 11:05"
+     ]
+    ],
+    "team": [
+     [
+      "u5",
+      "Case admin"
+     ]
+    ],
+    "kids": [
+     [
+      "00331",
+      "Update West region sharing rule",
+      "Working",
+      "Rohan Das"
+     ]
+    ]
+   },
+   "files": [
+    {
+     "n": "insufficient-privileges.png",
+     "s": "96 KB"
+    }
+   ],
+   "comments": [
+    {
+     "authorId": "u5",
+     "body": "Your profile is missing the West Region Sales permission set. I've raised child case 00331 to update the sharing rule.",
+     "internal": false,
+     "createdAt": "2026-11-03T13:10"
+    },
+    {
+     "authorId": "u5",
+     "body": "Sharing rule change needs sign-off from Vikram; tested in sandbox.",
+     "internal": true,
+     "createdAt": "2026-11-04T09:40"
+    }
+   ],
+   "events": [
+    {
+     "at": "2026-11-03T11:05",
+     "text": "Case created in Salesforce by Neha Shah (origin: NPSTX platform)",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-03T11:05",
+     "text": "Assignment rule → Rohan Das",
+     "kind": "assign"
+    },
+    {
+     "at": "2026-11-03T13:10",
+     "text": "Status: New → Working",
+     "kind": "status"
+    }
+   ],
+   "followers": [
+    {
+     "userId": "u7",
+     "relation": "CC",
+     "addedById": "u2"
+    }
+   ]
+  },
+  {
+   "key": "SF-00334",
+   "helpdesk": "SF",
+   "categoryKey": "REPORTS",
+   "subCategory": "New report",
+   "title": "Pipeline report by product line",
+   "description": "Need a weekly pipeline report grouped by product line and stage for the West region.",
+   "priority": "Medium",
+   "status": "New",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u2",
+   "assigneeId": "q_sf",
+   "createdAt": "2026-11-04T10:15",
+   "updatedAt": "2026-11-04T10:15",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-04T18:15",
+   "resolutionDue": "2026-11-07T10:15",
+   "responseMet": null,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "account": "—",
+    "oppId": "—"
+   },
+   "approval": null,
+   "sf": {
+    "caseNo": "00334",
+    "ent": "Internal Sales Support",
+    "ms": [
+     [
+      "First response",
+      "In progress · due 04 Nov, 18:15"
+     ]
+    ],
+    "team": [],
+    "kids": []
+   },
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-04T10:15",
+     "text": "Case created in Salesforce by Neha Shah",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-04T10:15",
+     "text": "Assignment rule → SF Ops queue",
+     "kind": "assign"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "SF-00336",
+   "helpdesk": "SF",
+   "categoryKey": "DATA",
+   "subCategory": "Duplicate merge",
+   "title": "Merge duplicate accounts for Orion Retail",
+   "description": "Orion Retail exists twice; opportunities are split between both records.",
+   "priority": "Medium",
+   "status": "Working",
+   "closeResponse": null,
+   "closeMessage": null,
+   "requesterId": "u7",
+   "assigneeId": "u5",
+   "createdAt": "2026-11-02T09:00",
+   "updatedAt": "2026-11-03T18:00",
+   "closedAt": null,
+   "closedById": null,
+   "responseDue": "2026-11-02T17:00",
+   "resolutionDue": "2026-11-05T09:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "account": "Orion Retail Ltd",
+    "oppId": "—",
+    "record": "001Kx00000OrN01"
+   },
+   "approval": null,
+   "sf": {
+    "caseNo": "00336",
+    "ent": "Internal Sales Support",
+    "ms": [
+     [
+      "First response",
+      "Compliant"
+     ],
+     [
+      "Resolution",
+      "In progress · due 05 Nov, 09:00"
+     ]
+    ],
+    "team": [
+     [
+      "u5",
+      "Case admin"
+     ],
+     [
+      "u2",
+      "Account owner"
+     ]
+    ],
+    "kids": []
+   },
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-11-02T09:00",
+     "text": "Case created by Vikram Joshi",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-11-02T10:00",
+     "text": "Status: New → Working",
+     "kind": "status"
+    }
+   ],
+   "followers": [
+    {
+     "userId": "u2",
+     "relation": "CC",
+     "addedById": "u7"
+    }
+   ]
+  },
+  {
+   "key": "SF-00311",
+   "helpdesk": "SF",
+   "categoryKey": "REPORTS",
+   "subCategory": "New report",
+   "title": "Quarterly win-loss dashboard for Presales",
+   "description": "Dashboard of won and lost opportunities by competitor for the QBR.",
+   "priority": "Medium",
+   "status": "Closed",
+   "closeResponse": "Resolved",
+   "closeMessage": "Dashboard published in the Presales folder.",
+   "requesterId": "u2",
+   "assigneeId": "u5",
+   "createdAt": "2026-10-10T10:00",
+   "updatedAt": "2026-10-14T16:00",
+   "closedAt": "2026-10-14T16:00",
+   "closedById": "u5",
+   "responseDue": "2026-10-10T18:00",
+   "resolutionDue": "2026-10-13T10:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {
+    "account": "—"
+   },
+   "approval": null,
+   "sf": {
+    "caseNo": "00311",
+    "ent": "Internal Sales Support",
+    "ms": [
+     [
+      "First response",
+      "Compliant"
+     ],
+     [
+      "Resolution",
+      "Violated"
+     ]
+    ],
+    "team": [],
+    "kids": []
+   },
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-10T10:00",
+     "text": "Case created by Neha Shah",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-14T16:00",
+     "text": "Closed · Resolved by Rohan Das",
+     "kind": "close"
+    }
+   ],
+   "followers": []
+  },
+  {
+   "key": "SF-00309",
+   "helpdesk": "SF",
+   "categoryKey": "LEADS",
+   "subCategory": "Opportunity stages",
+   "title": "Opportunity stage picklist missing \"Negotiation\"",
+   "description": "New record type does not show the Negotiation stage.",
+   "priority": "High",
+   "status": "Closed",
+   "closeResponse": "Resolved",
+   "closeMessage": "Stage added to the Enterprise record type.",
+   "requesterId": "u7",
+   "assigneeId": "u5",
+   "createdAt": "2026-10-06T10:00",
+   "updatedAt": "2026-10-09T11:00",
+   "closedAt": "2026-10-09T11:00",
+   "closedById": "u5",
+   "responseDue": "2026-10-06T14:00",
+   "resolutionDue": "2026-10-08T10:00",
+   "responseMet": true,
+   "confidential": false,
+   "escalationLevel": 0,
+   "paused": false,
+   "relatedKey": null,
+   "fields": {},
+   "approval": null,
+   "sf": {
+    "caseNo": "00309",
+    "ent": "Internal Sales Support",
+    "ms": [
+     [
+      "First response",
+      "Compliant"
+     ],
+     [
+      "Resolution",
+      "Violated"
+     ]
+    ],
+    "team": [
+     [
+      "u5",
+      "Case admin"
+     ],
+     [
+      "u2",
+      "Requester delegate"
+     ]
+    ],
+    "kids": []
+   },
+   "files": [],
+   "comments": [],
+   "events": [
+    {
+     "at": "2026-10-06T10:00",
+     "text": "Case created by Vikram Joshi",
+     "kind": "raise"
+    },
+    {
+     "at": "2026-10-09T11:00",
+     "text": "Closed · Resolved by Rohan Das",
+     "kind": "close"
+    }
+   ],
+   "followers": [
+    {
+     "userId": "u2",
+     "relation": "CASE_TEAM",
+     "addedById": "u5"
+    }
+   ]
+  }
+ ],
+ "notifications": [
+  {
+   "userId": "u1",
+   "text": "Priya Rao needs more information on HR-000127",
+   "ticketKey": "HR-000127",
+   "createdAt": "2026-11-03T15:05",
+   "read": false
+  },
+  {
+   "userId": "u1",
+   "text": "New update on HR-000123",
+   "ticketKey": "HR-000123",
+   "createdAt": "2026-11-02T11:00",
+   "read": true
+  },
+  {
+   "userId": "u1",
+   "text": "Deepa Pillai tagged you on IT-000041",
+   "ticketKey": "IT-000041",
+   "createdAt": "2026-11-02T14:20",
+   "read": false
+  },
+  {
+   "userId": "u2",
+   "text": "Rohan Das replied on SF-00330",
+   "ticketKey": "SF-00330",
+   "createdAt": "2026-11-03T13:10",
+   "read": false
+  },
+  {
+   "userId": "u2",
+   "text": "You were CC'd on SF-00336",
+   "ticketKey": "SF-00336",
+   "createdAt": "2026-11-02T09:00",
+   "read": true
+  },
+  {
+   "userId": "u3",
+   "text": "HR-000121 escalated to Level 2 (Anil Gupta)",
+   "ticketKey": "HR-000121",
+   "createdAt": "2026-11-01T15:00",
+   "read": false
+  },
+  {
+   "userId": "u3",
+   "text": "New update on HR-000123",
+   "ticketKey": "HR-000123",
+   "createdAt": "2026-11-03T16:40",
+   "read": false
+  },
+  {
+   "userId": "u4",
+   "text": "Approval needed: LND-000049 from Deepa Pillai",
+   "ticketKey": "LND-000049",
+   "createdAt": "2026-11-02T18:00",
+   "read": false
+  },
+  {
+   "userId": "u5",
+   "text": "SF-00334 placed in SF Ops queue",
+   "ticketKey": "SF-00334",
+   "createdAt": "2026-11-04T10:15",
+   "read": false
+  },
+  {
+   "userId": "u6",
+   "text": "Approval needed: LND-000048 from Arjun Kumar",
+   "ticketKey": "LND-000048",
+   "createdAt": "2026-11-03T12:30",
+   "read": false
+  },
+  {
+   "userId": "u6",
+   "text": "You were CC'd on IT-000041",
+   "ticketKey": "IT-000041",
+   "createdAt": "2026-11-02T14:00",
+   "read": true
+  },
+  {
+   "userId": "u8",
+   "text": "Approval needed: LND-000047 from Imran Sheikh",
+   "ticketKey": "LND-000047",
+   "createdAt": "2026-11-04T10:30",
+   "read": false
+  },
+  {
+   "userId": "u8",
+   "text": "Approval needed: LND-000049 from Deepa Pillai",
+   "ticketKey": "LND-000049",
+   "createdAt": "2026-11-02T18:00",
+   "read": false
+  },
+  {
+   "userId": "u20",
+   "text": "HR-000121 breached SLA and reached Level 2",
+   "ticketKey": "HR-000121",
+   "createdAt": "2026-11-01T15:00",
+   "read": false
+  },
+  {
+   "userId": "u1",
+   "text": "Nikhil Rane needs more information on IT-000052",
+   "ticketKey": "IT-000052",
+   "createdAt": "2026-11-04T10:10",
+   "read": false
+  },
+  {
+   "userId": "u1",
+   "text": "Pooja Shetty scheduled a technician for ADM-000061",
+   "ticketKey": "ADM-000061",
+   "createdAt": "2026-11-04T10:15",
+   "read": false
+  },
+  {
+   "userId": "u6",
+   "text": "Approval needed: IT-000055 from Deepa Pillai",
+   "ticketKey": "IT-000055",
+   "createdAt": "2026-11-04T08:30",
+   "read": false
+  },
+  {
+   "userId": "u6",
+   "text": "Approval needed: ADM-000058 from Arjun Kumar",
+   "ticketKey": "ADM-000058",
+   "createdAt": "2026-11-04T08:50",
+   "read": false
+  },
+  {
+   "userId": "u21",
+   "text": "New ticket IT-000057 in IT Service Desk queue",
+   "ticketKey": "IT-000057",
+   "createdAt": "2026-11-04T10:40",
+   "read": false
+  },
+  {
+   "userId": "u21",
+   "text": "IT-000035 was reopened by Neha Shah",
+   "ticketKey": "IT-000035",
+   "createdAt": "2026-11-03T11:00",
+   "read": false
+  },
+  {
+   "userId": "u23",
+   "text": "IT-000050 escalated to Level 2",
+   "ticketKey": "IT-000050",
+   "createdAt": "2026-11-03T04:00",
+   "read": false
+  },
+  {
+   "userId": "u24",
+   "text": "New ticket ADM-000065 in Admin Desk queue",
+   "ticketKey": "ADM-000065",
+   "createdAt": "2026-11-04T11:20",
+   "read": false
+  },
+  {
+   "userId": "u25",
+   "text": "Approval needed: ADM-000049 from Sanjay Menon",
+   "ticketKey": "ADM-000049",
+   "createdAt": "2026-11-03T09:30",
+   "read": false
+  },
+  {
+   "userId": "u25",
+   "text": "ADM-000052 escalated to Level 2",
+   "ticketKey": "ADM-000052",
+   "createdAt": "2026-10-31T21:00",
+   "read": false
+  },
+  {
+   "userId": "u2",
+   "text": "Approval pending with Vikram Joshi for IT-000047",
+   "ticketKey": "IT-000047",
+   "createdAt": "2026-11-03T15:20",
+   "read": true
+  }
+ ],
+ "faqs": [
+  {
+   "helpdesk": "HR",
+   "sortOrder": 0,
+   "question": "How do I raise an HR ticket?",
+   "answer": "Open Helpdesk, choose HR, click **Raise ticket**, pick a category and sub-category, write a clear title and description, attach files if needed, and submit. You get a ticket ID.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "HR",
+   "sortOrder": 1,
+   "question": "How do I check the status of my ticket?",
+   "answer": "Open **My Tickets**. Your open tickets are on the **Open Tickets** page with status, assignee and SLA due date. You can also ask the AI bar on the Dashboard, for example \"What is the status of my payroll ticket?\". Click a ticket to see the conversation and timeline.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "HR",
+   "sortOrder": 2,
+   "question": "What do the statuses mean?",
+   "answer": "**Open**: waiting to be picked up. **In Progress**: an HR agent is working on it. **Waiting for employee**: HR needs more information from you. **Closed**: it has been resolved, rejected or cancelled, with a closing response.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "HR",
+   "sortOrder": 3,
+   "question": "What does priority mean?",
+   "answer": "Priority shows urgency (High, Medium, Low). It is set by the ticket's category and can be changed by the HR agent.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "HR",
+   "sortOrder": 4,
+   "question": "How long will I wait for a reply?",
+   "answer": "Each category has a response time and a resolution time. Your ticket shows the SLA due dates. The target times are [to be confirmed by HR].",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "HR",
+   "sortOrder": 5,
+   "question": "Are my HR tickets private?",
+   "answer": "Tickets in sensitive categories (for example payroll, personal records, grievances) are visible only to you, the assigned agent, the category lead and people you or the agent add as followers. [Confirm the category list with HR.]",
+   "categoryKey": "PAY"
+  },
+  {
+   "helpdesk": "HR",
+   "sortOrder": 6,
+   "question": "What if my ticket is not answered in time?",
+   "answer": "The ticket escalates automatically to the next level (category lead, then HR management). You do not need to raise it again.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "HR",
+   "sortOrder": 7,
+   "question": "Can I reopen a closed ticket?",
+   "answer": "Yes, if the category allows it. Open the ticket from the Closed Tickets page or History page and click **Reopen**, then add a note. [Reopen window to be confirmed.]",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "HR",
+   "sortOrder": 8,
+   "question": "How do I follow a colleague's ticket or add someone to mine?",
+   "answer": "Add people as followers on the ticket. They will see it on the **Following** page and receive updates. Followers cannot change the status.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "HR",
+   "sortOrder": 9,
+   "question": "Where can I see my old tickets?",
+   "answer": "Use the **History** page. Closed HR tickets are listed there with their closing response.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "LND",
+   "sortOrder": 0,
+   "question": "How do I request a course or LinkedIn Learning licence?",
+   "answer": "Raise an L&D ticket, choose the **Course request** type, select the learning source and item, and add a short business justification. Your manager and L&D will review it.",
+   "categoryKey": "COURSE"
+  },
+  {
+   "helpdesk": "LND",
+   "sortOrder": 1,
+   "question": "Who approves course requests?",
+   "answer": "Your manager approves first, then L&D. [Confirm the approval chain with the L&D Head.] You can see the approval status on the ticket.",
+   "categoryKey": "COURSE"
+  },
+  {
+   "helpdesk": "LND",
+   "sortOrder": 2,
+   "question": "I cannot log in to the L&D portal. What should I do?",
+   "answer": "Raise an **L&D portal access** ticket. Include the error message, your browser and the time it happened. If company single sign-on fails for every app, not only the L&D portal, raise an **IT and Support** ticket under Account and password instead.",
+   "categoryKey": "ACCESS"
+  },
+  {
+   "helpdesk": "LND",
+   "sortOrder": 3,
+   "question": "My LinkedIn Learning access shows an error after signing in.",
+   "answer": "Raise a ticket under L&D portal access, sub-category LinkedIn Learning duplicate email. Common causes are a duplicate email address or a licence not yet assigned.",
+   "categoryKey": "ACCESS"
+  },
+  {
+   "helpdesk": "LND",
+   "sortOrder": 4,
+   "question": "A course or video does not load. What can I do?",
+   "answer": "Try another browser and clear cache first. If it still fails, raise a **Content and playback** ticket with the course name, the page and a screenshot.",
+   "categoryKey": "CONTENT"
+  },
+  {
+   "helpdesk": "LND",
+   "sortOrder": 5,
+   "question": "I completed a course but I did not get a certificate.",
+   "answer": "Raise a **Certificates and records** ticket with the course name and completion date. Note that LinkedIn Learning issues one certificate per course, on first completion; repeating a course does not create a new one.",
+   "categoryKey": "CERT"
+  },
+  {
+   "helpdesk": "LND",
+   "sortOrder": 6,
+   "question": "I am not mapped to my training session.",
+    "answer": "Raise a **Training sessions** ticket with the session name and date. Priority is set automatically (High if the session is within two days). [Confirm rule with L&D.]",
+   "categoryKey": "SESSION"
+  },
+  {
+   "helpdesk": "LND",
+   "sortOrder": 7,
+   "question": "How do I join a Skillup Lounge?",
+   "answer": "Raise a **Course request** with the learning source Skillup Lounge, or check the lounge schedule published by L&D. [Confirm process with L&D.]",
+   "categoryKey": "COURSE"
+  },
+  {
+   "helpdesk": "LND",
+   "sortOrder": 8,
+   "question": "Can I cancel or change a course request?",
+   "answer": "Yes. Open the ticket and add a comment, or ask the L&D coordinator to cancel it. A cancelled ticket moves to History as Cancelled.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "LND",
+   "sortOrder": 9,
+   "question": "Where can I see my L&D ticket history?",
+   "answer": "Open **History**, choose L&D, and filter by date or status.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "IT",
+   "sortOrder": 0,
+   "question": "How do I raise an IT ticket?",
+   "answer": "Open Helpdesk, click **Raise ticket**, choose **IT and Support**, pick a category and sub-category, and fill the fields that appear. You can also tap the mic and describe the problem; AI fills the form for you to check. You get an IT ticket ID such as IT-000123.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "IT",
+   "sortOrder": 1,
+   "question": "My laptop is slow, broken or flickering. What should I include?",
+   "answer": "Choose **Hardware and IT asset**. Add the asset tag from the sticker (for example NPX-LT-0412), the device type, the exact error and who is affected. Attach a photo or screenshot if you can.",
+   "categoryKey": "HW"
+  },
+  {
+   "helpdesk": "IT",
+   "sortOrder": 2,
+   "question": "How do I request new software or a licence?",
+   "answer": "Choose **Software and installation**, then Install new software or Software licence request. Add the software name and a business justification. Your manager approves first, then IT installs it. [Confirm the licence budget rule with IT.]",
+   "categoryKey": "SW"
+  },
+  {
+   "helpdesk": "IT",
+   "sortOrder": 3,
+   "question": "How do I get access to a shared folder, VPN or a company system?",
+   "answer": "Choose **Access and permissions**. Pick the system, access level and duration. Your manager approves by default. Admin rights also need the IT head. [Confirm duration limits with IT.]",
+   "categoryKey": "ACC"
+  },
+  {
+   "helpdesk": "IT",
+   "sortOrder": 4,
+   "question": "I forgot my password or my account is locked.",
+   "answer": "Try the self-service reset first. [Confirm the reset portal link.] If it still fails, raise **Account and password**. These tickets start at High priority.",
+   "categoryKey": "ACCT"
+  },
+  {
+   "helpdesk": "IT",
+   "sortOrder": 5,
+   "question": "Wi-Fi or VPN is not working. What do I do?",
+   "answer": "Choose **Network and connectivity**. Add your location and floor, and say whether only you or the whole floor is affected. Whole-floor problems are worked first.",
+   "categoryKey": "NET"
+  },
+  {
+   "helpdesk": "IT",
+   "sortOrder": 6,
+   "question": "I received a suspicious email.",
+   "answer": "Do not click links or forward it. Raise **Security and incident**, sub-category Phishing email reported. These tickets are confidential: only you, IT security, the IT head and helpdesk admins can see them.",
+   "categoryKey": "SEC"
+  },
+  {
+   "helpdesk": "IT",
+   "sortOrder": 7,
+   "question": "My laptop was lost or stolen.",
+   "answer": "Raise **Security and incident**, sub-category Lost or stolen device, straight away so IT can lock it. If your ID card was lost too, raise a separate Admin Desk ticket and link it as a related ticket.",
+   "categoryKey": "SEC"
+  },
+  {
+   "helpdesk": "IT",
+   "sortOrder": 8,
+   "question": "How do I set up IT for a new joiner?",
+   "answer": "The manager raises **New joiner IT setup** at least 5 working days before the joining date [to be confirmed]. Link the related Admin Desk seat ticket and the HR onboarding ticket so all teams see each other.",
+   "categoryKey": "NJ"
+  },
+  {
+   "helpdesk": "IT",
+   "sortOrder": 9,
+   "question": "Is a problem with the L&D portal an IT issue?",
+   "answer": "No. Problems with the L&D portal or LinkedIn Learning go to **L&D**. Company sign-in, MFA, email accounts and devices go to **IT and Support**. If you pick the wrong helpdesk, the form suggests the right one.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "ADM",
+   "sortOrder": 0,
+   "question": "How do I raise an Admin Desk ticket?",
+   "answer": "Open Helpdesk, click **Raise ticket**, choose **Admin Desk**, pick a category and fill the fields that appear. You get an Admin Desk ticket ID such as ADM-000045.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "ADM",
+   "sortOrder": 1,
+   "question": "Something in the office needs repair (AC, lights, plumbing).",
+   "answer": "Choose **Facilities and maintenance**. Add the building, floor, exact spot and urgency. Choose Immediately for anything unsafe, such as sparks or water near sockets; that sets High priority.",
+   "categoryKey": "FAC"
+  },
+  {
+   "helpdesk": "ADM",
+   "sortOrder": 2,
+   "question": "How do I book travel?",
+   "answer": "Choose **Travel and accommodation**. Add from, to, dates, purpose and travellers. Your manager approves, then the travel desk books and attaches the tickets. [Confirm the advance-booking rule.]",
+   "categoryKey": "TRAVEL"
+  },
+  {
+   "helpdesk": "ADM",
+   "sortOrder": 3,
+   "question": "Who approves travel and purchases?",
+   "answer": "Travel: your manager. Purchases and vendor requests: your manager, then the Admin head. [Confirm cost thresholds with Admin.] You can see each approval step on the ticket.",
+   "categoryKey": "PUR"
+  },
+  {
+   "helpdesk": "ADM",
+   "sortOrder": 4,
+   "question": "How do I get a parking slot or office cab?",
+   "answer": "Choose **Transport and parking**. For parking, add the vehicle registration (for example MH 02 AB 1234). For cabs and late-night drops, add the shift time.",
+   "categoryKey": "TRANS"
+  },
+  {
+   "helpdesk": "ADM",
+   "sortOrder": 5,
+   "question": "I lost my ID card. What now?",
+   "answer": "Raise **ID card and access badge**, sub-category Lost card. The old card is deactivated and reception gives you a temporary pass until the new card is printed.",
+   "categoryKey": "IDC"
+  },
+  {
+   "helpdesk": "ADM",
+   "sortOrder": 6,
+   "question": "How do I register a visitor?",
+   "answer": "Choose **Visitors and meeting rooms**, sub-category Visitor pass, at least one working day before the visit [to be confirmed]. Add the date and visitor names.",
+   "categoryKey": "VIS"
+  },
+  {
+   "helpdesk": "ADM",
+   "sortOrder": 7,
+   "question": "How do I send a courier?",
+   "answer": "Choose **Courier and mail**. Add the recipient, destination city, approximate weight and dispatch date.",
+   "categoryKey": "COUR"
+  },
+  {
+   "helpdesk": "ADM",
+   "sortOrder": 8,
+   "question": "How do I get stationery or a new seat?",
+   "answer": "Use **Stationery and supplies** for items and toner, and **Seating and workspace** for a new seat, seat change, desk equipment or locker.",
+   "categoryKey": "STAT"
+  },
+  {
+   "helpdesk": "ADM",
+   "sortOrder": 9,
+   "question": "Is a travel expense claim an Admin Desk request?",
+   "answer": "No. Admin Desk books travel. Claiming the expenses afterwards is an **HR** request under Reimbursement and expenses.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "SF",
+   "sortOrder": 0,
+   "question": "Who can raise a Salesforce case?",
+   "answer": "Employees of Sales, Presales and Solutions. Other employees do not see this helpdesk.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "SF",
+   "sortOrder": 1,
+   "question": "How do I raise a Salesforce case?",
+   "answer": "Open Helpdesk, choose Salesforce, click **Raise case**, pick a type and reason, describe the problem, add the record link if relevant, and submit. You get a case number.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "SF",
+   "sortOrder": 2,
+   "question": "How do I check my case status?",
+   "answer": "Use **My Tickets**. The case shows its status, owner or queue and SLA due date, which come from Salesforce.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "SF",
+   "sortOrder": 3,
+   "question": "Who works on my case?",
+   "answer": "A Salesforce assignment rule places it with a user or a queue. The detail page shows the current owner.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "SF",
+   "sortOrder": 4,
+   "question": "What types of issues should I raise?",
+   "answer": "Access and permissions, data corrections, reports and dashboards, lead and opportunity setup, integrations and sync, enhancement requests, defects, and how-to questions. [Confirm list with the Salesforce admin.]",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "SF",
+   "sortOrder": 5,
+   "question": "What details help the admin fix my issue fast?",
+   "answer": "Record link or ID, what you expected, what happened, error message, time, and screenshots.",
+   "categoryKey": "DATA"
+  },
+  {
+   "helpdesk": "SF",
+   "sortOrder": 6,
+   "question": "What is a child case?",
+   "answer": "A larger request may be split into child cases so different admins can work in parallel. You see the child cases on the parent case page.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "SF",
+   "sortOrder": 7,
+   "question": "What does Escalated mean?",
+   "answer": "The case stayed open too long, so Salesforce moved it to a senior admin or queue and notified them.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "SF",
+   "sortOrder": 8,
+   "question": "Can I add a colleague to my case?",
+   "answer": "Yes. Add them as a follower or CC. Salesforce case team members are shown separately.",
+   "categoryKey": null
+  },
+  {
+   "helpdesk": "SF",
+   "sortOrder": 9,
+   "question": "Why can I not see the Salesforce helpdesk?",
+   "answer": "It is available only to Sales, Presales and Solutions. If you believe you should have access, raise an HR ticket to check your department record.",
+   "categoryKey": null
+  }
+ ],
+ "adminLog": [
+  {
+   "at": "2026-11-03T17:20",
+   "who": "u20",
+   "text": "Set HR category \"Payroll and salary\" to confidential"
+  },
+  {
+   "at": "2026-11-02T10:05",
+   "who": "u20",
+   "text": "Added field \"Claim ID\" to HR · Reimbursement and expenses"
+  },
+  {
+   "at": "2026-10-30T12:40",
+   "who": "u20",
+   "text": "High priority resolution target set to 48 h"
+  }
+ ],
+ "sequences": {
+  "HR": 131,
+  "LND": 53,
+  "IT": 59,
+  "ADM": 66,
+  "SF": 337
+ }
+}

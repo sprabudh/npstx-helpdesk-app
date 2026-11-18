@@ -1,0 +1,4091 @@
+{
+ "categories": [
+  {
+   "helpdesk": "HR",
+   "key": "LEAVE",
+   "name": "Leave and attendance",
+   "subs": [
+    "Leave balance",
+    "Leave policy",
+    "Attendance regularisation",
+    "Holiday calendar",
+    "Work from home"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u3",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 0,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "HR",
+   "key": "PAY",
+   "name": "Payroll and salary",
+   "subs": [
+    "Payslip",
+    "Salary credit",
+    "Tax and Form 16",
+    "Bank detail change",
+    "Salary revision"
+   ],
+   "defaultPriority": "High",
+   "leadId": "u3",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": true,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 1,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "HR",
+   "key": "REIMB",
+   "name": "Reimbursement and expenses",
+   "subs": [
+    "Claim status",
+    "Claim rejection",
+    "Policy query"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u10",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 2,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "HR",
+   "key": "BEN",
+   "name": "Benefits and insurance",
+   "subs": [
+    "Medical insurance",
+    "Wellness",
+    "Other benefits"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u10",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 3,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "HR",
+   "key": "REC",
+   "name": "Employee records and letters",
+   "subs": [
+    "Employment letter",
+    "Experience letter",
+    "Address or personal detail change",
+    "Documents"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u9",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": true,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 4,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "HR",
+   "key": "POL",
+   "name": "HR policies",
+   "subs": [
+    "Policy clarification",
+    "Code of conduct"
+   ],
+   "defaultPriority": "Low",
+   "leadId": "u9",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 5,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "HR",
+   "key": "ONB",
+   "name": "Onboarding and exit (HR formalities)",
+   "subs": [
+    "Onboarding documents and formalities",
+    "Exit formalities",
+    "Full and final settlement"
+   ],
+   "defaultPriority": "High",
+   "leadId": "u9",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": true,
+   "restricted": false,
+   "reopenAllowed": false,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 6,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "HR",
+   "key": "PERF",
+   "name": "Performance and growth",
+   "subs": [
+    "Review cycle",
+    "Goals",
+    "Promotion query"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u9",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": true,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 7,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "HR",
+   "key": "GRV",
+   "name": "Grievance and workplace concerns",
+   "subs": [
+    "Harassment or ethics concerns",
+    "Manager concerns"
+   ],
+   "defaultPriority": "High",
+   "leadId": "u13",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": true,
+   "restricted": true,
+   "reopenAllowed": false,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 8,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "HR",
+   "key": "OTHER",
+   "name": "Other",
+   "subs": [
+    "Other HR question"
+   ],
+   "defaultPriority": "Low",
+   "leadId": "u9",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 9,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "LND",
+   "key": "COURSE",
+   "name": "Course request",
+   "subs": [
+    "Request a LinkedIn Learning licence",
+    "Request a new course or learning path",
+    "Request a Skillup Lounge",
+    "Request a training session"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "u8",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": "course",
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 0,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "LND",
+   "key": "ACCESS",
+   "name": "L&D portal access",
+   "subs": [
+    "Cannot open the L&D portal",
+    "LinkedIn Learning duplicate email",
+    "L&D account not activated",
+    "LinkedIn Learning licence not assigned"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "q_lnd",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": "portal",
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 1,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "LND",
+   "key": "ENROL",
+   "name": "Enrolment",
+   "subs": [
+    "Cannot enrol",
+    "Wrong enrolment",
+    "Withdraw from a course"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "u8",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": "portal",
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 2,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "LND",
+   "key": "CONTENT",
+   "name": "Content and playback",
+   "subs": [
+    "Content not loading",
+    "Progress not saving",
+    "Wrong or missing content",
+    "Video or audio problem"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "q_lnd",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": "portal",
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 3,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "LND",
+   "key": "CERT",
+   "name": "Certificates and records",
+   "subs": [
+    "Certificate not generated",
+    "Certificate details wrong",
+    "Learning history missing",
+    "Completion not reflected"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "u8",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": "portal",
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 4,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "LND",
+   "key": "SESSION",
+   "name": "Training sessions and Skillup Lounge",
+   "subs": [
+    "Session mapping error",
+    "Not mapped to my session",
+    "Calendar invite issue",
+    "Attendance correction",
+    "Reschedule request"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "u8",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": "portal",
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 5,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "LND",
+   "key": "REPORTS",
+   "name": "Reports and data correction",
+   "subs": [
+    "Learning report request",
+    "Learning record correction"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "u4",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": "portal",
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 6,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "LND",
+   "key": "FEEDBACK",
+   "name": "Feedback and suggestions",
+   "subs": [
+    "Course feedback",
+    "Portal feedback"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "u8",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": "portal",
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 7,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "LND",
+   "key": "OTHER",
+   "name": "Other",
+   "subs": [
+    "Other L&D question"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "u8",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": "portal",
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 8,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "IT",
+   "key": "HW",
+   "name": "Hardware and IT asset",
+   "subs": [
+    "Laptop or desktop issue",
+    "New asset request",
+    "Peripheral request",
+    "Asset return",
+    "Replacement or repair"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u21",
+   "ownerId": null,
+   "queueId": "q_it",
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 0,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "IT",
+   "key": "SW",
+   "name": "Software and installation",
+   "subs": [
+    "Install new software",
+    "Software licence request",
+    "Software not working",
+    "Upgrade or update"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u21",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 1,
+   "active": true,
+   "approvalRule": [
+    {
+     "when": {
+      "field": "sub",
+      "op": "in",
+      "value": [
+       "Install new software",
+       "Software licence request"
+      ]
+     },
+     "chain": [
+      "mgr"
+     ]
+    }
+   ]
+  },
+  {
+   "helpdesk": "IT",
+   "key": "ACC",
+   "name": "Access and permissions",
+   "subs": [
+    "Shared folder access",
+    "VPN access",
+    "Company system or application access",
+    "Admin rights on my laptop"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u22",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 2,
+   "active": true,
+   "approvalRule": [
+    {
+     "when": {
+      "any": [
+       {
+        "field": "accessLevel",
+        "op": "eq",
+        "value": "Admin"
+       },
+       {
+        "field": "sub",
+        "op": "eq",
+        "value": "Admin rights on my laptop"
+       }
+      ]
+     },
+     "chain": [
+      "mgr",
+      "ith"
+     ]
+    },
+    {
+     "when": null,
+     "chain": [
+      "mgr"
+     ]
+    }
+   ]
+  },
+  {
+   "helpdesk": "IT",
+   "key": "ACCT",
+   "name": "Account and password",
+   "subs": [
+    "Password reset",
+    "Account locked",
+    "MFA or authenticator problem",
+    "SSO sign-in problem",
+    "Email account creation"
+   ],
+   "defaultPriority": "High",
+   "leadId": "u22",
+   "ownerId": null,
+   "queueId": "q_it_sec",
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 3,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "IT",
+   "key": "NET",
+   "name": "Network and connectivity",
+   "subs": [
+    "Wi-Fi",
+    "LAN or ethernet",
+    "VPN not connecting",
+    "Internet slow"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u21",
+   "ownerId": null,
+   "queueId": "q_it",
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 4,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "IT",
+   "key": "EMAIL",
+   "name": "Email and collaboration tools",
+   "subs": [
+    "Outlook or mailbox problem",
+    "Distribution list",
+    "Teams or meetings",
+    "Calendar problem",
+    "Shared mailbox"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u21",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 5,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "IT",
+   "key": "SEC",
+   "name": "Security and incident",
+   "subs": [
+    "Phishing email reported",
+    "Malware or virus",
+    "Lost or stolen device",
+    "Data leak concern"
+   ],
+   "defaultPriority": "Critical",
+   "leadId": "u22",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": true,
+   "restricted": true,
+   "reopenAllowed": false,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 6,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "IT",
+   "key": "NJ",
+   "name": "New joiner IT setup",
+   "subs": [
+    "Laptop and accounts for a new joiner",
+    "System access for a new joiner"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u21",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": {
+    "Critical": [
+     1,
+     24
+    ],
+    "High": [
+     4,
+     48
+    ],
+    "Medium": [
+     8,
+     72
+    ],
+    "Low": [
+     24,
+     120
+    ]
+   },
+   "sortOrder": 7,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "IT",
+   "key": "OTHER",
+   "name": "Other",
+   "subs": [
+    "Other IT question"
+   ],
+   "defaultPriority": "Low",
+   "leadId": "u21",
+   "ownerId": null,
+   "queueId": "q_it",
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 8,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "ADM",
+   "key": "FAC",
+   "name": "Facilities and maintenance",
+   "subs": [
+    "Air conditioning",
+    "Electrical or lighting",
+    "Plumbing or washroom",
+    "Furniture repair",
+    "Pest control"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u24",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 0,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "ADM",
+   "key": "SEAT",
+   "name": "Seating and workspace",
+   "subs": [
+    "New seat request",
+    "Seat change",
+    "Desk equipment",
+    "Locker"
+   ],
+   "defaultPriority": "Low",
+   "leadId": "u24",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 1,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "ADM",
+   "key": "TRAVEL",
+   "name": "Travel and accommodation",
+   "subs": [
+    "Flight booking",
+    "Train booking",
+    "Hotel booking",
+    "Visa support letter",
+    "Airport cab"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u24",
+   "ownerId": null,
+   "queueId": "q_travel",
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": {
+    "High": [
+     2,
+     24
+    ],
+    "Medium": [
+     4,
+     48
+    ],
+    "Low": [
+     8,
+     72
+    ]
+   },
+   "sortOrder": 2,
+   "active": true,
+   "approvalRule": [
+    {
+     "when": null,
+     "chain": [
+      "mgr"
+     ]
+    }
+   ]
+  },
+  {
+   "helpdesk": "ADM",
+   "key": "TRANS",
+   "name": "Transport and parking",
+   "subs": [
+    "Parking slot",
+    "Office cab or shuttle",
+    "Late-night drop"
+   ],
+   "defaultPriority": "Low",
+   "leadId": "u24",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 3,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "ADM",
+   "key": "STAT",
+   "name": "Stationery and supplies",
+   "subs": [
+    "Stationery",
+    "Printer toner or paper",
+    "Business cards"
+   ],
+   "defaultPriority": "Low",
+   "leadId": "u24",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 4,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "ADM",
+   "key": "IDC",
+   "name": "ID card and access badge",
+   "subs": [
+    "New ID card",
+    "Lost card",
+    "Card not working",
+    "Access to a restricted area"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u24",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 5,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "ADM",
+   "key": "VIS",
+   "name": "Visitors and meeting rooms",
+   "subs": [
+    "Visitor pass",
+    "Meeting room booking problem",
+    "Event or town hall setup"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u24",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 6,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "ADM",
+   "key": "COUR",
+   "name": "Courier and mail",
+   "subs": [
+    "Send a courier",
+    "Collect a package",
+    "International shipment"
+   ],
+   "defaultPriority": "Low",
+   "leadId": "u24",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 7,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "ADM",
+   "key": "HK",
+   "name": "Housekeeping and pantry",
+   "subs": [
+    "Cleaning request",
+    "Spill or hygiene issue",
+    "Pantry supplies",
+    "Coffee or water machine"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u24",
+   "ownerId": null,
+   "queueId": "q_adm",
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 8,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "ADM",
+   "key": "PUR",
+   "name": "Purchase and vendor requests",
+   "subs": [
+    "New purchase",
+    "Vendor onboarding",
+    "Service contract renewal"
+   ],
+   "defaultPriority": "Medium",
+   "leadId": "u25",
+   "ownerId": null,
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": false,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": {
+    "High": [
+     8,
+     72
+    ],
+    "Medium": [
+     8,
+     120
+    ],
+    "Low": [
+     24,
+     168
+    ]
+   },
+   "sortOrder": 9,
+   "active": true,
+   "approvalRule": [
+    {
+     "when": null,
+     "chain": [
+      "mgr",
+      "adm"
+     ]
+    }
+   ]
+  },
+  {
+   "helpdesk": "ADM",
+   "key": "OTHER",
+   "name": "Other",
+   "subs": [
+    "Other Admin Desk question"
+   ],
+   "defaultPriority": "Low",
+   "leadId": "u24",
+   "ownerId": null,
+   "queueId": "q_adm",
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": true,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 10,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "SF",
+   "key": "ACCESS",
+   "name": "Salesforce access and permissions",
+   "subs": [
+    "New Salesforce user",
+    "Profile or permission change",
+    "Salesforce password or MFA",
+    "Salesforce licence request"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "u5",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 0,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "SF",
+   "key": "DATA",
+   "name": "Data and records",
+   "subs": [
+    "Data correction",
+    "Duplicate merge",
+    "Bulk update or import",
+    "Record ownership change"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "u5",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": null,
+   "needsRecord": true,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 1,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "SF",
+   "key": "REPORTS",
+   "name": "Reports and dashboards",
+   "subs": [
+    "New report",
+    "Report not working",
+    "Dashboard access"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "q_sf",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 2,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "SF",
+   "key": "LEADS",
+   "name": "Leads and opportunities setup",
+   "subs": [
+    "Lead routing",
+    "Opportunity stages",
+    "Products and price books",
+    "Quotes"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "q_sf",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 3,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "SF",
+   "key": "INTEG",
+   "name": "Integrations and sync",
+   "subs": [
+    "Salesforce email or calendar sync",
+    "Third-party app",
+    "API access"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "q_sf",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 4,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "SF",
+   "key": "ENH",
+   "name": "Enhancement request",
+   "subs": [
+    "New field",
+    "New automation",
+    "New page layout"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "q_sf",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": true,
+   "slaOverride": null,
+   "sortOrder": 5,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "SF",
+   "key": "DEFECT",
+   "name": "Defect",
+   "subs": [
+    "Something stopped working",
+    "Error message"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "u5",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 6,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "SF",
+   "key": "HOWTO",
+   "name": "How-to and training",
+   "subs": [
+    "Salesforce usage question",
+    "Salesforce training request"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "q_sf",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 7,
+   "active": true,
+   "approvalRule": null
+  },
+  {
+   "helpdesk": "SF",
+   "key": "OTHER",
+   "name": "Other",
+   "subs": [
+    "Other Salesforce question"
+   ],
+   "defaultPriority": null,
+   "leadId": null,
+   "ownerId": "q_sf",
+   "queueId": null,
+   "confidential": false,
+   "restricted": false,
+   "reopenAllowed": null,
+   "requestType": null,
+   "needsRecord": false,
+   "needsImpact": false,
+   "slaOverride": null,
+   "sortOrder": 8,
+   "active": true,
+   "approvalRule": null
+  }
+ ],
+ "formFields": [
+  {
+   "helpdesk": "IT",
+   "categoryKey": "HW",
+   "key": "deviceType",
+   "label": "Device type",
+   "type": "select",
+   "options": [
+    "Laptop",
+    "Desktop",
+    "Monitor",
+    "Keyboard or mouse",
+    "Headset",
+    "Docking station",
+    "Other"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "HW",
+   "key": "assetTag",
+   "label": "Asset tag",
+   "type": "text",
+   "options": null,
+   "placeholder": "NPX-LT-0412",
+   "hint": "Printed on the sticker under the device.",
+   "min": null,
+   "pattern": "^NPX-[A-Z]{2}-\\d{4}$",
+   "patternFlags": "i",
+   "patternMessage": "Use the tag on the asset sticker, for example NPX-LT-0412.",
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": {
+    "field": "sub",
+    "op": "notIn",
+    "value": [
+     "New asset request"
+    ]
+   },
+   "showWhen": {
+    "field": "sub",
+    "op": "notIn",
+    "value": [
+     "New asset request"
+    ]
+   },
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "HW",
+   "key": "errorMsg",
+   "label": "Error message or what you see",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. Screen flickers, then goes black",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": false,
+   "showWhen": {
+    "field": "sub",
+    "op": "in",
+    "value": [
+     "Laptop or desktop issue",
+     "Replacement or repair"
+    ]
+   },
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "HW",
+   "key": "impact",
+   "label": "Impact",
+   "type": "select",
+   "options": [
+    "Only me",
+    "My team",
+    "Many people"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": "Only me",
+   "sortOrder": 3,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "HW",
+   "key": "location",
+   "label": "Location",
+   "type": "select",
+   "options": [
+    "Mumbai HQ",
+    "Pune",
+    "Bengaluru",
+    "Remote"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 4,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "SW",
+   "key": "swName",
+   "label": "Software name",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. Postman",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "SW",
+   "key": "swVersion",
+   "label": "Version",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. 11.2 or latest",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": false,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "SW",
+   "key": "justification",
+   "label": "Business justification",
+   "type": "textarea",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": {
+    "field": "sub",
+    "op": "in",
+    "value": [
+     "Install new software",
+     "Software licence request"
+    ]
+   },
+   "showWhen": {
+    "field": "sub",
+    "op": "in",
+    "value": [
+     "Install new software",
+     "Software licence request"
+    ]
+   },
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "SW",
+   "key": "assetTag",
+   "label": "Asset tag of the device",
+   "type": "text",
+   "options": null,
+   "placeholder": "NPX-LT-0412",
+   "hint": null,
+   "min": null,
+   "pattern": "^NPX-[A-Z]{2}-\\d{4}$",
+   "patternFlags": "i",
+   "patternMessage": "Use the tag on the asset sticker, for example NPX-LT-0412.",
+   "defaultValue": null,
+   "sortOrder": 3,
+   "required": false,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "ACC",
+   "key": "accSystem",
+   "label": "System",
+   "type": "select",
+   "options": [
+    "Shared drive",
+    "VPN",
+    "Jira",
+    "Confluence",
+    "GitHub",
+    "ERP (SAP)",
+    "Other"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "ACC",
+   "key": "folderPath",
+   "label": "Folder path",
+   "type": "text",
+   "options": null,
+   "placeholder": "\\\\fs01\\Finance",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": {
+    "field": "accSystem",
+    "op": "eq",
+    "value": "Shared drive"
+   },
+   "showWhen": {
+    "field": "accSystem",
+    "op": "eq",
+    "value": "Shared drive"
+   },
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "ACC",
+   "key": "accessLevel",
+   "label": "Access level",
+   "type": "select",
+   "options": [
+    "Read",
+    "Write",
+    "Admin"
+   ],
+   "placeholder": null,
+   "hint": "Admin also needs IT head approval.",
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "ACC",
+   "key": "duration",
+   "label": "Duration",
+   "type": "select",
+   "options": [
+    "30 days",
+    "90 days",
+    "Permanent"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": "90 days",
+   "sortOrder": 3,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "ACC",
+   "key": "approver",
+   "label": "Approver",
+   "type": "person",
+   "options": null,
+   "placeholder": null,
+   "hint": "Defaults to your manager.",
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": "mgr",
+   "sortOrder": 4,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "ACCT",
+   "key": "acctSystem",
+   "label": "Which sign-in",
+   "type": "select",
+   "options": [
+    "Windows sign-in",
+    "Microsoft 365",
+    "SSO portal",
+    "Email mailbox",
+    "Other"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "ACCT",
+   "key": "username",
+   "label": "Username or email",
+   "type": "text",
+   "options": null,
+   "placeholder": "name@npstx.com",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": false,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "NET",
+   "key": "connType",
+   "label": "Connection type",
+   "type": "select",
+   "options": [
+    "Wi-Fi",
+    "LAN or ethernet",
+    "VPN"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "NET",
+   "key": "location",
+   "label": "Location",
+   "type": "select",
+   "options": [
+    "Mumbai HQ",
+    "Pune",
+    "Bengaluru",
+    "Remote"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "NET",
+   "key": "floor",
+   "label": "Floor",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. 3",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": false,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "NET",
+   "key": "affected",
+   "label": "Who is affected",
+   "type": "select",
+   "options": [
+    "Only me",
+    "My team",
+    "Whole floor"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": "Only me",
+   "sortOrder": 3,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "EMAIL",
+   "key": "tool",
+   "label": "Tool",
+   "type": "select",
+   "options": [
+    "Outlook",
+    "Teams",
+    "Calendar",
+    "Distribution list",
+    "Shared mailbox"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "EMAIL",
+   "key": "mailboxName",
+   "label": "List or mailbox name",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. qa-team@npstx.com",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": {
+    "field": "tool",
+    "op": "in",
+    "value": [
+     "Distribution list",
+     "Shared mailbox"
+    ]
+   },
+   "showWhen": {
+    "field": "tool",
+    "op": "in",
+    "value": [
+     "Distribution list",
+     "Shared mailbox"
+    ]
+   },
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "SEC",
+   "key": "incidentAt",
+   "label": "When did it happen",
+   "type": "datetime-local",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "SEC",
+   "key": "assetTag",
+   "label": "Affected device asset tag",
+   "type": "text",
+   "options": null,
+   "placeholder": "NPX-LT-0412",
+   "hint": null,
+   "min": null,
+   "pattern": "^NPX-[A-Z]{2}-\\d{4}$",
+   "patternFlags": "i",
+   "patternMessage": "Use the tag on the asset sticker, for example NPX-LT-0412.",
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": false,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "NJ",
+   "key": "njName",
+   "label": "New joiner name",
+   "type": "text",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "NJ",
+   "key": "njDate",
+   "label": "Joining date",
+   "type": "date",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": true,
+   "showWhen": null,
+   "validation": {
+    "notPast": true,
+    "message": "Pick today or a later date."
+   },
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "NJ",
+   "key": "njRole",
+   "label": "Role and team",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. QA Engineer, Payments",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "IT",
+   "categoryKey": "NJ",
+   "key": "laptopType",
+   "label": "Laptop type",
+   "type": "select",
+   "options": [
+    "Standard",
+    "Developer",
+    "Designer"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": "Standard",
+   "sortOrder": 3,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "FAC",
+   "key": "building",
+   "label": "Building",
+   "type": "select",
+   "options": [
+    "Mumbai HQ · Tower A",
+    "Mumbai HQ · Tower B",
+    "Pune · Hinjewadi",
+    "Bengaluru · Whitefield"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "FAC",
+   "key": "floor",
+   "label": "Floor",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. 5",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "FAC",
+   "key": "spot",
+   "label": "Exact location",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. Near meeting room Everest",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "FAC",
+   "key": "urgency",
+   "label": "Urgency",
+   "type": "select",
+   "options": [
+    "Can wait",
+    "Today",
+    "Immediately (safety risk)"
+   ],
+   "placeholder": null,
+   "hint": "Sets the priority for this request automatically.",
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": "Today",
+   "sortOrder": 3,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "SEAT",
+   "key": "building",
+   "label": "Building",
+   "type": "select",
+   "options": [
+    "Mumbai HQ · Tower A",
+    "Mumbai HQ · Tower B",
+    "Pune · Hinjewadi",
+    "Bengaluru · Whitefield"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "SEAT",
+   "key": "floor",
+   "label": "Preferred floor",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. 4",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": false,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "SEAT",
+   "key": "zone",
+   "label": "Team or zone",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. Near the QA team",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": false,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "SEAT",
+   "key": "neededFrom",
+   "label": "Needed from",
+   "type": "date",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 3,
+   "required": true,
+   "showWhen": null,
+   "validation": {
+    "notPast": true,
+    "message": "Pick today or a later date."
+   },
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "TRAVEL",
+   "key": "fromCity",
+   "label": "From",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. Mumbai",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "TRAVEL",
+   "key": "toCity",
+   "label": "To",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. Bengaluru",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "TRAVEL",
+   "key": "departDate",
+   "label": "Departure date",
+   "type": "date",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": true,
+   "showWhen": null,
+   "validation": {
+    "notPast": true,
+    "message": "Pick today or a later date."
+   },
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "TRAVEL",
+   "key": "returnDate",
+   "label": "Return date",
+   "type": "date",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 3,
+   "required": false,
+   "showWhen": null,
+   "validation": {
+    "gteField": "departDate",
+    "message": "Return date must be on or after the departure date."
+   },
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "TRAVEL",
+   "key": "purpose",
+   "label": "Purpose",
+   "type": "select",
+   "options": [
+    "Client visit",
+    "Internal meeting",
+    "Training",
+    "Conference"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 4,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "TRAVEL",
+   "key": "travellers",
+   "label": "Travellers",
+   "type": "number",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": 1,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": "1",
+   "sortOrder": 5,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "TRAVEL",
+   "key": "approver",
+   "label": "Approver",
+   "type": "person",
+   "options": null,
+   "placeholder": null,
+   "hint": "Defaults to your manager.",
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": "mgr",
+   "sortOrder": 6,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "TRANS",
+   "key": "location",
+   "label": "Location",
+   "type": "select",
+   "options": [
+    "Mumbai HQ",
+    "Pune",
+    "Bengaluru",
+    "Remote"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "TRANS",
+   "key": "vehicleNo",
+   "label": "Vehicle registration",
+   "type": "text",
+   "options": null,
+   "placeholder": "MH 02 AB 1234",
+   "hint": null,
+   "min": null,
+   "pattern": "^[A-Z]{2}\\s?\\d{1,2}\\s?[A-Z]{1,3}\\s?\\d{4}$",
+   "patternFlags": "i",
+   "patternMessage": "Use the registration format, for example MH 02 AB 1234.",
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": {
+    "field": "sub",
+    "op": "eq",
+    "value": "Parking slot"
+   },
+   "showWhen": {
+    "field": "sub",
+    "op": "eq",
+    "value": "Parking slot"
+   },
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "TRANS",
+   "key": "shiftTime",
+   "label": "Shift or drop time",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. 22:30",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": false,
+   "showWhen": {
+    "all": [
+     {
+      "field": "sub",
+      "op": "set",
+      "value": true
+     },
+     {
+      "field": "sub",
+      "op": "neq",
+      "value": "Parking slot"
+     }
+    ]
+   },
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "STAT",
+   "key": "item",
+   "label": "Item",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. A4 notebooks",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "STAT",
+   "key": "qty",
+   "label": "Quantity",
+   "type": "number",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": 1,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": "1",
+   "sortOrder": 1,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "STAT",
+   "key": "building",
+   "label": "Deliver to",
+   "type": "select",
+   "options": [
+    "Mumbai HQ · Tower A",
+    "Mumbai HQ · Tower B",
+    "Pune · Hinjewadi",
+    "Bengaluru · Whitefield"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "IDC",
+   "key": "building",
+   "label": "Building",
+   "type": "select",
+   "options": [
+    "Mumbai HQ · Tower A",
+    "Mumbai HQ · Tower B",
+    "Pune · Hinjewadi",
+    "Bengaluru · Whitefield"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "IDC",
+   "key": "cardNo",
+   "label": "Card number",
+   "type": "text",
+   "options": null,
+   "placeholder": "Printed on the back",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": false,
+   "showWhen": {
+    "all": [
+     {
+      "field": "sub",
+      "op": "set",
+      "value": true
+     },
+     {
+      "field": "sub",
+      "op": "neq",
+      "value": "New ID card"
+     }
+    ]
+   },
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "IDC",
+   "key": "area",
+   "label": "Restricted area",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. Server room, Tower A",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": {
+    "field": "sub",
+    "op": "eq",
+    "value": "Access to a restricted area"
+   },
+   "showWhen": {
+    "field": "sub",
+    "op": "eq",
+    "value": "Access to a restricted area"
+   },
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "VIS",
+   "key": "building",
+   "label": "Building",
+   "type": "select",
+   "options": [
+    "Mumbai HQ · Tower A",
+    "Mumbai HQ · Tower B",
+    "Pune · Hinjewadi",
+    "Bengaluru · Whitefield"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "VIS",
+   "key": "visitDate",
+   "label": "Date",
+   "type": "date",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": true,
+   "showWhen": null,
+   "validation": {
+    "notPast": true,
+    "message": "Pick today or a later date."
+   },
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "VIS",
+   "key": "visitorNames",
+   "label": "Visitor names",
+   "type": "text",
+   "options": null,
+   "placeholder": "Comma separated",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": {
+    "field": "sub",
+    "op": "eq",
+    "value": "Visitor pass"
+   },
+   "showWhen": {
+    "field": "sub",
+    "op": "eq",
+    "value": "Visitor pass"
+   },
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "COUR",
+   "key": "recipient",
+   "label": "Recipient name",
+   "type": "text",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "COUR",
+   "key": "destCity",
+   "label": "Destination city",
+   "type": "text",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "COUR",
+   "key": "weightKg",
+   "label": "Approx. weight (kg)",
+   "type": "number",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": 0,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": false,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "COUR",
+   "key": "dispatchBy",
+   "label": "Dispatch by",
+   "type": "date",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 3,
+   "required": false,
+   "showWhen": null,
+   "validation": {
+    "notPast": true,
+    "message": "Pick today or a later date."
+   },
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "HK",
+   "key": "building",
+   "label": "Building",
+   "type": "select",
+   "options": [
+    "Mumbai HQ · Tower A",
+    "Mumbai HQ · Tower B",
+    "Pune · Hinjewadi",
+    "Bengaluru · Whitefield"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "HK",
+   "key": "floor",
+   "label": "Floor",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. 4",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "HK",
+   "key": "spot",
+   "label": "Exact location",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. Pantry near lifts",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": false,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "PUR",
+   "key": "itemService",
+   "label": "Item or service",
+   "type": "text",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 0,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "PUR",
+   "key": "cost",
+   "label": "Estimated cost (₹)",
+   "type": "number",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": 1,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 1,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "PUR",
+   "key": "vendor",
+   "label": "Preferred vendor",
+   "type": "text",
+   "options": null,
+   "placeholder": "Optional",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 2,
+   "required": false,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "PUR",
+   "key": "justification",
+   "label": "Business justification",
+   "type": "textarea",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 3,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": false
+  },
+  {
+   "helpdesk": "ADM",
+   "categoryKey": "PUR",
+   "key": "neededBy",
+   "label": "Needed by",
+   "type": "date",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "sortOrder": 4,
+   "required": false,
+   "showWhen": null,
+   "validation": {
+    "notPast": true,
+    "message": "Pick today or a later date."
+   },
+   "custom": false
+  },
+  {
+   "helpdesk": "HR",
+   "categoryKey": "PAY",
+   "key": "payMonth",
+   "label": "Payslip / salary month",
+   "type": "month",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": true,
+   "active": true,
+   "sortOrder": 100
+  },
+  {
+   "helpdesk": "HR",
+   "categoryKey": "LEAVE",
+   "key": "datesAffected",
+   "label": "Date(s) affected",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. 21–23 Oct 2026",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "required": false,
+   "showWhen": null,
+   "validation": null,
+   "custom": true,
+   "active": true,
+   "sortOrder": 100
+  },
+  {
+   "helpdesk": "HR",
+   "categoryKey": "REIMB",
+   "key": "claimId",
+   "label": "Claim ID",
+   "type": "text",
+   "options": null,
+   "placeholder": "e.g. CLM-20431",
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "required": true,
+   "showWhen": null,
+   "validation": null,
+   "custom": true,
+   "active": true,
+   "sortOrder": 100
+  },
+  {
+   "helpdesk": "LND",
+   "categoryKey": "REPORTS",
+   "key": "reportPeriod",
+   "label": "Report period",
+   "type": "select",
+   "options": [
+    "Last month",
+    "Last quarter",
+    "This year"
+   ],
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "required": false,
+   "showWhen": null,
+   "validation": null,
+   "custom": true,
+   "active": true,
+   "sortOrder": 100
+  },
+  {
+   "helpdesk": "SF",
+   "categoryKey": "DEFECT",
+   "key": "errorAt",
+   "label": "When did the error happen?",
+   "type": "datetime-local",
+   "options": null,
+   "placeholder": null,
+   "hint": null,
+   "min": null,
+   "pattern": null,
+   "patternFlags": null,
+   "patternMessage": null,
+   "defaultValue": null,
+   "required": false,
+   "showWhen": null,
+   "validation": null,
+   "custom": true,
+   "active": true,
+   "sortOrder": 100
+  }
+ ],
+ "config": {
+  "helpdesks": [
+   {
+    "key": "HR",
+    "label": "HR"
+   },
+   {
+    "key": "LND",
+    "label": "L&D"
+   },
+   {
+    "key": "IT",
+    "label": "IT and Support"
+   },
+   {
+    "key": "ADM",
+    "label": "Admin Desk"
+   },
+   {
+    "key": "SF",
+    "label": "Salesforce"
+   }
+  ],
+  "sfDepartments": [
+   "Sales",
+   "Presales",
+   "Solutions"
+  ],
+  "statuses": {
+   "HR": {
+    "open": [
+     "Open",
+     "In Progress",
+     "Waiting for employee",
+     "On hold"
+    ],
+    "closed": [
+     "Closed"
+    ],
+    "tr": {
+     "Open": [
+      "In Progress"
+     ],
+     "In Progress": [
+      "Waiting for employee",
+      "On hold",
+      "Closed"
+     ],
+     "Waiting for employee": [
+      "In Progress",
+      "Closed"
+     ],
+     "On hold": [
+      "In Progress"
+     ]
+    },
+    "closing": [
+     "Closed"
+    ],
+    "work": "In Progress",
+    "wait": "Waiting for employee"
+   },
+   "LND": {
+    "open": [
+     "New",
+     "Pending approval",
+     "In progress",
+     "Waiting for employee",
+     "On hold",
+     "Reopened"
+    ],
+    "closed": [
+     "Resolved",
+     "Closed",
+     "Rejected",
+     "Cancelled"
+    ],
+    "tr": {
+     "New": [
+      "In progress",
+      "Rejected"
+     ],
+     "In progress": [
+      "Waiting for employee",
+      "On hold",
+      "Resolved"
+     ],
+     "Waiting for employee": [
+      "In progress"
+     ],
+     "On hold": [
+      "In progress"
+     ],
+     "Resolved": [
+      "Closed"
+     ],
+     "Reopened": [
+      "In progress"
+     ]
+    },
+    "closing": [
+     "Resolved",
+     "Rejected"
+    ],
+    "work": "In progress",
+    "wait": "Waiting for employee"
+   },
+   "SF": {
+    "open": [
+     "New",
+     "Working",
+     "Waiting for requester",
+     "On Hold",
+     "Escalated"
+    ],
+    "closed": [
+     "Closed"
+    ],
+    "tr": {
+     "New": [
+      "Working",
+      "Closed"
+     ],
+     "Working": [
+      "Waiting for requester",
+      "On Hold",
+      "Escalated",
+      "Closed"
+     ],
+     "Waiting for requester": [
+      "Working",
+      "Closed"
+     ],
+     "On Hold": [
+      "Working"
+     ],
+     "Escalated": [
+      "Working",
+      "Closed"
+     ]
+    },
+    "closing": [
+     "Closed"
+    ],
+    "work": "Working",
+    "wait": "Waiting for requester"
+   },
+   "IT": {
+    "open": [
+     "New",
+     "Assigned",
+     "Pending approval",
+     "In Progress",
+     "Waiting for user",
+     "On hold",
+     "Reopened"
+    ],
+    "closed": [
+     "Resolved",
+     "Closed",
+     "Rejected",
+     "Cancelled"
+    ],
+    "tr": {
+     "New": [
+      "Assigned",
+      "In Progress",
+      "Rejected"
+     ],
+     "Assigned": [
+      "In Progress",
+      "Rejected"
+     ],
+     "In Progress": [
+      "Waiting for user",
+      "On hold",
+      "Resolved"
+     ],
+     "Waiting for user": [
+      "In Progress"
+     ],
+     "On hold": [
+      "In Progress"
+     ],
+     "Resolved": [
+      "Closed"
+     ],
+     "Reopened": [
+      "In Progress"
+     ]
+    },
+    "closing": [
+     "Resolved",
+     "Rejected"
+    ],
+    "work": "In Progress",
+    "wait": "Waiting for user"
+   },
+   "ADM": {
+    "open": [
+     "New",
+     "Pending approval",
+     "In Progress",
+     "Scheduled",
+     "Waiting for employee",
+     "On hold",
+     "Reopened"
+    ],
+    "closed": [
+     "Resolved",
+     "Closed",
+     "Rejected",
+     "Cancelled"
+    ],
+    "tr": {
+     "New": [
+      "In Progress",
+      "Scheduled",
+      "Rejected"
+     ],
+     "In Progress": [
+      "Scheduled",
+      "Waiting for employee",
+      "On hold",
+      "Resolved"
+     ],
+     "Scheduled": [
+      "In Progress",
+      "Resolved"
+     ],
+     "Waiting for employee": [
+      "In Progress"
+     ],
+     "On hold": [
+      "In Progress"
+     ],
+     "Resolved": [
+      "Closed"
+     ],
+     "Reopened": [
+      "In Progress"
+     ]
+    },
+    "closing": [
+     "Resolved",
+     "Rejected"
+    ],
+    "work": "In Progress",
+    "wait": "Waiting for employee"
+   }
+  },
+  "uiMap": {
+   "HR": {
+    "Open": "Open",
+    "In Progress": "In Progress",
+    "Waiting for employee": "Pending Input",
+    "On hold": "In Progress"
+   },
+   "LND": {
+    "New": "Open",
+    "Pending approval": "Pending Input",
+    "In progress": "In Progress",
+    "Waiting for employee": "Pending Input",
+    "On hold": "In Progress",
+    "Reopened": "Open"
+   },
+   "SF": {
+    "New": "Open",
+    "Working": "In Progress",
+    "Waiting for requester": "Pending Input",
+    "On Hold": "In Progress",
+    "Escalated": "In Progress"
+   },
+   "IT": {
+    "New": "Open",
+    "Assigned": "Open",
+    "Pending approval": "Pending Input",
+    "In Progress": "In Progress",
+    "Waiting for user": "Pending Input",
+    "On hold": "In Progress",
+    "Reopened": "Open"
+   },
+   "ADM": {
+    "New": "Open",
+    "Pending approval": "Pending Input",
+    "In Progress": "In Progress",
+    "Scheduled": "In Progress",
+    "Waiting for employee": "Pending Input",
+    "On hold": "In Progress",
+    "Reopened": "Open"
+   }
+  },
+  "priorities": {
+   "HR": [
+    "High",
+    "Medium",
+    "Low"
+   ],
+   "LND": [
+    "Critical",
+    "High",
+    "Medium",
+    "Low"
+   ],
+   "IT": [
+    "Critical",
+    "High",
+    "Medium",
+    "Low"
+   ],
+   "ADM": [
+    "High",
+    "Medium",
+    "Low"
+   ],
+   "SF": [
+    "High",
+    "Medium",
+    "Low"
+   ]
+  },
+  "sla": {
+   "shared": {
+    "Critical": [
+     1,
+     8
+    ],
+    "High": [
+     4,
+     48
+    ],
+    "Medium": [
+     8,
+     72
+    ],
+    "Low": [
+     24,
+     120
+    ]
+   },
+   "IT": {
+    "Critical": [
+     0.5,
+     4
+    ],
+    "High": [
+     2,
+     8
+    ],
+    "Medium": [
+     4,
+     24
+    ],
+    "Low": [
+     8,
+     72
+    ]
+   },
+   "ADM": {
+    "High": [
+     2,
+     24
+    ],
+    "Medium": [
+     4,
+     48
+    ],
+    "Low": [
+     8,
+     96
+    ]
+   }
+  },
+  "escalation": {
+   "HR": [
+    {
+     "who": "lead",
+     "role": "Category lead",
+     "pct": 50
+    },
+    {
+     "who": "u9",
+     "role": "HR manager",
+     "pct": 75
+    },
+    {
+     "who": "u13",
+     "role": "HR head",
+     "pct": 100
+    }
+   ],
+   "LND": [
+    {
+     "who": "u8",
+     "role": "L&D coordinator",
+     "pct": 50
+    },
+    {
+     "who": "u4",
+     "role": "L&D Head",
+     "pct": 75
+    },
+    {
+     "who": "u13",
+     "role": "HR head",
+     "pct": 100
+    }
+   ],
+   "IT": [
+    {
+     "who": "lead",
+     "role": "Category lead",
+     "pct": 50
+    },
+    {
+     "who": "u23",
+     "role": "IT Head",
+     "pct": 75
+    },
+    {
+     "who": "u20",
+     "role": "Helpdesk admin (service owner)",
+     "pct": 100
+    }
+   ],
+   "ADM": [
+    {
+     "who": "lead",
+     "role": "Category lead",
+     "pct": 50
+    },
+    {
+     "who": "u25",
+     "role": "Admin Head",
+     "pct": 75
+    },
+    {
+     "who": "u13",
+     "role": "HR head",
+     "pct": 100
+    }
+   ]
+  },
+  "sfEscalation": {
+   "who": "q_sf_sr",
+   "role": "Salesforce escalation rule"
+  },
+  "rules": {
+   "pauseOnWait": true,
+   "businessHours": true,
+   "breachNotify": true
+  },
+  "ruleLabels": {
+   "pauseOnWait": "Pause the clock while waiting for the employee",
+   "businessHours": "Count business hours only",
+   "breachNotify": "Email the category lead on response breach"
+  },
+  "canned": [
+   [
+    "Acknowledge",
+    "Hi, thanks for raising this. I have picked it up and will update you within the response time for this category."
+   ],
+   [
+    "Need details",
+    "Could you share a screenshot and the exact dates involved? I will continue as soon as you reply."
+   ],
+   [
+    "Fix applied",
+    "A fix has been applied on our side. Please check and confirm it works for you."
+   ]
+  ],
+  "closing": {
+   "Resolved": "Your request has been resolved. Reply within the reopen window if anything is still wrong.",
+   "Rejected": "We are unable to action this request. The reason is noted below.",
+   "Cancelled": "This ticket was cancelled as requested.",
+   "Duplicate": "This is a duplicate of an existing ticket; we will track it there."
+  },
+  "agents": {
+   "HR": [
+    "u3",
+    "u9",
+    "u10",
+    "u13"
+   ],
+   "LND": [
+    "u8",
+    "u4",
+    "q_lnd"
+   ],
+   "IT": [
+    "u21",
+    "u22",
+    "u23",
+    "q_it",
+    "q_it_sec"
+   ],
+   "ADM": [
+    "u24",
+    "u25",
+    "q_adm",
+    "q_travel"
+   ],
+   "SF": [
+    "u5",
+    "q_sf",
+    "q_sf_sr"
+   ]
+  },
+  "fieldLabels": {
+   "payMonth": "Payslip / salary month",
+   "datesAffected": "Date(s) affected",
+   "claimId": "Claim ID",
+   "assetTag": "Asset tag",
+   "location": "Location",
+   "requestType": "Request type",
+   "learningSource": "Platform / learning source",
+   "learningItem": "Course name / learning item",
+   "sessionAt": "Session date and time",
+   "justification": "Business justification",
+   "problem": "Problem details",
+   "device": "Device and browser",
+   "reportPeriod": "Report period",
+   "errorAt": "When did the error happen?",
+   "account": "Account name",
+   "oppId": "Opportunity ID",
+   "record": "Record link or ID",
+   "impact": "Business need and impact",
+   "deviceType": "Device type",
+   "errorMsg": "Error message or what you see",
+   "swName": "Software name",
+   "swVersion": "Version",
+   "accSystem": "System",
+   "folderPath": "Folder path",
+   "accessLevel": "Access level",
+   "duration": "Duration",
+   "approver": "Approver",
+   "acctSystem": "Which sign-in",
+   "username": "Username or email",
+   "connType": "Connection type",
+   "floor": "Floor",
+   "affected": "Who is affected",
+   "tool": "Tool",
+   "mailboxName": "List or mailbox name",
+   "incidentAt": "When did it happen",
+   "njName": "New joiner name",
+   "njDate": "Joining date",
+   "njRole": "Role and team",
+   "laptopType": "Laptop type",
+   "building": "Building",
+   "spot": "Exact location",
+   "urgency": "Urgency",
+   "zone": "Team or zone",
+   "neededFrom": "Needed from",
+   "fromCity": "From",
+   "toCity": "To",
+   "departDate": "Departure date",
+   "returnDate": "Return date",
+   "purpose": "Purpose",
+   "travellers": "Travellers",
+   "vehicleNo": "Vehicle registration",
+   "shiftTime": "Shift or drop time",
+   "item": "Item",
+   "qty": "Quantity",
+   "cardNo": "Card number",
+   "area": "Restricted area",
+   "visitDate": "Date",
+   "visitorNames": "Visitor names",
+   "recipient": "Recipient name",
+   "destCity": "Destination city",
+   "weightKg": "Approx. weight (kg)",
+   "dispatchBy": "Dispatch by",
+   "itemService": "Item or service",
+   "cost": "Estimated cost (₹)",
+   "vendor": "Preferred vendor",
+   "neededBy": "Needed by",
+   "related": "Related ticket"
+  },
+  "locations": [
+   "Mumbai HQ",
+   "Pune",
+   "Bengaluru",
+   "Remote"
+  ],
+  "buildings": [
+   "Mumbai HQ · Tower A",
+   "Mumbai HQ · Tower B",
+   "Pune · Hinjewadi",
+   "Bengaluru · Whitefield"
+  ],
+  "learningSources": [
+   "LinkedIn Learning",
+   "Internal course",
+   "Skillup Lounge",
+   "Instructor-led training session"
+  ],
+  "coreFields": {
+   "HR": [
+    "Category",
+    "Sub-category",
+    "Title",
+    "Description",
+    "Location",
+    "Manager CC and followers",
+    "Attachments"
+   ],
+   "LND": [
+    "Request type",
+    "Category",
+    "Sub-category",
+    "Platform / learning source",
+    "Course name / learning item",
+    "Session date and time (sessions)",
+    "Business justification (course requests)",
+    "Problem details (portal problems)",
+    "Device and browser",
+    "Title",
+    "Description",
+    "CC colleagues",
+    "Attachments"
+   ],
+   "SF": [
+    "Type",
+    "Reason",
+    "Account name",
+    "Opportunity ID",
+    "Record link or ID",
+    "Business need and impact (enhancements)",
+    "Subject",
+    "Description",
+    "CC colleagues",
+    "Attachments"
+   ],
+   "IT": [
+    "Category",
+    "Sub-category",
+    "Title",
+    "Description",
+    "CC colleagues",
+    "Attachments",
+    "Related ticket"
+   ],
+   "ADM": [
+    "Category",
+    "Sub-category",
+    "Title",
+    "Description",
+    "CC colleagues",
+    "Attachments",
+    "Related ticket"
+   ]
+  },
+  "fieldTypes": {
+   "text": "Short text",
+   "number": "Number",
+   "date": "Date",
+   "month": "Month",
+   "datetime-local": "Date and time",
+   "select": "Dropdown"
+  },
+  "approvalSteps": {
+   "mgr": {
+    "l": "Manager"
+   },
+   "lnd": {
+    "l": "L&D"
+   },
+   "ith": {
+    "l": "IT head"
+   },
+   "adm": {
+    "l": "Admin head"
+   }
+  },
+  "leadHelpdesks": [
+   "HR",
+   "IT",
+   "ADM"
+  ],
+  "roleLabels": {
+   "EMP": "Employee",
+   "HR_AGENT": "HR agent",
+   "LND_HEAD": "L&D Head",
+   "LND_COORD": "L&D coordinator",
+   "SF_ADMIN": "SFO case admin (Salesforce queues)",
+   "MANAGER": "Team lead / Manager",
+   "HRLND_ADMIN": "HR / L&D admin",
+   "HD_ADMIN": "Helpdesk admin",
+   "IT_AGENT": "IT agent",
+   "IT_HEAD": "IT head",
+   "ADM_AGENT": "Admin desk agent",
+   "ADM_HEAD": "Admin head",
+   "AUDITOR": "Auditor (read-only)"
+  },
+  "assignableRoles": [
+   "HR_AGENT",
+   "HRLND_ADMIN",
+   "LND_HEAD",
+   "LND_COORD",
+   "IT_AGENT",
+   "IT_HEAD",
+   "ADM_AGENT",
+   "ADM_HEAD",
+   "SF_ADMIN",
+   "HD_ADMIN",
+   "AUDITOR"
+  ],
+  "personaGroups": [
+   [
+    "Employees",
+    [
+     "u1",
+     "u6"
+    ]
+   ],
+   [
+    "HR and L&D",
+    [
+     "u3",
+     "u8",
+     "u4"
+    ]
+   ],
+   [
+    "IT and Support",
+    [
+     "u21",
+     "u23"
+    ]
+   ],
+   [
+    "Admin Desk",
+    [
+     "u24",
+     "u25"
+    ]
+   ],
+   [
+    "SFO · Sales Front Office (Salesforce)",
+    [
+     "u2",
+     "u5"
+    ]
+   ],
+   [
+    "Governance",
+    [
+     "u20",
+     "u26"
+    ]
+   ]
+  ],
+  "aiSamples": [
+   {
+    "hd": "IT",
+    "l": "Laptop screen flickering",
+    "t": "My laptop screen is flickering since morning, it is urgent, please copy my manager."
+   },
+   {
+    "hd": "ADM",
+    "l": "Flight and hotel",
+    "t": "I need a flight from Mumbai to Bengaluru on 18 November for a client visit, returning on 20 November, and a hotel near Whitefield."
+   },
+   {
+    "hd": "ADM",
+    "l": "AC leaking",
+    "t": "The AC on the 5th floor of Tower A is leaking water near meeting room Everest, please fix it today."
+   },
+   {
+    "hd": "IT",
+    "l": "Shared drive access",
+    "t": "I need write access to the Finance shared drive for 30 days, my manager Sanjay will approve."
+   },
+   {
+    "hd": "HR",
+    "l": "Salary not credited",
+    "t": "My October salary has not been credited yet, I am based in Pune, please keep Sanjay in CC."
+   },
+   {
+    "hd": "LND",
+    "l": "Missing certificate",
+    "t": "I finished the Kubernetes Essentials course on LinkedIn Learning last week but I did not get the certificate."
+   },
+   {
+    "hd": "SF",
+    "l": "Merge duplicate accounts",
+    "t": "Please merge the duplicate Orion Retail accounts, account name Orion Retail Ltd, opportunity 006Kx00000AbC12XYZ."
+   }
+  ],
+  "aiKeywords": [
+   [
+    "IT",
+    "SEC",
+    "Phishing email reported",
+    "phishing|suspicious (e-?mail|link)"
+   ],
+   [
+    "IT",
+    "SEC",
+    "Lost or stolen device",
+    "(lost|stolen).{0,20}(laptop|phone|device)"
+   ],
+   [
+    "ADM",
+    "IDC",
+    "Lost card",
+    "(lost|misplaced).{0,20}(id card|badge|access card)"
+   ],
+   [
+    "HR",
+    "GRV",
+    "Manager concerns",
+    "harass|grievance|bull(y|ied)|unfair treatment"
+   ],
+   [
+    "HR",
+    "PAY",
+    "Salary credit",
+    "salary.{0,30}(not|credited|missing|delayed)|not.{0,15}credited"
+   ],
+   [
+    "HR",
+    "PAY",
+    "Payslip",
+    "payslip"
+   ],
+   [
+    "HR",
+    "PAY",
+    "Tax and Form 16",
+    "form 16|\\btds\\b"
+   ],
+   [
+    "HR",
+    "LEAVE",
+    "Leave balance",
+    "leave balance|leaves? (deducted|missing)"
+   ],
+   [
+    "HR",
+    "LEAVE",
+    "Attendance regularisation",
+    "marked absent|attendance"
+   ],
+   [
+    "HR",
+    "REIMB",
+    "Claim status",
+    "reimburse|expense claim"
+   ],
+   [
+    "HR",
+    "BEN",
+    "Medical insurance",
+    "insurance|mediclaim"
+   ],
+   [
+    "HR",
+    "REC",
+    "Employment letter",
+    "(employment|experience|verification) letter"
+   ],
+   [
+    "LND",
+    "CERT",
+    "Certificate not generated",
+    "certificate"
+   ],
+   [
+    "LND",
+    "SESSION",
+    "Not mapped to my session",
+    "(workshop|session).{0,40}(not mapped|invite|registered)"
+   ],
+   [
+    "LND",
+    "CONTENT",
+    "Content not loading",
+    "(video|course).{0,30}(not load|stuck|buffer)"
+   ],
+   [
+    "LND",
+    "COURSE",
+    "Request a LinkedIn Learning licence",
+    "linkedin learning licen[cs]e|request.{0,20}course"
+   ],
+   [
+    "LND",
+    "ACCESS",
+    "Cannot open the L&D portal",
+    "l&d portal|learning portal"
+   ],
+   [
+    "SF",
+    "DATA",
+    "Duplicate merge",
+    "merge.{0,30}(duplicate|account)|duplicate.{0,20}account"
+   ],
+   [
+    "SF",
+    "ACCESS",
+    "Profile or permission change",
+    "sales ?force.{0,40}(access|permission|edit)"
+   ],
+   [
+    "SF",
+    "REPORTS",
+    "New report",
+    "sales ?force report|pipeline report"
+   ],
+   [
+    "SF",
+    "HOWTO",
+    "Salesforce usage question",
+    "sales ?force"
+   ],
+   [
+    "IT",
+    "ACC",
+    "Admin rights on my laptop",
+    "admin rights"
+   ],
+   [
+    "IT",
+    "ACC",
+    "Shared folder access",
+    "shared (drive|folder)|folder access"
+   ],
+   [
+    "IT",
+    "ACC",
+    "VPN access",
+    "vpn access"
+   ],
+   [
+    "IT",
+    "ACCT",
+    "MFA or authenticator problem",
+    "\\bmfa\\b|authenticator|\\botp\\b"
+   ],
+   [
+    "IT",
+    "ACCT",
+    "Password reset",
+    "password|locked out|account locked"
+   ],
+   [
+    "IT",
+    "HW",
+    "Laptop or desktop issue",
+    "(laptop|desktop|screen|display|keyboard|trackpad).{0,40}(flicker|broken|slow|not working|crash|black|dead|stopped)|flicker|keys? not"
+   ],
+   [
+    "IT",
+    "HW",
+    "Peripheral request",
+    "(need|request|want).{0,20}(monitor|mouse|keyboard|headset|dock)"
+   ],
+   [
+    "IT",
+    "HW",
+    "New asset request",
+    "new laptop|laptop request"
+   ],
+   [
+    "IT",
+    "SW",
+    "Install new software",
+    "install|software"
+   ],
+   [
+    "IT",
+    "NET",
+    "VPN not connecting",
+    "\\bvpn\\b"
+   ],
+   [
+    "IT",
+    "NET",
+    "Wi-Fi",
+    "wi-?fi|wireless"
+   ],
+   [
+    "IT",
+    "NET",
+    "Internet slow",
+    "internet|network"
+   ],
+   [
+    "IT",
+    "EMAIL",
+    "Teams or meetings",
+    "\\bteams\\b"
+   ],
+   [
+    "IT",
+    "EMAIL",
+    "Outlook or mailbox problem",
+    "outlook|mailbox|e-?mail"
+   ],
+   [
+    "ADM",
+    "FAC",
+    "Air conditioning",
+    "\\bac\\b|air ?con"
+   ],
+   [
+    "ADM",
+    "FAC",
+    "Plumbing or washroom",
+    "leak|plumb|washroom|\\btap\\b"
+   ],
+   [
+    "ADM",
+    "FAC",
+    "Electrical or lighting",
+    "\\blights?\\b|electric|socket"
+   ],
+   [
+    "ADM",
+    "FAC",
+    "Furniture repair",
+    "(chair|table|furniture).{0,20}(broken|repair)"
+   ],
+   [
+    "ADM",
+    "TRAVEL",
+    "Flight booking",
+    "flight|\\bfly\\b"
+   ],
+   [
+    "ADM",
+    "TRAVEL",
+    "Hotel booking",
+    "hotel"
+   ],
+   [
+    "ADM",
+    "TRAVEL",
+    "Train booking",
+    "train (ticket|to)"
+   ],
+   [
+    "ADM",
+    "TRANS",
+    "Parking slot",
+    "parking"
+   ],
+   [
+    "ADM",
+    "TRANS",
+    "Office cab or shuttle",
+    "\\bcab\\b|shuttle|late.?night drop"
+   ],
+   [
+    "ADM",
+    "IDC",
+    "New ID card",
+    "id card|badge"
+   ],
+   [
+    "ADM",
+    "VIS",
+    "Visitor pass",
+    "visitor"
+   ],
+   [
+    "ADM",
+    "VIS",
+    "Meeting room booking problem",
+    "meeting room.{0,20}(booking|booked)"
+   ],
+   [
+    "ADM",
+    "COUR",
+    "Send a courier",
+    "courier|parcel"
+   ],
+   [
+    "ADM",
+    "STAT",
+    "Printer toner or paper",
+    "toner|printer paper"
+   ],
+   [
+    "ADM",
+    "STAT",
+    "Stationery",
+    "stationery|notebooks?|\\bpens?\\b"
+   ],
+   [
+    "ADM",
+    "HK",
+    "Spill or hygiene issue",
+    "spill"
+   ],
+   [
+    "ADM",
+    "HK",
+    "Coffee or water machine",
+    "coffee machine|water (dispenser|machine)"
+   ],
+   [
+    "ADM",
+    "HK",
+    "Pantry supplies",
+    "pantry"
+   ],
+   [
+    "ADM",
+    "HK",
+    "Cleaning request",
+    "clean"
+   ],
+   [
+    "ADM",
+    "PUR",
+    "New purchase",
+    "purchase|procure|\\bbuy\\b|vendor"
+   ],
+   [
+    "ADM",
+    "SEAT",
+    "New seat request",
+    "\\bseat\\b|desk for"
+   ]
+  ],
+  "redirect": {
+   "IT": "\\b(laptop|desktop|monitor|keyboard|mouse|wi-?fi|vpn|password|mfa|outlook|mailbox|software|install|virus|phishing|internet)\\b",
+   "ADM": "\\b(chair|seat|air ?con\\w*|leak\\w*|plumb\\w*|parking|cab|flight|hotel|courier|visitor|meeting room|pantry|id card|badge|stationery|toner)\\b",
+   "HR": "\\b(salary|payslip|leave balance|reimburse\\w*|insurance|form 16|experience letter|appraisal)\\b",
+   "LND": "\\b(course|certificate|linkedin learning|skillup|training session|learning path)\\b",
+   "SF": "\\b(salesforce|opportunity id|lead routing|price book)\\b"
+  },
+  "hrExtraKeys": [
+   "PAY",
+   "LEAVE",
+   "REIMB"
+  ]
+ }
+}

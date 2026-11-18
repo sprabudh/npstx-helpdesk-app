@@ -1,0 +1,212 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { api, setToken } from '../../api/client';
+import { useAction, useConfig, useMe, useNotifications } from '../../api/hooks';
+import type { ListItem } from '../../api/types';
+import { fdt, HDL } from '../../lib/format';
+import { Icon } from '../../lib/icons';
+import { useUi } from '../../store/ui';
+import { Avatar, HdBadge, Pill } from '../common/bits';
+
+const NAV: [string, string][] = [['home', 'Home'], ['user', 'My profile'], ['clock', 'Attendance'], ['cal', 'Leave'], ['wallet', 'Payroll'], ['book', 'Learning'], ['target', 'Performance'], ['help', 'Helpdesk'], ['gear', 'Settings']];
+const CRUMB: Record<string, string> = { dashboard: 'Dashboard', tickets: 'My tickets', assigned: 'Assigned to me', following: "Following / CC'd", history: 'History', faqs: 'FAQs', admin: 'Admin console' };
+
+export function Sidebar() {
+  const { data: me } = useMe();
+  const toast = useUi((s) => s.toast);
+  return (
+    <aside className="side">
+      <div className="brand"><div className="brand-mark">N</div><div className="brand-name">NPSTX</div></div>
+      <div className="nav-label">Workspace</div>
+      <nav className="nav">
+        {NAV.map(([i, l]) =>
+          l === 'Helpdesk' ? (
+            <Link key={l} to="/dashboard" className="on" title={l}>
+              <Icon n={i} s={18} /><span>{l}</span>
+              {!!me?.counts.waiting && <em className="nb">{me.counts.waiting}</em>}
+            </Link>
+          ) : (
+            <a key={l} href="#" title={l} onClick={(e) => { e.preventDefault(); toast(`${l} is another NPSTX module. This app covers Helpdesk only.`); }}>
+              <Icon n={i} s={18} /><span>{l}</span>
+            </a>
+          ),
+        )}
+      </nav>
+      <div className="side-foot">NPSTX HR platform · Helpdesk module v1.0</div>
+    </aside>
+  );
+}
+
+function NotifPanel({ onClose }: { onClose: () => void }) {
+  const { data } = useNotifications(true);
+  const act = useAction();
+  const nav = useNavigate();
+  return (
+    <div className="notif">
+      <header>Notifications<button className="linkbtn" onClick={() => act.run(() => api('/notifications/read-all', { method: 'POST' }))}>Mark all read</button></header>
+      <div className="list">
+        {data?.length ? data.map((n) => (
+          <button key={n.id} className={`it ${n.readAt ? '' : 'unread'}`} onClick={async () => { await act.run(() => api(`/notifications/${n.id}/read`, { method: 'POST' })); onClose(); if (n.ticketKey) nav(`/ticket/${n.ticketKey}`); }}>
+            <Icon n="bell" s={15} />
+            <span>{n.text}<time>{fdt(n.createdAt)} · in-app + email</time></span>
+          </button>
+        )) : <div className="gempty">No notifications yet.</div>}
+      </div>
+    </div>
+  );
+}
+
+export function Topbar({ onPersona }: { onPersona: (id: string) => void }) {
+  const { data: me } = useMe();
+  const loc = useLocation();
+  const route = loc.pathname.split('/')[1] || 'dashboard';
+  const { notifOpen, set } = useUi();
+  const userId = useUi((s) => s.userId);
+  const { data: personas } = useQuery({ queryKey: ['personas'], queryFn: () => api<{ defaultUserId: string; groups: { label: string; people: { id: string; name: string; title: string }[] }[] }>('/auth/personas'), retry: false });
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const h = (e: MouseEvent) => notifOpen && ref.current && !ref.current.contains(e.target as Node) && set({ notifOpen: false });
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [notifOpen, set]);
+  const key = route === 'ticket' ? decodeURIComponent(loc.pathname.split('/')[2] ?? '') : '';
+  return (
+    <header className="top">
+      <div className="crumb">NPSTX &nbsp;›&nbsp; Helpdesk &nbsp;›&nbsp; <b>{route === 'ticket' ? key : CRUMB[route] ?? 'Dashboard'}</b></div>
+      <div className="top-right">
+        {personas && (
+          <div className="persona">
+            <label htmlFor="persona">Demo role</label>
+            <select className="in" id="persona" value={userId ?? ''} onChange={(e) => onPersona(e.target.value)}>
+              {personas.groups.map((g) => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.people.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.title}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+        )}
+        <div style={{ position: 'relative' }} ref={ref}>
+          <button className="icon-btn" aria-label="Notifications" onClick={() => set({ notifOpen: !notifOpen })}>
+            <Icon n="bell" s={18} />
+            {!!me?.counts.notifications && <span className="dot">{me.counts.notifications > 99 ? '99+' : me.counts.notifications}</span>}
+          </button>
+          {notifOpen && <NotifPanel onClose={() => set({ notifOpen: false })} />}
+        </div>
+        {me && <span title={me.name}><Avatar name={me.name} /></span>}
+      </div>
+    </header>
+  );
+}
+
+function GlobalSearch() {
+  const [q, setQ] = useState('');
+  const nav = useNavigate();
+  const { data } = useQuery({ queryKey: ['gsearch', useUi.getState().userId, q], queryFn: () => api<ListItem[]>(`/tickets/search?q=${encodeURIComponent(q.trim())}`), enabled: q.trim().length > 0 });
+  return (
+    <div className="gsearch">
+      <Icon n="search" s={15} />
+      <input id="gsearch" type="search" placeholder="Check status: ticket ID or title" value={q} autoComplete="off" onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === 'Escape' && setQ('')} />
+      {q.trim() && (
+        <div className="gresults">
+          {data?.length ? data.map((t) => (
+            <button key={t.key} onClick={() => { setQ(''); nav(`/ticket/${t.key}`); }}>
+              <span className="mono">{t.key}</span><HdBadge hd={t.helpdesk} />
+              <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.title}</span><Pill t={t} />
+            </button>
+          )) : <div className="gempty">No ticket you have access to matches “{q}”. Confidential and other helpdesks' tickets are never listed.</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function ModuleHeader({ from }: { from: string }) {
+  const { data: me } = useMe();
+  const nav = useNavigate();
+  const set = useUi((s) => s.set);
+  if (!me) return null;
+  const hl = me.helpdesks.map((h) => HDL[h]);
+  const tabs: [string, string, number?, string?][] = [
+    ['dashboard', 'Dashboard', 0, 'chart'], ['tickets', 'My tickets'], ...(me.flags.worker ? [['assigned', 'Assigned to me', me.counts.assignedOpen] as [string, string, number]] : []),
+    ['following', "Following / CC'd", me.counts.followCount], ['history', 'History'], ['faqs', 'FAQs'], ...(me.flags.helpdeskAdmin ? [['admin', 'Admin console', 0, 'gear'] as [string, string, number, string]] : []),
+  ];
+  return (
+    <div className="mh">
+      <div className="mh-top">
+        <div>
+          <h1>Helpdesk</h1>
+          <p>{hl.slice(0, -1).join(', ')} and {hl[hl.length - 1]} support in one place</p>
+        </div>
+        <div className="mh-actions">
+          {from !== 'dashboard' && <GlobalSearch />}
+          {me.flags.helpdeskAdmin && from !== 'admin' && <button className="btn" onClick={() => nav('/admin')}><Icon n="gear" s={16} />Configure</button>}
+          <button className="btn primary" onClick={() => set({ drawer: {} })}><Icon n="plus" s={16} />Raise ticket</button>
+        </div>
+      </div>
+      <nav className="subnav" aria-label="Helpdesk pages">
+        {tabs.map(([k, l, c, i]) => (
+          <button key={k} className={from === k ? 'on' : ''} onClick={() => nav(`/${k}`)}>
+            {i && <Icon n={i} s={15} />}{l}{!!c && <span className="count">{c}</span>}
+          </button>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+export function RoleStrip() {
+  const { data: me } = useMe();
+  const { data: cfg } = useConfig();
+  const { permOpen, set, toast } = useUi();
+  const qc = useQueryClient();
+  const nav = useNavigate();
+  const act = useAction();
+  if (!me || !cfg) return null;
+  const hrNames = Object.fromEntries(cfg.categories.filter((c) => c.helpdesk === 'HR').map((c) => [c.key, c.name.split(' ')[0]]));
+  return (
+    <>
+      <div className="rolestrip">
+        <span className="lbl">Signed in as</span><b>{me.name}</b><span>{me.title} · {me.dept}</span>
+        {me.roles.map((r) => <span key={r} className="chip">{cfg.roleLabels[r]}{r === 'HR_AGENT' && ` (${me.hrCategories.map((k) => hrNames[k]).join(', ')})`}</span>)}
+        <span className="lbl" style={{ marginLeft: 6 }}>Helpdesks</span>{me.helpdesks.map((h) => <HdBadge key={h} hd={h} />)}
+        <span style={{ marginLeft: 'auto', display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+          <button className="linkbtn" onClick={() => set({ permOpen: !permOpen })}>{permOpen ? 'Hide' : 'What can this role do?'}</button>
+          {cfg.demoMode && (
+            <>
+              <span className="lbl">Demo states</span>
+              <button className="linkbtn" onClick={() => { set({ demo: 'loading' }); nav('/tickets'); setTimeout(() => set({ demo: null }), 1600); toast('Showing the loading state'); }}>Loading</button>
+              <button className="linkbtn" onClick={() => { set({ demo: 'error' }); nav('/tickets'); toast('Showing the error state. Select Retry to recover.'); }}>Error</button>
+              <button className="linkbtn" onClick={async () => { await act.run(() => api('/demo/out-of-office', { method: 'POST', body: { on: !me.outOfOffice } })); await qc.invalidateQueries(); }}>{me.outOfOffice ? 'Back in office (demo)' : 'Out of office (demo)'}</button>
+              <button className="linkbtn" onClick={async () => { await act.run(() => api('/demo/reset', { method: 'POST' })); qc.clear(); nav('/dashboard'); }}>Reset demo data</button>
+            </>
+          )}
+        </span>
+      </div>
+      {permOpen && (
+        <div className="perm">
+          <div className="yes"><h4>Can</h4><ul>{me.permissions.can.map((x) => <li key={x}>{x}</li>)}</ul></div>
+          <div className="no"><h4>Cannot</h4><ul>{me.permissions.no.map((x) => <li key={x}>{x}</li>)}</ul></div>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function Layout({ from, children, onPersona }: { from: string; children: ReactNode; onPersona: (id: string) => void }) {
+  return (
+    <div className="app">
+      <Sidebar />
+      <div className="main">
+        <Topbar onPersona={onPersona} />
+        <main className="module">
+          <ModuleHeader from={from} />
+          <RoleStrip />
+          <div className="page">{children}</div>
+        </main>
+      </div>
+    </div>
+  );
+}
+export { setToken };
