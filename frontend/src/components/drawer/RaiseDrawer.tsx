@@ -43,10 +43,14 @@ const slaText = (cfg: Config, pri: string, hd = 'HR', cat?: Category) => {
   const [a, b] = slaFor(cfg, hd, cat, pri);
   return `response within ${fmtH(a)}, resolution within ${fmtH(b)}`;
 };
+/** Same rule as the server: manager step when the category toggle covers the sub-category, then any policy steps. */
 const chainOf = (c: Category | undefined, f: Vals): string[] | null => {
-  if (!c?.approvalRule) return null;
-  const r = c.approvalRule.find((x) => !x.when || evalCond(x.when, f));
-  return r ? r.chain : null;
+  if (!c) return null;
+  const mgr = !!c.mgrApproval && (!c.mgrApprovalSubs?.length || c.mgrApprovalSubs.includes(String(f.sub ?? '')));
+  const rule = c.helpdesk === 'LND' ? null : (c.approvalRule ?? []).find((x) => !x.when || evalCond(x.when, f));
+  const extra = c.helpdesk === 'LND' ? (f.reqType === 'course' ? ['lnd'] : []) : (rule?.chain ?? []).filter((x) => x !== 'mgr');
+  const chain = [...(mgr ? ['mgr'] : []), ...extra];
+  return chain.length ? chain : null;
 };
 
 function newForm(hd: Hd, cat: string | null | undefined, me: Me, cfg: Config, pre?: DrawerState['pre']): Vals {
@@ -224,13 +228,23 @@ function DrawerInner({ init, me, cfg }: { init: DrawerState; me: Me; cfg: Config
   const commonTail = <>{titleDesc}{ccBlock}{filesBlock}</>;
 
   // ---------- forms ----------
+  const apprNote = (c: Category | undefined) => {
+    const ch = chainOf(c, d.f);
+    if (!ch) return null;
+    const mgrName = cfg.managers?.find((m) => m.id === d.f.approver)?.name ?? me.managerName;
+    const who = (k: string) => (k === 'mgr' ? ` (${mgrName || 'Helpdesk admin, as you have no manager on record'})` : '');
+    return (
+      <div className="note appr" id="d-appr"><Icon n="users" s={15} /><p><b>Approval needed:</b> {ch.map((k) => (cfg.approvalSteps[k]?.l ?? k) + who(k)).join(' → ')}. The ticket starts as <b>Pending approval</b>. {ch.includes('mgr') ? 'Response and resolution times start once your manager approves.' : 'Response and resolution times start once it is approved.'} <mark className="tc">TC</mark></p></div>
+    );
+  };
   const hrForm = () => {
     const c = catOf('HR', d.f.cat);
     return (
       <>
         <F d={d} onUndo={undo} id="cat" label="Category" req>{dsel('cat', cats('HR').filter((x) => x.active).map((x) => [x.key, x.name]), 'Select a category')}</F>
         {c && <F d={d} onUndo={undo} id="sub" label="Sub-category" req>{dsel('sub', c.subs, 'Select a sub-category')}</F>}
-        {c && <div className="note info"><Icon n="users" s={15} /><p>Routes to <b>{c.leadName}</b> (category lead). Priority <b>{c.defaultPriority}</b>, set by category · {slaText(cfg, c.defaultPriority ?? 'Medium')} <mark className="tc">TC</mark>. {c.reopenAllowed !== false ? 'Reopen allowed for 30 days.' : 'This category does not allow reopening.'}</p></div>}
+        {c && <div className="note info"><Icon n="users" s={15} /><p>Routes to <b>{c.leadName}</b> (category lead) · {slaText(cfg, c.defaultPriority ?? 'Medium')} <mark className="tc">TC</mark>. {c.reopenAllowed !== false ? 'Reopen allowed for 30 days.' : 'This category does not allow reopening.'}</p></div>}
+        {apprNote(c)}
         {c?.confidential && <div className="note conf"><Icon n="lock" s={15} /><p><b>Confidential category.</b> Only you, the assigned agent, the category lead and people you add can see this ticket.{c.restricted ? ' Grievance tickets are restricted further to the HR head.' : ''} Your manager is not CC'd unless you tick the box below.</p></div>}
         {titleDesc}
         {extraFields('HR', d.f.cat)}
@@ -247,7 +261,7 @@ function DrawerInner({ init, me, cfg }: { init: DrawerState; me: Me; cfg: Config
     const lreq = (v: string) => setD((o) => { const err = { ...o.err }; delete err.reqType; return { ...o, f: { ...o.f, reqType: v, cat: v === 'course' ? 'COURSE' : '', sub: '' }, err }; });
     return (
       <>
-        <F d={d} onUndo={undo} id="reqType" label="Request type" req hint="Course requests need manager and L&D approval. Portal problems go straight to the support queue.">
+        <F d={d} onUndo={undo} id="reqType" label="Request type" req hint="Course requests need approval before work starts. Portal problems go straight to the support queue.">
           <div className="seg"><button id="d-reqType" className={course ? 'on' : ''} onClick={() => lreq('course')}>Course request</button><button className={d.f.reqType === 'portal' ? 'on' : ''} onClick={() => lreq('portal')}>Portal problem</button></div>
         </F>
         {d.f.reqType && <F d={d} onUndo={undo} id="cat" label="Category" req>{dsel('cat', list.map((x) => [x.key, x.name]), 'Select a category')}</F>}
@@ -267,10 +281,9 @@ function DrawerInner({ init, me, cfg }: { init: DrawerState; me: Me; cfg: Config
               </>
             )}
             {extraFields('LND', d.f.cat)}
-            <div className="note info"><Icon n="info" s={15} /><p>Priority is set automatically for L&amp;D (Medium; High if the session is within two days; Critical if it is today). {slaText(cfg, d.f.pri || 'Medium', 'LND', c)} <mark className="tc">TC</mark></p></div>
-            {course
-              ? <div className="note appr"><Icon n="users" s={15} /><p><b>Approval chain:</b> {me.managerName || 'Your manager'} (manager) → Meera Iyer (L&amp;D). The ticket starts as <b>Pending approval</b>. <mark className="tc">TC</mark></p></div>
-              : <div className="note info"><Icon n="users" s={15} /><p>Routes to <b>{c.ownerName ?? c.queueName ?? c.leadName}</b> · {slaText(cfg, d.f.pri || 'Medium')} <mark className="tc">TC</mark></p></div>}
+            {d.f.cat === 'SESSION' && <div className="note info"><Icon n="info" s={15} /><p>Sessions within the next two days are handled first.</p></div>}
+            {apprNote(c)}
+            {!course && <div className="note info"><Icon n="users" s={15} /><p>Routes to <b>{c.ownerName ?? c.queueName ?? c.leadName}</b> · {slaText(cfg, d.f.pri || 'Medium')} <mark className="tc">TC</mark></p></div>}
             {commonTail}
           </>
         )}
@@ -295,7 +308,6 @@ function DrawerInner({ init, me, cfg }: { init: DrawerState; me: Me; cfg: Config
             <F d={d} onUndo={undo} id="record" label="Record link or ID" req={c.needsRecord} hint={c.needsRecord ? 'Required for data and record changes.' : ''}>{inp('record', 'Paste the Salesforce record URL or ID')}</F>
             {c.needsImpact && <F d={d} onUndo={undo} id="impact" label="Business need and impact" req>{area('impact', 2, 'Who needs it, and what it unblocks')}</F>}
             {extraFields('SF', d.f.cat)}
-            <div className="note info"><Icon n="info" s={15} /><p>Priority is set by Salesforce (default Medium).</p></div>
             <div className="note info"><Icon n="users" s={15} /><p>Assignment rule routes this type to <b>{c.ownerName ?? c.queueName ?? c.leadName}</b>.</p></div>
             {commonTail}
           </>
@@ -306,15 +318,13 @@ function DrawerInner({ init, me, cfg }: { init: DrawerState; me: Me; cfg: Config
   const schemaForm = (hd: Hd) => {
     const c = catOf(hd, d.f.cat);
     const sch = c ? schemaOf(hd, c.key) : [];
-    const ch = chainOf(c, d.f);
-    const mgrName = cfg.managers?.find((m) => m.id === d.f.approver)?.name ?? me.managerName;
     return (
       <>
         <F d={d} onUndo={undo} id="cat" label="Category" req>{dsel('cat', cats(hd).filter((x) => x.active).map((x) => [x.key, x.name]), 'Select a category')}</F>
         {c && <F d={d} onUndo={undo} id="sub" label="Sub-category" req>{dsel('sub', c.subs, 'Select a sub-category')}</F>}
-        {c && <div className="note info"><Icon n="users" s={15} /><p>Routes to <b>{c.queueId ? c.queueName : c.leadName}</b>{c.queueId ? ` (category lead ${c.leadName})` : ' (category lead)'}. Priority is set from the category. {slaText(cfg, d.f.pri || c.defaultPriority || 'Medium', hd, c)} <mark className="tc">TC</mark>. {c.reopenAllowed !== false ? 'You can reopen within 7 days of resolution.' : 'This category does not allow reopening.'}</p></div>}
+        {c && <div className="note info"><Icon n="users" s={15} /><p>Routes to <b>{c.queueId ? c.queueName : c.leadName}</b>{c.queueId ? ` (category lead ${c.leadName})` : ' (category lead)'} · {slaText(cfg, d.f.pri || c.defaultPriority || 'Medium', hd, c)} <mark className="tc">TC</mark>. {c.reopenAllowed !== false ? 'You can reopen within 7 days of resolution.' : 'This category does not allow reopening.'}</p></div>}
         {c?.confidential && <div className="note conf"><Icon n="lock" s={15} /><p><b>Confidential category.</b> Only you, IT security, the IT head and helpdesk admins can see this ticket. Do not forward suspicious emails to colleagues.</p></div>}
-        {ch && <div className="note appr"><Icon n="users" s={15} /><p><b>Approval needed:</b> {ch.map((k) => cfg.approvalSteps[k].l + (k === 'mgr' ? ` (${mgrName})` : '')).join(' → ')}. The ticket starts as <b>Pending approval</b>. <mark className="tc">TC</mark></p></div>}
+        {apprNote(c)}
         {sch.filter((x) => isShown(x, d.f)).map((x) => <F d={d} onUndo={undo} key={x.key} id={x.key} label={x.label} req={isRequired(x, d.f)} hint={x.hint ?? undefined}>{ctl(x)}</F>)}
         {c && extraFields(hd, d.f.cat)}
         {c && commonTail}
@@ -571,7 +581,7 @@ function DrawerInner({ init, me, cfg }: { init: DrawerState; me: Me; cfg: Config
       return toast(`Fix ${Object.keys(err).length} field${Object.keys(err).length > 1 ? 's' : ''} to submit`, 'bad');
     }
     const fields: Record<string, string> = {};
-    Object.entries(d.f).forEach(([k, v]) => { if (k !== 'mgrCc' && k !== 'related' && v !== undefined && v !== null && v !== '') fields[k] = String(v); });
+    Object.entries(d.f).forEach(([k, v]) => { if (k !== 'mgrCc' && k !== 'related' && (k !== 'pri' || d.ai.used) && v !== undefined && v !== null && v !== '') fields[k] = String(v); });
     const form = new FormData();
     form.append('payload', JSON.stringify({ helpdesk: d.hd, fields, cc: d.cc, mgrCc: !!d.f.mgrCc, related: d.f.related || null, aiTranscript: d.ai.used && d.ai.tx ? d.ai.tx : null }));
     d.files.forEach((f) => form.append('files', f));

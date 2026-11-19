@@ -9,9 +9,10 @@ import {
   allowedHds, apMgr, approvalStage, canAddPeople, canView, canWork, chainOf, has, isApprover, isHeadish, isReadOnly, isWorker, relOf,
   reopenDays, reopenInfo, stm, viewsFor, whyVisible,
 } from '../domain/policy';
-import { isAtRisk, isBreachedRes, isOverdue, slaInfo, uiOf } from '../domain/sla';
+import { isAtRisk, isBreachedRes, isOverdue, slaCounts, slaInfo, uiOf } from '../domain/sla';
 import { Principal } from '../domain/types';
 import { HelpdeskConfigService } from '../helpdesk-config/config.service';
+import { CoverService } from './cover.service';
 import { Row, TicketLoader } from './ticket-loader.service';
 
 export interface ListQuery {
@@ -23,11 +24,12 @@ const PR: Record<string, number> = { Critical: 0, High: 1, Medium: 2, Low: 3 };
 export const FLAG_LABELS: Record<string, string> = {
   escalated: 'Escalated', breached: 'SLA breached', atrisk: 'At risk (due within 24 h)', overdue: 'Overdue', reopened: 'Reopened',
   unassigned: 'Unassigned (in a queue)', month: 'Closed this month', waitingme: 'Waiting for me',
+  respbreached: 'Response SLA breached', resbreached: 'Resolution SLA breached', waitreq: 'Waiting for the requester', waitappr: 'Waiting for approval',
 };
 
 @Injectable()
 export class TicketQueryService {
-  constructor(private readonly loader: TicketLoader, private readonly cfg: HelpdeskConfigService) {}
+  constructor(private readonly loader: TicketLoader, private readonly cfg: HelpdeskConfigService, private readonly cover: CoverService) {}
 
   // ---------- shared helpers ----------
   uiStatus(r: Row) {
@@ -63,7 +65,11 @@ export class TicketQueryService {
     const month = istDate(clock.now()).slice(0, 7);
     switch (flag) {
       case 'escalated': return (r) => !r.closed && (r.t.escalationLevel > 0 || r.t.status === 'Escalated');
-      case 'breached': return (r) => r.t.responseMet === false || isBreachedRes(r.t, r.closed, now);
+      case 'breached': return (r) => slaCounts(r.t) && (r.t.responseMet === false || isBreachedRes(r.t, r.closed, now));
+      case 'respbreached': return (r) => slaCounts(r.t) && r.t.responseMet === false;
+      case 'resbreached': return (r) => isBreachedRes(r.t, r.closed, now);
+      case 'waitreq': return (r) => !r.closed && this.isWaiting(r);
+      case 'waitappr': return (r) => !r.closed && r.t.status === 'Pending approval';
       case 'atrisk': return (r) => isAtRisk(r.t, r.closed, now);
       case 'overdue': return (r) => isOverdue(r.t, r.closed, now);
       case 'reopened': return (r) => reopened.has(r.t.key);
@@ -117,13 +123,14 @@ export class TicketQueryService {
       const fn = this.flagFn(q.flag, u, await this.wasReopened(rows.map((r) => r.t.key)));
       rows = rows.filter(fn);
     }
-    const open = rows.filter((r) => !r.closed), closed = rows.filter((r) => r.closed);
+    // Category and priority apply to both tabs, so the tab counts add up to what a dashboard bar shows.
     const tab = q.tab === 'closed' ? 'closed' : 'open';
-    const base = tab === 'open' ? open : closed;
-    let list = base;
-    if (q.cat) list = list.filter((r) => `${r.t.helpdesk}.${r.t.categoryKey}` === q.cat);
+    const catRows = rows.filter((r) => (tab === 'open' ? !r.closed : r.closed));
+    if (q.cat) rows = rows.filter((r) => `${r.t.helpdesk}.${r.t.categoryKey}` === q.cat);
+    if (q.pri) rows = rows.filter((r) => r.t.priority === q.pri);
+    const open = rows.filter((r) => !r.closed), closed = rows.filter((r) => r.closed);
+    let list = tab === 'open' ? open : closed;
     if (tab === 'open') {
-      if (q.pri) list = list.filter((r) => r.t.priority === q.pri);
       if (q.status) list = list.filter((r) => (q.status!.startsWith('ui:') ? this.uiStatus(r) === q.status!.slice(3) : r.t.status === q.status));
     } else if (q.reason) list = list.filter((r) => this.closedState(r) === q.reason);
     const sort = q.sort || 'updated';
@@ -137,7 +144,7 @@ export class TicketQueryService {
     const size = Math.min(Math.max(Number(q.size) || 8, 1), 100);
     const pages = Math.max(1, Math.ceil(list.length / size));
     const page = Math.min(Math.max(Number(q.page) || 1, 1), pages);
-    const cats = [...new Map(base.map((r) => [`${r.t.helpdesk}.${r.t.categoryKey}`, `${this.cfg.helpdeskLabel(r.t.helpdesk)} · ${r.ctx.category?.name ?? r.t.categoryKey}`])).entries()];
+    const cats = [...new Map(catRows.map((r) => [`${r.t.helpdesk}.${r.t.categoryKey}`, `${this.cfg.helpdeskLabel(r.t.helpdesk)} · ${r.ctx.category?.name ?? r.t.categoryKey}`])).entries()];
     return {
       view, tab, sort, dir: d === 1 ? 'asc' : 'desc', page, pages, size, total: list.length,
       counts: { open: open.length, closed: closed.length },
@@ -186,7 +193,7 @@ export class TicketQueryService {
       sections: hds.map((h) => ({
         helpdesk: h,
         rows: rows.filter((r) => r.t.helpdesk === h).sort((a, b) => b.t.closedAt!.getTime() - a.t.closedAt!.getTime())
-          .map((r) => ({ ...this.listItem(u, r), resolutionMs: r.t.closedAt!.getTime() - r.t.createdAt.getTime(), closedState: this.closedState(r) })),
+          .map((r) => ({ ...this.listItem(u, r), resolutionMs: r.t.closedAt!.getTime() - (r.t.slaStart ?? r.t.createdAt).getTime(), closedState: this.closedState(r) })),
       })),
     };
   }
@@ -263,6 +270,9 @@ export class TicketQueryService {
     const readOnly = isReadOnly(u, r.ctx);
     const isReq = t.requesterId === u.id;
     const fol = relOf(r.ctx, u.id) ?? null;
+    const slaFrom = (t.slaStart ?? t.createdAt).getTime();
+    const pending = t.status === 'Pending approval';
+    const away = work ? await this.cover.awayFn(clock.now()) : () => false;
     return {
       ...this.listItem(u, r),
       description: t.description,
@@ -294,17 +304,18 @@ export class TicketQueryService {
       ladder,
       ladderBase: t.ladderBase ?? 0,
       asgHist: t.asgHist ?? [],
-      sla: { ...sla, usedPct: Math.min(100, Math.max(0, (((r.closed && t.closedAt ? t.closedAt.getTime() : clock.nowMs()) - t.createdAt.getTime()) / Math.max(1, t.resolutionDue.getTime() - t.createdAt.getTime())) * 100)) },
+      sla: { ...sla, usedPct: t.slaStarted ? Math.min(100, Math.max(0, (((r.closed && t.closedAt ? t.closedAt.getTime() : clock.nowMs()) - slaFrom) / Math.max(1, t.resolutionDue.getTime() - slaFrom)) * 100)) : 0 },
+      slaStarted: t.slaStarted, slaStart: t.slaStart,
       me: {
         role, roleTxt, canWork: work, isRequester: isReq, relation: fol, readOnly, canAddPeople: canAddPeople(u, r.ctx),
         canInternal: work, approvalStage: stage, isHelpdeskAdmin: has(u, 'HD_ADMIN'),
         transitions: (st.tr[t.status] || []).map((s) => ({ status: s, ui: uiOf(st, this.cfg.uiMap(t.helpdesk), s) })),
         closing: st.closing, priorities: this.cfg.priorities(t.helpdesk),
-        canEscalate: work && !r.closed && (t.ladderBase ?? 0) + t.escalationLevel < ladder.length, canCancel: isReq && !r.closed && stm(r.ctx),
+        canEscalate: work && !r.closed && !pending && (t.ladderBase ?? 0) + t.escalationLevel < ladder.length, pending, canCancel: isReq && !r.closed && stm(r.ctx),
         canConfirm: isReq && stm(r.ctx) && t.status === 'Resolved', reopen: isReq ? ro : { ok: false, short: ro.short, why: ro.why },
         canFollow: !fol && !isReq && t.assigneeId !== u.id, canComment: !readOnly && (!r.closed || (stm(r.ctx) && t.status === 'Resolved')),
         reopenDays: reopenDays(r.ctx), stm: stm(r.ctx), waiting: this.isWaiting(r),
-        agents: work ? (this.cfg.setting<Record<string, string[]>>('agents')[t.helpdesk] || []).filter((a) => a !== t.assigneeId).map((a) => ({ id: a, name: this.cfg.name(a), title: this.cfg.person(a)?.title ?? null })) : [],
+        agents: work ? (this.cfg.setting<Record<string, string[]>>('agents')[t.helpdesk] || []).filter((a) => a !== t.assigneeId).map((a) => ({ id: a, name: this.cfg.name(a), title: this.cfg.person(a)?.title ?? null, away: away(a) })) : [],
       },
     };
   }

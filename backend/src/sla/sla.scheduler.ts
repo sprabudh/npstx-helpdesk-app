@@ -35,7 +35,7 @@ export class SlaScheduler implements OnModuleInit, OnModuleDestroy {
     try {
       const now = clock.nowMs();
       const all = await this.ds.getRepository(TicketEntity).find({ where: { helpdesk: In(['HR', 'LND', 'IT', 'ADM']) } });
-      const open = all.filter((t) => !this.cfg.statusModel(t.helpdesk).closed.includes(t.status) && t.status !== 'Pending approval');
+      const open = all.filter((t) => !this.cfg.statusModel(t.helpdesk).closed.includes(t.status) && t.status !== 'Pending approval' && t.slaStarted);
       const evs = open.length ? await this.ds.getRepository(EventEntity).find({ where: { ticketKey: In(open.map((t) => t.key)), kind: 'sla' } }) : [];
       const had = (key: string, prefix: string) => evs.some((e) => e.ticketKey === key && e.text.startsWith(prefix));
       const ev = (key: string, text: string, kind: string) => this.ds.getRepository(EventEntity).insert({ ticketKey: key, at: clock.now(), text, kind });
@@ -49,8 +49,9 @@ export class SlaScheduler implements OnModuleInit, OnModuleDestroy {
           res.responseBreaches++;
         }
         if (t.paused) continue;
-        const span = Math.max(1, t.resolutionDue.getTime() - t.createdAt.getTime());
-        const used = ((now - t.createdAt.getTime()) / span) * 100;
+        const start = (t.slaStart ?? t.createdAt).getTime();
+        const span = Math.max(1, t.resolutionDue.getTime() - start);
+        const used = ((now - start) / span) * 100;
         const ladder = this.cfg.ladder(t.helpdesk, t.categoryKey, t.slaVer);
         const base = t.ladderBase ?? 0;
         const reached = ladder.slice(base).filter((l) => used >= l.pct).length;
@@ -59,11 +60,12 @@ export class SlaScheduler implements OnModuleInit, OnModuleDestroy {
           const escLog: EscRecord[] = [...(t.escLog ?? [])];
           for (let lvl = t.escalationLevel + 1; lvl <= reached; lvl++) {
             const l = ladder[base + lvl - 1];
-            await ev(t.key, `Escalated to Level ${lvl} · ${this.cfg.name(l.who)} (${l.role.toLowerCase()})`, 'esc');
-            await this.notes.notify([l.who, t.assigneeId], `${t.key} escalated to Level ${lvl}`, tk, null);
+            await ev(t.key, `Escalated to Level ${base + lvl} · ${this.cfg.name(l.who)} (${l.role.toLowerCase()})`, 'esc');
+            await this.notes.notify([l.who, t.assigneeId], `${t.key} escalated to Level ${base + lvl}`, tk, null);
             const at = clock.now().toISOString();
-            asgHist.push({ u: l.who, at, how: 'escalation', coverFor: null });
-            escLog.push({ level: lvl, at, from: t.assigneeId, to: l.who, how: 'auto', by: null });
+            const from = asgHist.length ? asgHist[asgHist.length - 1].u : t.assigneeId;
+            if (l.who !== from) asgHist.push({ u: l.who, at, how: 'escalation', coverFor: null });
+            escLog.push({ level: base + lvl, at, from, to: l.who, how: 'sla', by: null });
             res.escalated++;
           }
           await this.ds.getRepository(TicketEntity).update(t.key, { escalationLevel: reached, asgHist, escLog });

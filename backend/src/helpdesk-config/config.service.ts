@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { fmtH } from '../common/clock';
+import { clock, fmtH } from '../common/clock';
 import { CategoryEntity, FormFieldEntity, SettingEntity, SlaVersionEntity, UserEntity, UserHrCategoryEntity, UserRoleEntity } from '../database/entities';
 import { evalCond } from '../domain/sla';
 import { Helpdesk, PersonRef, Role, StatusModel } from '../domain/types';
@@ -102,7 +102,7 @@ export class HelpdeskConfigService implements OnModuleInit {
   }
   /** The version a ticket raised now would bind to: the newest effective version, else version 1. */
   currentVersionId(): number {
-    const now = Date.now();
+    const now = clock.nowMs();
     const eff = this.versions.filter((v) => v.effectiveFrom.getTime() <= now);
     return (eff.length ? eff[eff.length - 1] : this.versions[0])?.id ?? 1;
   }
@@ -149,12 +149,29 @@ export class HelpdeskConfigService implements OnModuleInit {
     const sf = this.setting<{ who: string; role: string }>('sfEscalation');
     return [{ who: sf.who, role: sf.role, pct: 100, th: 'Resolution milestone at risk' }];
   }
-  /** Approval chain for a new ticket, from the category's rule and the form values. */
+  /** People behind a queue (setting queueMembers), so cover routing can reach a real person. */
+  queueMembers(id: string): string[] {
+    return this.setting<Record<string, string[]>>('queueMembers')?.[id] ?? [];
+  }
+  /**
+   * Approval chain for a new ticket. The manager step comes from the category's "Manager approval"
+   * toggle (optionally limited to some sub-categories). Additional steps (L&D for course requests,
+   * IT head for admin rights, Admin head for purchases) still apply when the toggle is off.
+   */
   approvalChain(hd: Helpdesk, cat: string, f: Record<string, unknown>): string[] | null {
-    if (hd === 'LND') return f.reqType === 'course' ? ['mgr', 'lnd'] : null;
     const c = this.category(hd, cat);
-    for (const r of c?.approvalRule ?? []) if (r.when === null || evalCond(r.when, f)) return r.chain;
-    return null;
+    const mgr = !!c?.mgrApproval && (!c.mgrApprovalSubs?.length || c.mgrApprovalSubs.includes(String(f.sub ?? '')));
+    const chain = [...(mgr ? ['mgr'] : []), ...this.additionalSteps(hd, cat, f)];
+    return chain.length ? chain : null;
+  }
+  /** Non-manager approval steps for a ticket; with no form values, every step the category can need. */
+  additionalSteps(hd: string, cat: string, f?: Record<string, unknown>): string[] {
+    const c = this.category(hd, cat);
+    if (hd === 'LND') return (f ? f.reqType === 'course' : c?.requestType === 'course') ? ['lnd'] : [];
+    const rules = c?.approvalRule ?? [];
+    if (!f) return [...new Set(rules.flatMap((r) => r.chain.filter((s) => s !== 'mgr')))];
+    for (const r of rules) if (r.when === null || evalCond(r.when, f)) return r.chain.filter((s) => s !== 'mgr');
+    return [];
   }
   fieldLabel(key: string): string {
     const fromDb = this.fields.find((f) => f.key === key)?.label;

@@ -15,7 +15,8 @@ export type Modal =
   | { type: 'cat'; hd: string; key?: string }
   | { type: 'field'; hd: string; cat: string; id?: number }
   | { type: 'role'; userId?: string }
-  | { type: 'faq'; id: number };
+  | { type: 'faq'; id: number }
+  | { type: 'ooo' };
 interface Toast { id: number; msg: string; kind?: 'ok' | 'bad' }
 
 interface UiState {

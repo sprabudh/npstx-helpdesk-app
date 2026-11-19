@@ -52,6 +52,9 @@ export class CategoryEntity {
   @Column({ name: 'sla_override', type: 'json', nullable: true }) slaOverride: Record<string, [number, number]> | null;
   @Column({ name: 'approval_rule', type: 'json', nullable: true })
   approvalRule: { when: Condition | null; chain: string[] }[] | null;
+  @Column({ name: 'mgr_approval', type: 'boolean', default: false }) mgrApproval: boolean;
+  /** Sub-categories the manager step applies to; null means every sub-category. */
+  @Column({ name: 'mgr_approval_subs', type: 'json', nullable: true }) mgrApprovalSubs: string[] | null;
   @Column({ type: 'boolean', default: true }) active: boolean;
   @Column({ name: 'sort_order', type: 'int', default: 0 }) sortOrder: number;
 }
@@ -117,6 +120,9 @@ export class TicketEntity {
   @Column({ name: 'ladder_base', type: 'int', default: 0 }) ladderBase: number;
   @Column({ name: 'asg_hist', type: 'json', nullable: true }) asgHist: AsgRecord[] | null;
   @Column({ name: 'esc_log', type: 'json', nullable: true }) escLog: EscRecord[] | null;
+  /** False while approvals are pending: no SLA clock exists until the last approval. */
+  @Column({ name: 'sla_started', type: 'boolean', default: true }) slaStarted: boolean;
+  @Column({ name: 'sla_start', type: 'datetime', nullable: true }) slaStart: Date | null;
 }
 
 /** One assignment step on a ticket (Fix 1 / Fix 4). `how` distinguishes routing, absence cover, manual, queue claim and escalation. */
@@ -132,7 +138,8 @@ export interface EscRecord {
   at: string;
   from: string | null;
   to: string;
-  how: 'auto' | 'manual';
+  /** 'sla' when a resolution-time threshold triggered it ('auto' in rows written before v0.3). */
+  how: 'sla' | 'manual' | 'auto';
   by: string | null;
 }
 
@@ -167,6 +174,14 @@ export class SlaVersionEntity {
   @Column({ name: 'category_overrides', type: 'json', nullable: true }) categoryOverrides: Record<string, Record<string, [number, number]>> | null;
   @Column({ name: 'ladder_pct', type: 'json', nullable: true }) ladderPct: Record<string, number[]> | null;
   @Column({ type: 'varchar', length: 300, nullable: true }) note: string | null;
+  @Column({ type: 'json', nullable: true }) changes: SlaChange[] | null;
+}
+
+/** One cell changed by an SLA version: which value, and its value before and after. */
+export interface SlaChange {
+  what: string;
+  before: number | string | null;
+  after: number | string | null;
 }
 
 @Entity('ticket_comments')

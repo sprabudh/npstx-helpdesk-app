@@ -7,7 +7,9 @@ import { Helpdesk, HD_ORDER, Principal, Role, TicketCtx } from './types';
 export const SF_DEPTS = ['Sales', 'Presales', 'Solutions'];
 export const WORK_ROLES: Role[] = ['HR_AGENT', 'LND_HEAD', 'LND_COORD', 'SF_ADMIN', 'IT_AGENT', 'IT_HEAD', 'ADM_AGENT', 'ADM_HEAD', 'HD_ADMIN'];
 export const HEAD_ROLES: Role[] = ['LND_HEAD', 'IT_HEAD', 'ADM_HEAD', 'HD_ADMIN', 'AUDITOR', 'SF_ADMIN', 'HRLND_ADMIN'];
-export const APPROVER_ROLES: Role[] = ['MANAGER', 'LND_HEAD', 'HRLND_ADMIN', 'IT_HEAD', 'ADM_HEAD'];
+export const APPROVER_ROLES: Role[] = ['MANAGER', 'LND_HEAD', 'HRLND_ADMIN', 'IT_HEAD', 'ADM_HEAD', 'HD_ADMIN'];
+/** TC: when false, priority is hidden from plain requesters everywhere (staff still see it). */
+export const PRIORITY_VISIBLE_TO_REQUESTER = true;
 /** Helpdesks that use the Resolve → confirm → Closed model (the L&D style). */
 export const STM_HDS: Helpdesk[] = ['LND', 'IT', 'ADM'];
 
@@ -24,7 +26,8 @@ export const chainOf = (t: TicketCtx) => [...t.approvals].sort((a, b) => a.seq -
 export const apMgr = (t: TicketCtx) => t.approvals.find((a) => a.step === 'mgr')?.approverId || t.requesterManagerId;
 
 export function canApproveStep(u: Principal, t: TicketCtx, step: string): boolean {
-  if (step === 'mgr') return has(u, 'MANAGER') && apMgr(t) === u.id;
+  // A requester with no manager has the manager step routed to a Helpdesk admin (TC).
+  if (step === 'mgr') return (has(u, 'MANAGER') || has(u, 'HD_ADMIN')) && apMgr(t) === u.id;
   if (step === 'lnd') return has(u, 'LND_HEAD') || has(u, 'HRLND_ADMIN');
   if (step === 'ith') return has(u, 'IT_HEAD');
   if (step === 'adm') return has(u, 'ADM_HEAD');

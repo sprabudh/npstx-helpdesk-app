@@ -24,7 +24,9 @@
    "slaOverride": null,
    "sortOrder": 0,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "HR",
@@ -50,7 +52,9 @@
    "slaOverride": null,
    "sortOrder": 1,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "HR",
@@ -74,7 +78,9 @@
    "slaOverride": null,
    "sortOrder": 2,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "HR",
@@ -98,7 +104,9 @@
    "slaOverride": null,
    "sortOrder": 3,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "HR",
@@ -123,7 +131,9 @@
    "slaOverride": null,
    "sortOrder": 4,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "HR",
@@ -146,7 +156,9 @@
    "slaOverride": null,
    "sortOrder": 5,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "HR",
@@ -170,7 +182,9 @@
    "slaOverride": null,
    "sortOrder": 6,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "HR",
@@ -194,7 +208,9 @@
    "slaOverride": null,
    "sortOrder": 7,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "HR",
@@ -217,7 +233,9 @@
    "slaOverride": null,
    "sortOrder": 8,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "HR",
@@ -239,7 +257,9 @@
    "slaOverride": null,
    "sortOrder": 9,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "LND",
@@ -264,7 +284,9 @@
    "slaOverride": null,
    "sortOrder": 0,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": true,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "LND",
@@ -289,7 +311,9 @@
    "slaOverride": null,
    "sortOrder": 1,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "LND",
@@ -313,7 +337,9 @@
    "slaOverride": null,
    "sortOrder": 2,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "LND",
@@ -338,7 +364,9 @@
    "slaOverride": null,
    "sortOrder": 3,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "LND",
@@ -363,7 +391,9 @@
    "slaOverride": null,
    "sortOrder": 4,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "LND",
@@ -389,7 +419,9 @@
    "slaOverride": null,
    "sortOrder": 5,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "LND",
@@ -412,7 +444,9 @@
    "slaOverride": null,
    "sortOrder": 6,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "LND",
@@ -435,7 +469,9 @@
    "slaOverride": null,
    "sortOrder": 7,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "LND",
@@ -457,7 +493,9 @@
    "slaOverride": null,
    "sortOrder": 8,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "IT",
@@ -483,7 +521,9 @@
    "slaOverride": null,
    "sortOrder": 0,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "IT",
@@ -522,6 +562,11 @@
       "mgr"
      ]
     }
+   ],
+   "mgrApproval": true,
+   "mgrApprovalSubs": [
+    "Install new software",
+    "Software licence request"
    ]
   },
   {
@@ -574,7 +619,9 @@
       "mgr"
      ]
     }
-   ]
+   ],
+   "mgrApproval": true,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "IT",
@@ -600,7 +647,9 @@
    "slaOverride": null,
    "sortOrder": 3,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "IT",
@@ -625,7 +674,9 @@
    "slaOverride": null,
    "sortOrder": 4,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "IT",
@@ -651,7 +702,9 @@
    "slaOverride": null,
    "sortOrder": 5,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "IT",
@@ -676,7 +729,9 @@
    "slaOverride": null,
    "sortOrder": 6,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "IT",
@@ -716,7 +771,9 @@
    },
    "sortOrder": 7,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "IT",
@@ -738,7 +795,9 @@
    "slaOverride": null,
    "sortOrder": 8,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "ADM",
@@ -764,7 +823,9 @@
    "slaOverride": null,
    "sortOrder": 0,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "ADM",
@@ -789,7 +850,9 @@
    "slaOverride": null,
    "sortOrder": 1,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "ADM",
@@ -835,7 +898,9 @@
       "mgr"
      ]
     }
-   ]
+   ],
+   "mgrApproval": true,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "ADM",
@@ -859,7 +924,9 @@
    "slaOverride": null,
    "sortOrder": 3,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "ADM",
@@ -883,7 +950,9 @@
    "slaOverride": null,
    "sortOrder": 4,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "ADM",
@@ -908,7 +977,9 @@
    "slaOverride": null,
    "sortOrder": 5,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "ADM",
@@ -932,7 +1003,9 @@
    "slaOverride": null,
    "sortOrder": 6,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "ADM",
@@ -956,7 +1029,9 @@
    "slaOverride": null,
    "sortOrder": 7,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "ADM",
@@ -981,7 +1056,9 @@
    "slaOverride": null,
    "sortOrder": 8,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "ADM",
@@ -1026,7 +1103,9 @@
       "adm"
      ]
     }
-   ]
+   ],
+   "mgrApproval": true,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "ADM",
@@ -1048,7 +1127,9 @@
    "slaOverride": null,
    "sortOrder": 10,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "SF",
@@ -1073,7 +1154,9 @@
    "slaOverride": null,
    "sortOrder": 0,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "SF",
@@ -1098,7 +1181,9 @@
    "slaOverride": null,
    "sortOrder": 1,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "SF",
@@ -1122,7 +1207,9 @@
    "slaOverride": null,
    "sortOrder": 2,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "SF",
@@ -1147,7 +1234,9 @@
    "slaOverride": null,
    "sortOrder": 3,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "SF",
@@ -1171,7 +1260,9 @@
    "slaOverride": null,
    "sortOrder": 4,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "SF",
@@ -1195,7 +1286,9 @@
    "slaOverride": null,
    "sortOrder": 5,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "SF",
@@ -1218,7 +1311,9 @@
    "slaOverride": null,
    "sortOrder": 6,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "SF",
@@ -1241,7 +1336,9 @@
    "slaOverride": null,
    "sortOrder": 7,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   },
   {
    "helpdesk": "SF",
@@ -1263,7 +1360,9 @@
    "slaOverride": null,
    "sortOrder": 8,
    "active": true,
-   "approvalRule": null
+   "approvalRule": null,
+   "mgrApproval": false,
+   "mgrApprovalSubs": null
   }
  ],
  "formFields": [
@@ -3453,6 +3552,7 @@
    ],
    "SF": [
     "u5",
+    "u27",
     "q_sf",
     "q_sf_sr"
    ]
@@ -3660,13 +3760,28 @@
     "Employees",
     [
      "u1",
-     "u6"
+     "u12"
     ]
    ],
    [
-    "HR and L&D",
+    "Managers",
+    [
+     "u6",
+     "u7"
+    ]
+   ],
+   [
+    "HR",
     [
      "u3",
+     "u10",
+     "u9",
+     "u13"
+    ]
+   ],
+   [
+    "L&D",
+    [
      "u8",
      "u4"
     ]
@@ -3675,6 +3790,7 @@
     "IT and Support",
     [
      "u21",
+     "u22",
      "u23"
     ]
    ],
@@ -3686,10 +3802,13 @@
     ]
    ],
    [
-    "SFO · Sales Front Office (Salesforce)",
+    "Sales Front Office",
     [
      "u2",
-     "u5"
+     "u15",
+     "u16",
+     "u5",
+     "u27"
     ]
    ],
    [
@@ -4086,6 +4205,11 @@
    "PAY",
    "LEAVE",
    "REIMB"
-  ]
+  ],
+  "queueMembers": {
+   "q_sf_sr": [
+    "u27"
+   ]
+  }
  }
 }

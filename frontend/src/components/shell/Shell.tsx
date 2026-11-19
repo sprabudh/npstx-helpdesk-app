@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api, setToken } from '../../api/client';
-import { useAction, useConfig, useMe, useNotifications } from '../../api/hooks';
+import { useAction, useConfig, useMe, useNotifications, usePersonas } from '../../api/hooks';
 import type { ListItem } from '../../api/types';
 import { fdt, HDL } from '../../lib/format';
 import { Icon } from '../../lib/icons';
@@ -10,7 +10,7 @@ import { useUi } from '../../store/ui';
 import { Avatar, HdBadge, Pill } from '../common/bits';
 
 const NAV: [string, string][] = [['home', 'Home'], ['user', 'My profile'], ['clock', 'Attendance'], ['cal', 'Leave'], ['wallet', 'Payroll'], ['book', 'Learning'], ['target', 'Performance'], ['help', 'Helpdesk'], ['gear', 'Settings']];
-const CRUMB: Record<string, string> = { dashboard: 'Dashboard', tickets: 'My tickets', assigned: 'Assigned to me', following: "Following / CC'd", history: 'History', faqs: 'FAQs', admin: 'Admin console' };
+const CRUMB: Record<string, string> = { dashboard: 'Dashboard', tickets: 'My tickets', assigned: 'Assigned to me', following: "Following / CC'd", history: 'History', faqs: 'FAQs', admin: 'Admin console', performance: 'My performance' };
 
 export function Sidebar() {
   const { data: me } = useMe();
@@ -27,13 +27,13 @@ export function Sidebar() {
               {!!me?.counts.waiting && <em className="nb">{me.counts.waiting}</em>}
             </Link>
           ) : (
-            <a key={l} href="#" title={l} onClick={(e) => { e.preventDefault(); toast(`${l} is another NPSTX module. This app covers Helpdesk only.`); }}>
+            <a key={l} href="#" className="nav-other" title={l} onClick={(e) => { e.preventDefault(); toast(`${l} is another NPSTX module. This app covers Helpdesk only.`); }}>
               <Icon n={i} s={18} /><span>{l}</span>
             </a>
           ),
         )}
       </nav>
-      <div className="side-foot">NPSTX HR platform · Helpdesk module v1.0</div>
+      <div className="side-foot">NPSTX HR platform · Helpdesk module v0.3 (mock)</div>
     </aside>
   );
 }
@@ -63,7 +63,7 @@ export function Topbar({ onPersona }: { onPersona: (id: string) => void }) {
   const route = loc.pathname.split('/')[1] || 'dashboard';
   const { notifOpen, set } = useUi();
   const userId = useUi((s) => s.userId);
-  const { data: personas } = useQuery({ queryKey: ['personas'], queryFn: () => api<{ defaultUserId: string; groups: { label: string; people: { id: string; name: string; title: string }[] }[] }>('/auth/personas'), retry: false });
+  const { data: personas } = usePersonas();
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const h = (e: MouseEvent) => notifOpen && ref.current && !ref.current.contains(e.target as Node) && set({ notifOpen: false });
@@ -81,7 +81,7 @@ export function Topbar({ onPersona }: { onPersona: (id: string) => void }) {
             <select className="in" id="persona" value={userId ?? ''} onChange={(e) => onPersona(e.target.value)}>
               {personas.groups.map((g) => (
                 <optgroup key={g.label} label={g.label}>
-                  {g.people.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.title}</option>)}
+                  {g.people.map((p) => <option key={p.id} value={p.id}>{p.name} — {p.title}{p.onLeave ? ' · on leave today' : ''}</option>)}
                 </optgroup>
               ))}
             </select>
@@ -130,7 +130,8 @@ export function ModuleHeader({ from }: { from: string }) {
   const hl = me.helpdesks.map((h) => HDL[h]);
   const tabs: [string, string, number?, string?][] = [
     ['dashboard', 'Dashboard', 0, 'chart'], ['tickets', 'My tickets'], ...(me.flags.worker ? [['assigned', 'Assigned to me', me.counts.assignedOpen] as [string, string, number]] : []),
-    ['following', "Following / CC'd", me.counts.followCount], ['history', 'History'], ['faqs', 'FAQs'], ...(me.flags.helpdeskAdmin ? [['admin', 'Admin console', 0, 'gear'] as [string, string, number, string]] : []),
+    ['history', 'History'], ['faqs', 'FAQs'],
+    ...(me.flags.worker ? [['performance', 'My performance', 0, 'target'] as [string, string, number, string]] : []), ...(me.flags.helpdeskAdmin ? [['admin', 'Admin console', 0, 'gear'] as [string, string, number, string]] : []),
   ];
   return (
     <div className="mh">
@@ -142,7 +143,7 @@ export function ModuleHeader({ from }: { from: string }) {
         <div className="mh-actions">
           {from !== 'dashboard' && <GlobalSearch />}
           {me.flags.helpdeskAdmin && from !== 'admin' && <button className="btn" onClick={() => nav('/admin')}><Icon n="gear" s={16} />Configure</button>}
-          <button className="btn primary" onClick={() => set({ drawer: {} })}><Icon n="plus" s={16} />Raise ticket</button>
+          {from !== 'dashboard' && <button className="btn primary" onClick={() => set({ drawer: {} })}><Icon n="plus" s={16} />Raise ticket</button>}
         </div>
       </div>
       <nav className="subnav" aria-label="Helpdesk pages">
@@ -178,7 +179,7 @@ export function RoleStrip() {
               <span className="lbl">Demo states</span>
               <button className="linkbtn" onClick={() => { set({ demo: 'loading' }); nav('/tickets'); setTimeout(() => set({ demo: null }), 1600); toast('Showing the loading state'); }}>Loading</button>
               <button className="linkbtn" onClick={() => { set({ demo: 'error' }); nav('/tickets'); toast('Showing the error state. Select Retry to recover.'); }}>Error</button>
-              <button className="linkbtn" onClick={async () => { await act.run(() => api('/demo/out-of-office', { method: 'POST', body: { on: !me.outOfOffice } })); await qc.invalidateQueries(); }}>{me.outOfOffice ? 'Back in office (demo)' : 'Out of office (demo)'}</button>
+              <button className="linkbtn" onClick={() => set({ modal: { type: 'ooo' } })}>Out of office (demo)</button>
               <button className="linkbtn" onClick={async () => { await act.run(() => api('/demo/reset', { method: 'POST' })); qc.clear(); nav('/dashboard'); }}>Reset demo data</button>
             </>
           )}
@@ -205,6 +206,10 @@ export function Layout({ from, children, onPersona }: { from: string; children: 
           <RoleStrip />
           <div className="page">{children}</div>
         </main>
+        <footer className="app-foot">
+          <span>NPSTX HR platform · Helpdesk module v0.3 (mock)</span>
+          <span className="app-foot-r">© {new Date().getFullYear()} NPSTX · All rights reserved</span>
+        </footer>
       </div>
     </div>
   );

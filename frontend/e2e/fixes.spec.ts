@@ -6,7 +6,7 @@ test.beforeEach(async ({ request }) => resetDemo(request));
 // Fix 3: no priority control anywhere in the raise drawer.
 test('Fix 3 · raise form has no priority field', async ({ page }) => {
   await openAs(page, 'u1');
-  await page.locator('.mh-actions .btn.primary', { hasText: 'Raise ticket' }).click();
+  await page.locator('.bigbtn.primary', { hasText: 'Raise ticket' }).click();
   await page.locator('.hdcard', { hasText: 'HR helpdesk' }).click();
   await page.selectOption('#d-cat', 'PAY');
   await expect(page.locator('#d-pri')).toHaveCount(0);
@@ -41,18 +41,22 @@ test('Fix 4 · assignee performance report', async ({ page }) => {
   await expect(page.locator('table.t', { hasText: 'Unassigned (queues)' })).toBeVisible();
 });
 
-// Fix 1: the demo out-of-office toggle flips the signed-in person and their label.
-test('Fix 1 · out-of-office demo toggle', async ({ page }) => {
+// Fix 1: the demo out-of-office panel toggles a person's leave state.
+test('Fix 1 · out-of-office demo panel toggles a person', async ({ page }) => {
   await openAs(page, 'u1');
   await page.getByRole('button', { name: 'Out of office (demo)' }).click();
-  await expect(toast(page)).toContainText('out of office');
-  await expect(page.getByRole('button', { name: 'Back in office (demo)' })).toBeVisible();
+  const dlg = page.locator('.dlg', { hasText: 'Out of office (demo)' });
+  await expect(dlg).toBeVisible();
+  const sw = dlg.getByRole('switch', { name: 'Kavya Nair on leave today' });
+  await expect(sw).not.toBeChecked();
+  await sw.click();
+  await expect(sw).toBeChecked();
 });
 
 // Fix 1: an HR leave ticket routes past the absent category lead to the next available person.
 test('Fix 1 · absent lead is covered by the next available person', async ({ page }) => {
   await openAs(page, 'u1');
-  await page.locator('.mh-actions .btn.primary', { hasText: 'Raise ticket' }).click();
+  await page.locator('.bigbtn.primary', { hasText: 'Raise ticket' }).click();
   await page.locator('.hdcard', { hasText: 'HR helpdesk' }).click();
   await page.selectOption('#d-cat', 'LEAVE');
   await page.selectOption('#d-sub', 'Leave balance');

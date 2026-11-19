@@ -11,6 +11,7 @@ import { setTimeZone } from './lib/format';
 import AdminPage from './pages/AdminPage';
 import DashboardPage from './pages/DashboardPage';
 import { FaqPage, FollowingPage, HistoryPage } from './pages/ListPages';
+import MyPerformancePage from './pages/MyPerformancePage';
 import TicketDetailPage from './pages/TicketDetailPage';
 import TicketsPage from './pages/TicketsPage';
 import { useUi } from './store/ui';
@@ -64,6 +65,7 @@ function Pages({ onPersona }: { onPersona: (id: string) => void }) {
           <Route path="/history" element={<HistoryPage />} />
           <Route path="/faqs" element={<FaqPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/performance" element={<MyPerformancePage />} />
           <Route path="/ticket/:key" element={<TicketDetailPage />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>

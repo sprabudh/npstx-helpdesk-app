@@ -313,6 +313,20 @@
    "hrCategories": []
   },
   {
+   "id": "u27",
+   "name": "Karan Mehta",
+   "dept": "Sales",
+   "title": "Senior SFO Case Admin",
+   "location": "Pune",
+   "managerId": "u7",
+   "isQueue": false,
+   "roles": [
+    "EMP",
+    "SF_ADMIN"
+   ],
+   "hrCategories": []
+  },
+  {
    "id": "q_lnd",
    "name": "L&D Support queue",
    "dept": null,
@@ -3287,8 +3301,8 @@
   {
    "helpdesk": "HR",
    "sortOrder": 3,
-   "question": "What does priority mean?",
-   "answer": "Priority shows urgency (High, Medium, Low). It is set by the ticket's category and can be changed by the HR agent.",
+   "question": "How is my ticket prioritised?",
+   "answer": "You do not choose a priority. Each ticket is prioritised automatically from its category and the details you give, and your HR agent can adjust it.",
    "categoryKey": null
   },
   {
@@ -3379,7 +3393,7 @@
    "helpdesk": "LND",
    "sortOrder": 6,
    "question": "I am not mapped to my training session.",
-    "answer": "Raise a **Training sessions** ticket with the session name and date. Priority is set automatically (High if the session is within two days). [Confirm rule with L&D.]",
+   "answer": "Raise a **Training sessions** ticket with the session name and date. Sessions within the next two days are handled first. [Confirm rule with L&D.]",
    "categoryKey": "SESSION"
   },
   {
@@ -3435,7 +3449,7 @@
    "helpdesk": "IT",
    "sortOrder": 4,
    "question": "I forgot my password or my account is locked.",
-   "answer": "Try the self-service reset first. [Confirm the reset portal link.] If it still fails, raise **Account and password**. These tickets start at High priority.",
+    "answer": "Try the self-service reset first. [Confirm the reset portal link.] If it still fails, raise **Account and password**. These are handled urgently.",
    "categoryKey": "ACCT"
   },
   {
@@ -3484,7 +3498,7 @@
    "helpdesk": "ADM",
    "sortOrder": 1,
    "question": "Something in the office needs repair (AC, lights, plumbing).",
-   "answer": "Choose **Facilities and maintenance**. Add the building, floor, exact spot and urgency. Choose Immediately for anything unsafe, such as sparks or water near sockets; that sets High priority.",
+    "answer": "Choose **Facilities and maintenance**. Add the building, floor, exact spot and urgency. Choose Immediately for anything unsafe, such as sparks or water near sockets; that flags it for the Admin Desk to act on straight away.",
    "categoryKey": "FAC"
   },
   {

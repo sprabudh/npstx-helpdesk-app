@@ -3,6 +3,7 @@ import { join } from 'path';
 import { DataSource } from 'typeorm';
 import { clock, fromIst, istDate } from '../common/clock';
 import { env } from '../common/env';
+import { AsgRecord, EscRecord } from '../database/entities';
 
 interface SeedData {
   users: any[];
@@ -73,10 +74,12 @@ export class SeedService {
       for (const c of cfg.categories) {
         await qr.query(
           `INSERT INTO categories (helpdesk,cat_key,name,subs,default_priority,lead_id,owner_id,queue_id,confidential,restricted,
-           reopen_allowed,request_type,needs_record,needs_impact,sla_override,approval_rule,active,sort_order) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+           reopen_allowed,request_type,needs_record,needs_impact,sla_override,approval_rule,mgr_approval,mgr_approval_subs,active,sort_order)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
           [c.helpdesk, c.key, c.name, JSON.stringify(c.subs), c.defaultPriority, c.leadId, c.ownerId, c.queueId, c.confidential, c.restricted,
             c.reopenAllowed, c.requestType, c.needsRecord, c.needsImpact, c.slaOverride ? JSON.stringify(c.slaOverride) : null,
-            c.approvalRule ? JSON.stringify(c.approvalRule) : null, c.active ? 1 : 0, c.sortOrder],
+            c.approvalRule ? JSON.stringify(c.approvalRule) : null, c.mgrApproval ? 1 : 0, c.mgrApprovalSubs ? JSON.stringify(c.mgrApprovalSubs) : null,
+            c.active ? 1 : 0, c.sortOrder],
         );
       }
       for (const f of cfg.formFields) {
@@ -107,29 +110,18 @@ export class SeedService {
 
       const nameToId = new Map<string, string>(data.users.map((u) => [u.name, u.id]));
       for (const t of data.tickets) {
-        // Fix 4: derive the assignment history and escalation log from the sample events so the
-        // Assignee performance report has data on day one (new tickets write these live).
-        const asgEvents = t.events.filter((e: any) => e.kind === 'assign');
-        const firstAsgAt = at(asgEvents[0]?.at ?? t.createdAt);
-        const asgHist = [{ u: t.assigneeId, at: (firstAsgAt ?? clock.now()).toISOString(), how: String(t.assigneeId).startsWith('q_') ? 'queue-claim' : 'routing', coverFor: null }];
-        for (let i = 1; i < asgEvents.length; i++) asgHist.push({ u: t.assigneeId, at: at(asgEvents[i].at)!.toISOString(), how: 'manual', coverFor: null });
-        let prevTo = t.assigneeId;
-        const escLog = t.events.filter((e: any) => e.kind === 'esc').map((e: any) => {
-          const level = Number((/Level (\d+)/.exec(e.text) || [])[1] || 1);
-          const name = e.text.replace(/^Escalated to Level \d+ · /, '').replace(/ \(.*\)$/, '').trim();
-          const to = nameToId.get(name) || t.assigneeId;
-          const rec = { level, at: at(e.at)!.toISOString(), from: prevTo, to, how: 'auto', by: null };
-          prevTo = to;
-          return rec;
-        });
+        const { asgHist, escLog } = SeedService.history(t, nameToId, at);
+        const rejectedAtApproval = t.status === 'Rejected' && !!t.approval && Object.values(t.approval).includes('Rejected');
+        const slaStarted = t.status !== 'Pending approval' && !rejectedAtApproval;
         await qr.query(
           `INSERT INTO tickets (ticket_key,helpdesk,category_key,sub_category,title,description,priority,status,close_response,close_message,
            requester_id,assignee_id,created_at,updated_at,closed_at,closed_by_id,response_due,resolution_due,response_met,confidential,
-           escalation_level,paused,related_key,fields,ai_transcript,sla_ver,ladder_base,asg_hist,esc_log) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?,?,?)`,
+           escalation_level,paused,related_key,fields,ai_transcript,sla_ver,ladder_base,asg_hist,esc_log,sla_started,sla_start)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,?,?,?,?,?,NULL)`,
           [t.key, t.helpdesk, t.categoryKey, t.subCategory, t.title, t.description, t.priority, t.status, t.closeResponse, t.closeMessage,
             t.requesterId, t.assigneeId, at(t.createdAt), at(t.updatedAt), at(t.closedAt), t.closedById,
             at(t.responseDue), at(t.resolutionDue), t.responseMet, t.confidential, t.escalationLevel, t.paused, t.relatedKey,
-            JSON.stringify(t.fields || {}), 1, 0, JSON.stringify(asgHist), escLog.length ? JSON.stringify(escLog) : null],
+            JSON.stringify(t.fields || {}), 1, 0, JSON.stringify(asgHist), escLog.length ? JSON.stringify(escLog) : null, slaStarted ? 1 : 0],
         );
         for (const c of t.comments)
           await qr.query('INSERT INTO ticket_comments (ticket_key,author_id,body,internal,created_at) VALUES (?,?,?,?,?)', [t.key, c.authorId, c.body, c.internal, at(c.createdAt)]);
@@ -158,16 +150,15 @@ export class SeedService {
             await qr.query('INSERT INTO sf_child_cases (ticket_key,case_no,title,status,owner_name) VALUES (?,?,?,?,?)', [t.key, no, title, status, owner]);
         }
       }
-      // Fix 1: a few demo absences, relative to today, so cover routing can be seen without setup.
-      // HR lead Priya Rao is away today (cover steps in); L&D coordinator Kavya Nair is away tomorrow;
-      // the whole IT ladder (lead, IT head, service owner) is away today to show the "Unattended" path.
+      // Demo absences relative to today: HR lead Priya Rao is on leave today (Anil Gupta covers), Kavya Nair
+      // is on leave tomorrow, and Admin Desk lead Pooja Shetty and the next ladder person Rahul Kapoor are
+      // both away today, so new Admin Desk tickets show the "no cover available" path.
       const today = istDate(clock.now());
       const tomorrow = istDate(new Date(clock.nowMs() + 86400000));
-      const absences: [string, string, string][] = [
-        ['u3', today, today], ['u8', tomorrow, tomorrow], ['u21', today, today], ['u23', today, today], ['u20', today, today],
-      ];
+      const absences: [string, string, string][] = [['u3', today, today], ['u8', tomorrow, tomorrow], ['u24', today, today], ['u25', today, today]];
       for (const [uid, from, to] of absences)
         await qr.query('INSERT INTO absences (user_id,from_date,to_date,type,status) VALUES (?,?,?,?,?)', [uid, from, to, 'Leave', 'Approved']);
+      await qr.query('INSERT INTO attendance (user_id,date,status,marked_at) VALUES (?,?,?,?)', ['u22', today, 'WFH', clock.now()]);
       // newest first in the artifact; insert oldest first so ids increase with time
       for (const n of [...data.notifications].reverse())
         await qr.query('INSERT INTO notifications (user_id,text,ticket_key,created_at,read_at) VALUES (?,?,?,?,?)', [n.userId, n.text, n.ticketKey, at(n.createdAt), n.read ? at(n.createdAt) : null]);
@@ -185,5 +176,44 @@ export class SeedService {
     } finally {
       await qr.release();
     }
+  }
+
+  /**
+   * Assignment history and escalation log rebuilt from a sample ticket's events, so the Assignee
+   * performance report has data on day one (live tickets write both as things happen).
+   * An escalation to the person already holding the ticket (Level 1 = category lead) is not a handover.
+   */
+  static history(t: any, nameToId: Map<string, string>, at: (s: string | null | undefined) => Date | null) {
+    const iso = (s: string) => (at(s) ?? clock.now()).toISOString();
+    const asgHist: AsgRecord[] = [];
+    const escLog: EscRecord[] = [];
+    let holder: string | null = null;
+    const push = (u: string, when: string, how: AsgRecord['how']) => {
+      asgHist.push({ u, at: when, how, coverFor: null });
+      holder = u;
+    };
+    for (const e of t.events as { at: string; text: string; kind: string }[]) {
+      if (e.kind === 'assign') {
+        const picked = /^Placed in (.+?) · picked up by (.+)$/.exec(e.text);
+        const moved = /^Reassigned from (.+?) to (.+?) by /.exec(e.text);
+        if (picked && !holder) {
+          push(nameToId.get(picked[1]) ?? t.assigneeId, iso(t.createdAt), 'routing');
+          push(nameToId.get(picked[2]) ?? t.assigneeId, iso(e.at), 'queue-claim');
+        } else if (moved && holder) {
+          const to = nameToId.get(moved[2]);
+          if (to && to !== holder) push(to, iso(e.at), String(holder).startsWith('q_') ? 'queue-claim' : 'manual');
+        }
+      } else if (e.kind === 'esc') {
+        if (!holder) push(t.assigneeId, iso(t.createdAt), 'routing');
+        const level = Number((/Level (\d+)/.exec(e.text) || [])[1] || 1);
+        const name = e.text.replace(/^Escalated to Level \d+ · /, '').replace(/ \(.*$/, '').trim();
+        const to = nameToId.get(name) ?? t.assigneeId;
+        const by = /^by (.+?)( · |$)/.exec(e.text.replace(/^.*?\) /, ''));
+        escLog.push({ level, at: iso(e.at), from: holder, to, how: by ? 'manual' : 'sla', by: by ? nameToId.get(by[1]) ?? null : null });
+        if (to !== holder) push(to, iso(e.at), 'escalation');
+      }
+    }
+    if (!holder) push(t.assigneeId, iso(t.createdAt), 'routing');
+    return { asgHist, escLog };
   }
 }

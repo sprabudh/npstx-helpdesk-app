@@ -5,6 +5,7 @@ import { CurrentUser, RequireAnyRole } from '../common/decorators';
 import type { Principal } from '../domain/types';
 import { SlaScheduler } from '../sla/sla.scheduler';
 import { AuditService } from '../audit/audit.service';
+import { PerformanceService } from '../performance/performance.service';
 import { AdminService } from './admin.service';
 
 export class CategoryDto {
@@ -16,7 +17,14 @@ export class CategoryDto {
   @ApiPropertyOptional() @IsOptional() @IsBoolean() confidential?: boolean;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() reopenAllowed?: boolean;
   @ApiPropertyOptional({ enum: ['portal', 'course'] }) @IsOptional() @IsIn(['portal', 'course']) requestType?: string;
+  @ApiPropertyOptional({ description: 'Manager approval needed' }) @IsOptional() @IsBoolean() mgrApproval?: boolean;
+  @ApiPropertyOptional({ type: [String], description: 'Sub-categories the manager step applies to; empty or missing means all' }) @IsOptional() @IsArray() @IsString({ each: true }) mgrApprovalSubs?: string[] | null;
 }
+export class MgrApprovalDto {
+  @ApiProperty() @IsBoolean() on: boolean;
+  @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @IsString({ each: true }) subs?: string[] | null;
+}
+export class PerfLogDto { @ApiProperty({ enum: ['open', 'filter', 'export'] }) @IsIn(['open', 'filter', 'export']) event: string; @ApiPropertyOptional() @IsOptional() @IsString() @Length(0, 200) detail?: string }
 export class ActiveDto { @ApiProperty() @IsBoolean() active: boolean }
 export class LeadDto { @ApiProperty() @IsString() userId: string }
 export class FieldDto {
@@ -49,7 +57,7 @@ export class RolesDto { @ApiProperty({ type: [String] }) @IsArray() @IsString({ 
 @RequireAnyRole('HD_ADMIN')
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly svc: AdminService, private readonly sla: SlaScheduler, private readonly audit: AuditService) {}
+  constructor(private readonly svc: AdminService, private readonly sla: SlaScheduler, private readonly audit: AuditService, private readonly perf: PerformanceService) {}
 
   @Get() overview(@CurrentUser() u: Principal) {
     return this.svc.overview(u);
@@ -62,6 +70,9 @@ export class AdminController {
   }
   @Patch('categories/:id/active') active(@CurrentUser() u: Principal, @Param('id', ParseIntPipe) id: number, @Body() b: ActiveDto) {
     return this.svc.setCategoryActive(u, id, b.active);
+  }
+  @Patch('categories/:id/mgr-approval') mgrApproval(@CurrentUser() u: Principal, @Param('id', ParseIntPipe) id: number, @Body() b: MgrApprovalDto) {
+    return this.svc.setMgrApproval(u, id, b.on, b.subs ?? null);
   }
   @Patch('categories/:id/lead') lead(@CurrentUser() u: Principal, @Param('id', ParseIntPipe) id: number, @Body() b: LeadDto) {
     return this.svc.setCategoryLead(u, id, b.userId);
@@ -93,8 +104,12 @@ export class AdminController {
   @Get('audit') auditLog() {
     return this.audit.list(100);
   }
-  @Get('performance') performance(@CurrentUser() u: Principal, @Query('hd') hd?: string, @Query('range') range?: string, @Query('q') q?: string) {
-    return this.svc.performance(u, { hd, range, q });
+  @Get('performance') performance(@CurrentUser() u: Principal, @Query('hd') hd?: string, @Query('range') range?: string, @Query('q') q?: string, @Query('group') group?: string) {
+    return this.perf.report(u, { hd, range, q, group });
+  }
+  @Post('performance/log') @HttpCode(200) async perfLog(@CurrentUser() u: Principal, @Body() b: PerfLogDto) {
+    await this.perf.log(u, b.event, b.detail ?? '');
+    return { toast: null };
   }
   @Post('sla/run') @HttpCode(200) async runSla(@CurrentUser() u: Principal) {
     const r = await this.sla.tick();

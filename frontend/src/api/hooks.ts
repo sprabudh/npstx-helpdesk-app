@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useUi, type TicketFilters } from '../store/ui';
 import { api, ApiError } from './client';
-import type { Analytics, Config, Detail, Faq, ListItem, ListResponse, Me, Notification, Performance } from './types';
+import type { Absences, Analytics, Config, Detail, Faq, ListItem, ListResponse, Me, Notification, Performance, Persona } from './types';
 
 const qs = (o: Record<string, unknown>) => {
   const p = new URLSearchParams();
@@ -30,8 +30,13 @@ export const useApprovals = (enabled: boolean) => useQuery({ queryKey: ['approva
 export const usePeople = (hd: string | null | undefined) => useQuery({ queryKey: ['people', uid(), hd], queryFn: () => api<{ id: string; name: string; dept: string | null; title: string | null }[]>(`/tickets/people?hd=${hd}`), enabled: !!hd, staleTime: 60000 });
 export const useRelatedOptions = (enabled: boolean) => useQuery({ queryKey: ['related', uid()], queryFn: () => api<{ key: string; title: string }[]>('/tickets/related-options'), enabled });
 export const useAdmin = (enabled: boolean) => useQuery({ queryKey: ['admin', uid()], queryFn: () => api<any>('/admin'), enabled });
-export const usePerformance = (p: { hd: string; range: string; q: string }, enabled: boolean) =>
+export const usePerformance = (p: { hd: string; range: string; q: string; group: string }, enabled: boolean) =>
   useQuery({ queryKey: ['performance', uid(), p], queryFn: () => api<Performance>(`/admin/performance?${qs(p)}`), enabled, placeholderData: (prev) => prev });
+export const useMyPerformance = (range: string) =>
+  useQuery({ queryKey: ['performance', uid(), 'me', range], queryFn: () => api<Performance>(`/performance/me?${qs({ range })}`), placeholderData: (prev) => prev, retry: false });
+export const usePersonas = () =>
+  useQuery({ queryKey: ['personas'], queryFn: () => api<{ defaultUserId: string; groups: { label: string; people: Persona[] }[] }>('/auth/personas'), retry: false });
+export const useAbsences = (enabled: boolean) => useQuery({ queryKey: ['absences', uid()], queryFn: () => api<Absences>('/demo/absences'), enabled });
 
 /** Runs a mutation, shows its toast, and refreshes everything that may have changed. */
 export function useAction() {
@@ -42,7 +47,7 @@ export function useAction() {
     onSuccess: (res: any) => {
       if (res?.toast) toast(res.toast, 'ok');
       (res?.warnings as string[] | undefined)?.forEach((w) => toast(w, 'bad'));
-      ['tickets', 'ticket', 'me', 'analytics', 'notifications', 'approvals', 'following', 'history', 'admin', 'config', 'related', 'faqs'].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+      ['tickets', 'ticket', 'me', 'analytics', 'notifications', 'approvals', 'following', 'history', 'admin', 'config', 'related', 'faqs', 'personas', 'absences', 'performance'].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
     },
   });
   return {

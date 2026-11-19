@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAction, useAdmin, useConfig, useMe, usePerformance } from '../api/hooks';
 import type { Condition } from '../api/types';
 import { Avatar, Denied, HdBadge, PriFlag, Skeleton } from '../components/common/bits';
+import { PerfReport } from '../components/perf/PerfReport';
 import { evalCond } from '../lib/cond';
 import { fdt, fmtH, HDL } from '../lib/format';
 import { Icon } from '../lib/icons';
@@ -52,7 +52,7 @@ function Categories({ adm, leadHd }: { adm: Adm; leadHd: boolean }) {
       </div>
       <div className="tbl-wrap">
         <table className="t">
-          <thead><tr><th>Category</th><th>Sub-categories</th>{a.hd === 'LND' && <th>Type</th>}<th>Default priority</th><th>{ownerL}</th>{leadHd && <><th>Confidential</th><th>Reopen</th></>}<th>Open</th><th>Active</th><th></th></tr></thead>
+          <thead><tr><th>Category</th><th>Sub-categories</th>{a.hd === 'LND' && <th>Type</th>}<th>Default priority</th><th>{ownerL}</th>{leadHd && <><th>Confidential</th><th>Reopen</th></>}<th data-tip="When on, the requester's manager approves first and the SLA starts at approval.">Manager approval</th><th>Open</th><th>Active</th><th></th></tr></thead>
           <tbody>
             {cats.map((c: any) => {
               const owner = c.leadId || c.ownerId;
@@ -69,6 +69,11 @@ function Categories({ adm, leadHd }: { adm: Adm; leadHd: boolean }) {
                       <td className="nowrap">{c.reopenAllowed !== false ? '30 days' : <span className="muted">Off</span>}</td>
                     </>
                   )}
+                  <td>
+                    <label className="sw"><input type="checkbox" id={`cat-mgr-${a.hd}-${c.key}`} checked={!!c.mgrApproval} aria-label={`Manager approval needed: ${c.name}`} onChange={(e) => act.run(() => api(`/admin/categories/${c.id}/mgr-approval`, { method: 'PATCH', body: { on: e.target.checked, subs: c.mgrApprovalSubs } }))} /></label>
+                    {c.mgrApproval && c.mgrApprovalSubs?.length ? <div className="sub">{c.mgrApprovalSubs.join(', ')}</div> : null}
+                    {c.extraSteps?.length ? <div className="sub">Additional approval: {c.extraSteps.join(' → ')}</div> : null}
+                  </td>
                   <td className="mono">{c.openCount}</td>
                   <td><label className="sw"><input type="checkbox" id={`cat-on-${a.hd}-${c.key}`} checked={c.active} aria-label={`Active: ${c.name}`} onChange={(e) => act.run(() => api(`/admin/categories/${c.id}/active`, { method: 'PATCH', body: { active: e.target.checked } }))} /></label></td>
                   <td><button className="btn sm" onClick={() => set({ modal: { type: 'cat', hd: a.hd, key: c.key } })}>Edit</button></td>
@@ -219,17 +224,17 @@ function SlaVersions({ adm }: { adm: Adm }) {
   const vers = (adm.slaVersions ?? []) as any[];
   return (
     <section className="panel adm-sec">
-      <div className="adm-head"><h3>Version history</h3><p>Every SLA or escalation change freezes a new version. Tickets raised after a save bind to it; the number of open tickets on each version is shown.</p></div>
+      <div className="adm-head"><h3>Version history</h3><p>Versions are never edited. Each save adds one; a second edit of the same value by the same admin within a minute is folded into it while no ticket has used it. Tickets raised after a save bind to the newest version.</p></div>
       <div className="tbl-wrap">
         <table className="t">
-          <thead><tr><th>Version</th><th>Effective from</th><th>Changed by</th><th>Change</th><th>Open tickets</th></tr></thead>
+          <thead><tr><th>Version</th><th>Effective from</th><th>Changed by</th><th>Before → after</th><th>Open tickets still on it</th></tr></thead>
           <tbody>
             {vers.length ? vers.map((v) => (
               <tr key={v.id} style={{ cursor: 'default' }}>
                 <td className="mono">v{v.id}</td>
                 <td className="nowrap">{fdt(v.effectiveFrom)}</td>
                 <td>{v.setByName}</td>
-                <td>{v.note ?? '—'}</td>
+                <td>{v.changes?.length ? v.changes.map((c: { what: string; before: unknown; after: unknown }, i: number) => <div key={i}>{c.what}: <b>{String(c.before)}</b> → <b>{String(c.after)}</b></div>) : v.note ?? 'Initial policy'}</td>
                 <td className="mono">{v.openOnVersion}</td>
               </tr>
             )) : <tr style={{ cursor: 'default' }}><td colSpan={5} className="muted">No versions yet.</td></tr>}
@@ -241,104 +246,12 @@ function SlaVersions({ adm }: { adm: Adm }) {
 }
 
 function Performance() {
-  const nav = useNavigate();
-  const toast = useUi((s) => s.toast);
   const [scope, setScope] = useState('ALL');
   const [range, setRange] = useState('30');
   const [q, setQ] = useState('');
-  const [drill, setDrill] = useState<{ label: string; keys: string[] } | null>(null);
-  const [showData, setShowData] = useState(false);
-  const { data: p, isLoading, error } = usePerformance({ hd: scope, range, q }, true);
-  const dur = (ms: number | null) => (ms == null ? '—' : ms < 3600000 ? `${Math.max(1, Math.round(ms / 60000))}m` : `${(ms / 3600000).toFixed(1)}h`);
-  const exportCsv = () => {
-    if (!p) return;
-    const head = ['Assignee', 'Helpdesk', 'Handled', 'Within SLA', 'Within SLA after manual escalation', 'Resolved late', 'Response breached', 'Resolution breached', 'Escalated (auto)', 'Escalated (manual)', 'Covered for absence', 'Received via escalation', 'Open', 'Overdue', 'At risk', 'Reopened', 'Avg first response (h)', 'Avg resolution (h)', 'Compliance %'];
-    const body = p.rows.map((r) => [r.name, HDL[r.helpdesk], r.handled, r.withinSla, r.withinAfterManual, r.resolvedLate, r.responseBreached, r.resolutionBreached, r.escalatedAuto, r.escalatedManual, r.coveredForAbsence, r.receivedViaEscalation, r.open, r.overdue, r.atRisk, r.reopened, r.avgFirstMs == null ? '' : (r.avgFirstMs / 3600000).toFixed(2), r.avgResolutionMs == null ? '' : (r.avgResolutionMs / 3600000).toFixed(2), r.compliancePct ?? '']);
-    const csv = [head, ...body].map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-    const el = document.createElement('a');
-    el.href = url; el.download = `assignee-performance-${range}.csv`; el.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-    toast('CSV exported');
-  };
-  const maxC = Math.max(1, ...(p?.chart.map((x) => x.n) ?? [1]));
-  return (
-    <section className="panel adm-sec">
-      <div className="adm-head">
-        <h3>Assignee performance</h3>
-        <div className="seg" aria-label="Helpdesk">{p?.scopes.map(([k, l]) => <button key={k} className={scope === k ? 'on' : ''} onClick={() => setScope(k)}>{l}</button>)}</div>
-        <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>Range
-          <select className="in" value={range} onChange={(e) => setRange(e.target.value)}>{[['7', 'Last 7 days'], ['30', 'Last 30 days'], ['90', 'Last 90 days'], ['year', 'This year']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select>
-        </label>
-        <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13 }}>Search
-          <input className="in" type="search" value={q} placeholder="Name" onChange={(e) => setQ(e.target.value)} />
-        </label>
-        <span className="r"><button className="btn sm" onClick={exportCsv} disabled={!p}><Icon n="down" s={14} />Export CSV</button></span>
-        <p>How each assignee's tickets ended: inside the SLA, late, breached, escalated, covered for an absence or reopened. Compliance counts resolved tickets only. Everyone sees the same numbers.</p>
-      </div>
-      {isLoading && !p ? <Skeleton /> : error ? (
-        <div className="note bad" style={{ margin: 16 }}><Icon n="info" s={15} /><p>The report could not be loaded. {(error as Error).message}</p></div>
-      ) : p ? (
-        <>
-          <div className="kpis" style={{ padding: '4px 16px 0' }}>
-            {p.cards.map((c) => <div key={c.l} className={`kpi tone-${c.tone ?? 'info'}`} data-tip={c.h}><span className="l"><span className="ki"><Icon n={c.ic} s={16} /></span>{c.l}</span><span className="n">{c.n}</span><span className="h">{c.h}</span></div>)}
-          </div>
-          <div style={{ padding: '4px 16px 0' }}>
-            <b style={{ fontSize: 13 }}>Compliance by assignee</b>
-            <div className="hbars" style={{ marginTop: 8 }}>
-              {p.chart.map((x) => <div key={x.label} className="hbar" data-tip={`${x.label}: ${x.n}%`}><span className="lb">{x.label}</span><span className="tk">{x.n > 0 && <i style={{ width: `${(x.n / maxC) * 100}%` }} />}</span><span className="v">{x.n}%</span></div>)}
-            </div>
-            <button className="linkbtn" style={{ marginTop: 6 }} onClick={() => setShowData(!showData)}>{showData ? 'Hide data' : 'Show data'}</button>
-            {showData && <div className="tbl-wrap"><table className="t"><thead><tr><th>Assignee</th><th>Compliance %</th></tr></thead><tbody>{p.chart.map((x) => <tr key={x.label} style={{ cursor: 'default' }}><td>{x.label}</td><td className="mono">{x.n}</td></tr>)}</tbody></table></div>}
-          </div>
-          <div className="tbl-wrap">
-            <table className="t">
-              <thead><tr><th>Assignee</th><th>Helpdesk</th><th>Handled</th><th>Within SLA</th><th>Late</th><th>Esc (auto)</th><th>Esc (manual)</th><th>Covered</th><th>Open</th><th>Overdue</th><th>At risk</th><th>Reopened</th><th>Avg first</th><th>Avg resolve</th><th>Compliance</th></tr></thead>
-              <tbody>
-                {p.rows.length ? p.rows.map((r) => (
-                  <tr key={r.userId} style={{ cursor: 'default' }}>
-                    <td className="nowrap"><span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}><Avatar name={r.name} sm />{r.name}</span>{r.title && <div className="sub">{r.title}</div>}</td>
-                    <td><HdBadge hd={r.helpdesk} /></td>
-                    <td className="mono"><button className="linkbtn" onClick={() => setDrill({ label: `${r.name} · handled`, keys: r.keys })}>{r.handled}</button></td>
-                    <td className="mono">{r.withinSla + r.withinAfterManual}</td>
-                    <td className="mono">{r.resolvedLate}</td>
-                    <td className="mono">{r.escalatedAuto}</td>
-                    <td className="mono">{r.escalatedManual}</td>
-                    <td className="mono">{r.coveredForAbsence}</td>
-                    <td className="mono">{r.open}</td>
-                    <td className="mono">{r.overdue}</td>
-                    <td className="mono">{r.atRisk}</td>
-                    <td className="mono">{r.reopened}</td>
-                    <td className="nowrap">{dur(r.avgFirstMs)}</td>
-                    <td className="nowrap">{dur(r.avgResolutionMs)}</td>
-                    <td className="mono">{r.compliancePct == null ? '—' : `${r.compliancePct}%`}</td>
-                  </tr>
-                )) : <tr style={{ cursor: 'default' }}><td colSpan={15} className="muted">No tickets in this range.</td></tr>}
-                <tr style={{ cursor: 'default' }} className="off">
-                  <td><b>Unassigned (queues)</b></td><td className="muted">—</td>
-                  <td className="mono"><button className="linkbtn" onClick={() => setDrill({ label: 'Unassigned (queues) · handled', keys: p.unassigned.keys })}>{p.unassigned.handled}</button></td>
-                  <td colSpan={5} className="muted">—</td>
-                  <td className="mono">{p.unassigned.open}</td><td className="mono">{p.unassigned.overdue}</td><td className="mono">{p.unassigned.atRisk}</td>
-                  <td colSpan={4} className="muted">—</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div className="note info" style={{ margin: '0 16px 12px' }}><Icon n="info" s={15} /><p>Reconciliation: {p.reconciliation.handled} handled by named assignees + {p.reconciliation.unassigned} unassigned in queues = {p.reconciliation.total} tickets in scope. This matches the dashboard total for the same range and helpdesk.</p></div>
-          <div style={{ padding: '0 16px 16px' }}>
-            <b style={{ fontSize: 13 }}>Unattended <mark className="tc">TC</mark></b>
-            <p className="muted" style={{ fontSize: 12.5, margin: '4px 0' }}>Tickets raised while no eligible cover was available, kept with the category lead.</p>
-            <div className="tbl-wrap"><table className="t"><thead><tr><th>Ticket</th><th>Helpdesk</th><th>Title</th><th>Held by</th></tr></thead>
-              <tbody>{p.unattended.length ? p.unattended.map((u) => <tr key={u.key} style={{ cursor: 'pointer' }} onClick={() => nav(`/ticket/${u.key}`)}><td className="mono">{u.key}</td><td><HdBadge hd={u.helpdesk} /></td><td>{u.title}</td><td>{u.assignee}</td></tr>) : <tr style={{ cursor: 'default' }}><td colSpan={4} className="muted">No unattended tickets.</td></tr>}</tbody>
-            </table></div>
-          </div>
-          {drill && (
-            <div className="note info" style={{ margin: '0 16px 16px' }}><Icon n="file" s={15} /><p><b>{drill.label}</b> · {drill.keys.length} ticket{drill.keys.length === 1 ? '' : 's'}{drill.keys.length > 0 && ':'}{' '}{drill.keys.map((k, i) => <span key={k}>{i > 0 && ', '}<button className="linkbtn" onClick={() => nav(`/ticket/${k}`)}>{k}</button></span>)}<button className="linkbtn" style={{ marginLeft: 10 }} onClick={() => setDrill(null)}>Close</button></p></div>
-          )}
-        </>
-      ) : null}
-    </section>
-  );
+  const [group, setGroup] = useState('assignee');
+  const { data: p, isLoading, error } = usePerformance({ hd: scope, range, q, group }, true);
+  return <PerfReport p={p} loading={isLoading} error={error} ctl={{ scope, setScope, range, setRange, q, setQ, group, setGroup }} />;
 }
 
 function Roles({ adm, cfg, leadHd }: { adm: Adm; cfg: any; leadHd: boolean }) {

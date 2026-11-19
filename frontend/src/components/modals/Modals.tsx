@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, ApiError } from '../../api/client';
-import { useAction, useAdmin, useConfig, useDetail, useFaqs, useMe, usePeople } from '../../api/hooks';
+import { useAbsences, useAction, useAdmin, useConfig, useDetail, useFaqs, useMe, usePeople } from '../../api/hooks';
 import type { Detail } from '../../api/types';
 import { Icon } from '../../lib/icons';
 import { HDL } from '../../lib/format';
@@ -109,9 +109,10 @@ function TicketModal({ m, t, onClose }: { m: Extract<Modal, { key: string }>; t:
     return (
       <Dialog title={`Reassign ${t.key}`} onClose={onClose} footer={<><Cancel onClose={onClose} /><button className="btn primary" disabled={sub.pending} onClick={() => sub.go(() => api(`${base}/reassign`, { body: { assigneeId: v.to, note: v.note || undefined } }))}>Reassign</button></>}>
         <MF id="to" label="New assignee" req err={err.to}>
-          <select className="in" id="m-to" value={v.to} onChange={(e) => s('to')(e.target.value)}>{t.me.agents.map((a) => <option key={a.id} value={a.id}>{a.name}{a.title ? ` · ${a.title}` : ''}</option>)}</select>
+          <select className="in" id="m-to" value={v.to} onChange={(e) => s('to')(e.target.value)}>{t.me.agents.map((a) => <option key={a.id} value={a.id}>{a.name}{a.title ? ` · ${a.title}` : ''}{a.away ? ' · unavailable today' : ''}</option>)}</select>
         </MF>
         <MF id="note" label="Handover note (internal)"><TA id="note" value={v.note} onChange={s('note')} ph="Optional" /></MF>
+        {t.me.agents.find((a) => a.id === v.to)?.away && <div className="note warn"><Icon n="cal" s={15} /><p>This person is on leave today. A manual reassignment is kept as you chose it.</p></div>}
       </Dialog>
     );
   }
@@ -165,17 +166,25 @@ function CategoryForm({ m, adm, cfg, onClose }: { m: Extract<Modal, { type: 'cat
   const [v, setV] = useState({
     n: c?.name ?? '', subs: (c?.subs ?? []).join('\n'), pri: c?.defaultPriority ?? 'Medium', owner: (c ? c.leadId || c.ownerId : adm.agents[m.hd]?.[0]?.id) ?? '',
     ctype: c?.requestType === 'course' ? 'course' : 'portal', conf: !!c?.confidential, reopen: c ? c.reopenAllowed !== false : true,
+    mgr: !!c?.mgrApproval, mgrSubs: new Set<string>(c?.mgrApproval ? c.mgrApprovalSubs ?? c.subs : []),
   });
   const [err, setErr] = useState<Errs>({});
   const sub = useSubmit(setErr, onClose);
   const set = (k: keyof typeof v) => (x: any) => { setV((o) => ({ ...o, [k]: x })); setErr((e) => ({ ...e, [k]: '' })); };
+  const subList = (v.subs as string).split('\n').map((x) => x.trim()).filter(Boolean);
+  const toggleSub = (x: string, on: boolean) => setV((o) => { const n = new Set(o.mgrSubs); if (on) n.add(x); else n.delete(x); return { ...o, mgrSubs: n }; });
   const save = () => {
-    const subs = (v.subs as string).split('\n').map((x) => x.trim()).filter(Boolean);
+    const subs = subList;
     const e: Errs = {};
     if (!v.n.trim()) e.n = 'Name the category.';
     if (!subs.length) e.subs = 'Add at least one sub-category.';
+    const picked = subs.filter((x) => v.mgrSubs.has(x));
+    if (v.mgr && !picked.length) e.mgrSubs = 'Pick at least one sub-category, or turn manager approval off.';
     if (Object.keys(e).length) return setErr(e);
-    const body = { helpdesk: m.hd, name: v.n.trim(), subs, defaultPriority: v.pri, ownerId: v.owner, confidential: leadHd ? v.conf : undefined, reopenAllowed: leadHd ? v.reopen : undefined, requestType: m.hd === 'LND' ? v.ctype : undefined };
+    const body = {
+      helpdesk: m.hd, name: v.n.trim(), subs, defaultPriority: v.pri, ownerId: v.owner, confidential: leadHd ? v.conf : undefined, reopenAllowed: leadHd ? v.reopen : undefined, requestType: m.hd === 'LND' ? v.ctype : undefined,
+      mgrApproval: v.mgr, mgrApprovalSubs: v.mgr ? picked : [],
+    };
     sub.go(() => (c ? api(`/admin/categories/${c.id}`, { method: 'PUT', body }) : api('/admin/categories', { body })));
   };
   return (
@@ -195,7 +204,40 @@ function CategoryForm({ m, adm, cfg, onClose }: { m: Extract<Modal, { type: 'cat
           <label className="check"><input type="checkbox" id="m-reopen" checked={v.reopen} onChange={(e) => set('reopen')(e.target.checked)} />Requester can reopen within 30 days</label>
         </>
       )}
-      <div className="note info"><Icon n="info" s={15} /><p>Changes apply to new tickets straight away and show in the Raise ticket form.</p></div>
+      <label className="check"><input type="checkbox" id="m-mgr" checked={v.mgr} onChange={(e) => setV((o) => ({ ...o, mgr: e.target.checked, mgrSubs: e.target.checked && !o.mgrSubs.size ? new Set(subList) : o.mgrSubs }))} />Manager approval needed</label>
+      {v.mgr && (
+        <MF id="mgrSubs" label="Applies to" err={err.mgrSubs}>
+          <div className="cbgrid">{subList.map((x) => <label key={x} className="check"><input type="checkbox" checked={v.mgrSubs.has(x)} onChange={(e) => { toggleSub(x, e.target.checked); setErr((o) => ({ ...o, mgrSubs: '' })); }} />{x}</label>)}</div>
+        </MF>
+      )}
+      {!!c?.extraSteps?.length && <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>Additional approval: {c.extraSteps.join(' → ')} (set by policy, not by this switch)</p>}
+      <div className="note info"><Icon n="info" s={15} /><p>Changes apply to new tickets straight away and show in the Raise ticket form. When manager approval is on, the SLA starts once the last approver approves.</p></div>
+    </Dialog>
+  );
+}
+
+/** Demo stand-in for the Attendance and Leave modules: who is on leave today. */
+function OooModal({ onClose }: { onClose: () => void }) {
+  const { data } = useAbsences(true);
+  const act = useAction();
+  return (
+    <Dialog title="Out of office (demo)" onClose={onClose} footer={<button className="btn primary" onClick={onClose}>Done</button>}>
+      <div className="note info"><Icon n="info" s={15} /><p>{data?.note ?? 'Simulates the Attendance and Leave modules.'} Tickets that become workable while someone is on leave go to the next available person; escalation is not used for this.</p></div>
+      {!data ? <div className="gempty">Loading…</div> : data.groups.map((g) => (
+        <div key={g.hd} className="ooo-grp">
+          <h4>{g.label}</h4>
+          {g.people.map((p) => (
+            <label key={p.id} className="ooo-row">
+              <span><b>{p.name}</b>{p.title && <span className="muted"> · {p.title}</span>}{p.onLeaveTomorrow && !p.onLeaveToday && <span className="chip" style={{ marginLeft: 6 }}>On leave tomorrow</span>}</span>
+              <span className="ooo-tg">
+                <span className="muted">On leave today</span>
+                <input type="checkbox" role="switch" aria-label={`${p.name} on leave today`} checked={p.onLeaveToday} disabled={act.pending}
+                  onChange={() => act.run(() => api(`/demo/absences/${p.id}`, { method: 'PUT', body: { on: !p.onLeaveToday } }))} />
+              </span>
+            </label>
+          ))}
+        </div>
+      ))}
     </Dialog>
   );
 }
@@ -310,6 +352,7 @@ export function ModalHost() {
     case 'field': return <FieldModal key={JSON.stringify(modal)} m={modal} onClose={close} />;
     case 'role': return <RoleModal key={JSON.stringify(modal)} m={modal} onClose={close} />;
     case 'faq': return <FaqModal key={modal.id} m={modal} onClose={close} />;
+    case 'ooo': return <OooModal onClose={close} />;
     default: return <TicketModalLoader key={JSON.stringify(modal)} m={modal} onClose={close} />;
   }
 }

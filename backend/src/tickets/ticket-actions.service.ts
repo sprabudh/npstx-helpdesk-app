@@ -8,11 +8,12 @@ import { badRequest, conflict, forbidden, notFound } from '../common/errors';
 import { ApprovalEntity, AsgRecord, AttachmentEntity, CommentEntity, EscRecord, EventEntity, FollowerEntity, TicketEntity } from '../database/entities';
 import { approvalStage, canAddPeople, canWork, chainOf, hdAllowed, isReadOnly, relOf, reopenInfo, stm } from '../domain/policy';
 import { evalCond } from '../domain/sla';
-import { Principal } from '../domain/types';
+import { Helpdesk, Principal } from '../domain/types';
 import { AuditService } from '../audit/audit.service';
 import { HelpdeskConfigService } from '../helpdesk-config/config.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ProvidersRegistry } from '../providers/providers.registry';
+import { CoverService } from './cover.service';
 import { checkFiles, storeFile, UploadedFileLike } from './ticket-create.service';
 import { Row, TicketLoader } from './ticket-loader.service';
 import { TicketQueryService } from './ticket-query.service';
@@ -29,6 +30,7 @@ export class TicketActionsService {
     private readonly notes: NotificationsService,
     private readonly providers: ProvidersRegistry,
     private readonly audit: AuditService,
+    private readonly cover: CoverService,
   ) {}
 
   private get repo() {
@@ -51,6 +53,15 @@ export class TicketActionsService {
   }
   private requireOpen(r: Row) {
     if (r.closed) throw conflict('This ticket is closed.', 'TICKET_CLOSED');
+  }
+  /** While approvals are pending the assignee can read, note, reply, attach and reassign, but not work it. */
+  private requireApproved(r: Row) {
+    if (r.t.status === 'Pending approval') throw conflict('Approvals must finish before work can start. SLA starts after approval.', 'PENDING_APPROVAL');
+  }
+  /** Who holds the ticket for reporting: the newest assignment-history entry. */
+  private holder(r: Row): string {
+    const h = r.t.asgHist ?? [];
+    return h.length ? h[h.length - 1].u : r.t.assigneeId;
   }
   private async save(r: Row, patch: Partial<TicketEntity>) {
     Object.assign(r.t, patch, { updatedAt: clock.now() });
@@ -92,6 +103,7 @@ export class TicketActionsService {
   async setStatus(u: Principal, key: string, to: string) {
     const r = await this.loader.one(u, key);
     this.requireWork(u, r);
+    this.requireApproved(r);
     const st = this.cfg.statusModel(r.t.helpdesk);
     if (to === r.t.status) return { toast: null };
     if (!(st.tr[r.t.status] || []).includes(to)) throw badRequest(`You cannot move a ${r.t.status} ticket to ${to}.`, 'INVALID_TRANSITION');
@@ -107,6 +119,12 @@ export class TicketActionsService {
     if (!this.cfg.priorities(r.t.helpdesk).includes(pri)) throw badRequest('Pick a priority this helpdesk uses.', 'INVALID_PRIORITY');
     const from = r.t.priority;
     if (from === pri) return { toast: null };
+    if (!r.t.slaStarted) {
+      await this.save(r, { priority: pri });
+      await this.loader.event(key, `Priority: ${from} → ${pri} by ${u.name} · SLA starts after approval`, 'status');
+      await this.notes.notify([r.t.requesterId], `Priority of ${key} changed to ${pri}`, this.tk(r), u.id);
+      return { toast: `Priority set to ${pri}` };
+    }
     const [oldRh, oldSh] = this.cfg.slaFor(r.t.helpdesk, r.t.categoryKey, from, r.t.slaVer);
     const [rh, sh] = this.cfg.slaFor(r.t.helpdesk, r.t.categoryKey, pri, r.t.slaVer);
     await this.save(r, {
@@ -126,7 +144,7 @@ export class TicketActionsService {
     const agents = this.cfg.setting<Record<string, string[]>>('agents')[r.t.helpdesk] || [];
     if (!agents.includes(to) || to === r.t.assigneeId) throw badRequest('Pick another agent or queue for this helpdesk.', 'INVALID_ASSIGNEE');
     const old = r.t.assigneeId;
-    await this.save(r, { assigneeId: to, asgHist: this.asg(r, to, 'manual') });
+    await this.save(r, { assigneeId: to, asgHist: this.asg(r, to, this.cfg.person(old)?.isQueue ? 'queue-claim' : 'manual') });
     await this.loader.event(key, `Reassigned from ${this.cfg.name(old)} to ${this.cfg.name(to)} by ${u.name}`, 'assign');
     if (note?.trim()) await this.addComment(key, u.id, 'Handover: ' + note.trim(), true);
     await this.notes.notify([to], `${key} assigned to you`, this.tk(r), u.id);
@@ -137,26 +155,28 @@ export class TicketActionsService {
     const r = await this.loader.one(u, key);
     this.requireWork(u, r);
     this.requireOpen(r);
+    this.requireApproved(r);
     if (!reason?.trim()) throw badRequest('Give a reason so the next level has context.', 'VALIDATION', { fieldErrors: { reason: 'Give a reason so the next level has context.' } });
     const ladder = this.cfg.ladder(r.t.helpdesk, r.t.categoryKey, r.t.slaVer);
     const base = r.t.ladderBase ?? 0;
     if (base + r.t.escalationLevel >= ladder.length) throw conflict('This ticket is already at the top escalation level.', 'MAX_ESCALATION');
     const lvl = r.t.escalationLevel + 1;
     const l = ladder[base + lvl - 1];
+    const from = this.holder(r);
     await this.save(r, {
       escalationLevel: lvl,
-      asgHist: this.asg(r, l.who, 'escalation'),
-      escLog: this.esc(r, { level: lvl, from: r.t.assigneeId, to: l.who, how: 'manual', by: u.id }),
+      asgHist: l.who === from ? r.t.asgHist : this.asg(r, l.who, 'escalation'),
+      escLog: this.esc(r, { level: base + lvl, from, to: l.who, how: 'manual', by: u.id }),
     });
-    await this.loader.event(key, `Escalated to Level ${lvl} · ${this.cfg.name(l.who)} (${l.role}) by ${u.name} · ${reason.trim()}`, 'esc');
+    await this.loader.event(key, `Escalated to Level ${base + lvl} · ${this.cfg.name(l.who)} (${l.role}) by ${u.name} · ${reason.trim()}`, 'esc');
     if (r.t.helpdesk === 'SF') {
       const from = r.t.status;
       await this.save(r, { status: 'Escalated', assigneeId: l.who });
       await this.loader.event(key, `Status: ${from} → Escalated · owner set by escalation rule`, 'status');
     }
-    await this.notes.notify([l.who, r.t.assigneeId], `${key} escalated to Level ${lvl}`, this.tk(r), u.id);
-    await this.notes.notify([r.t.requesterId], `${key} was escalated to Level ${lvl}`, this.tk(r), u.id);
-    await this.audit.record(u.id, 'ticket.escalate', `Escalated ${key} to Level ${lvl}`, { target: key });
+    await this.notes.notify([l.who, r.t.assigneeId], `${key} escalated to Level ${base + lvl}`, this.tk(r), u.id);
+    await this.notes.notify([r.t.requesterId], `${key} was escalated to Level ${base + lvl}`, this.tk(r), u.id);
+    await this.audit.record(u.id, 'ticket.escalate', `Escalated ${key} to Level ${base + lvl}`, { target: key });
     return { toast: `Escalated to ${this.cfg.name(l.who)}. They have been notified.` };
   }
 
@@ -165,6 +185,7 @@ export class TicketActionsService {
     const r = await this.loader.one(u, key);
     this.requireWork(u, r);
     this.requireOpen(r);
+    this.requireApproved(r);
     if (!body.message?.trim()) throw badRequest('This message is required.', 'VALIDATION', { fieldErrors: { msg: 'This message is required.' } });
     const st = this.cfg.statusModel(r.t.helpdesk);
     const isStm = stm(r.ctx);
@@ -287,7 +308,7 @@ export class TicketActionsService {
     }
     await this.addComment(key, u.id, text, internal);
     await this.save(r, {});
-    if (!internal && work && r.t.responseMet === null) {
+    if (!internal && work && r.t.responseMet === null && r.t.slaStarted) {
       const met = now.getTime() <= r.t.responseDue.getTime();
       await this.save(r, { responseMet: met });
       await this.loader.event(key, `First response sent · response SLA ${met ? 'met' : 'breached'}`, 'sla', now);
@@ -327,21 +348,38 @@ export class TicketActionsService {
         await this.notes.notify(this.query.approverIds(r, nx.step), `Approval needed: ${key} from ${this.cfg.name(r.t.requesterId)}`, this.tk(r), u.id);
         await this.notes.notify([r.t.requesterId], `${key}: ${label.toLowerCase()} approved, now with ${steps[nx.step].l}`, this.tk(r), u.id);
       } else {
-        const work = this.cfg.statusModel(r.t.helpdesk).work;
-        const waited = Math.max(0, now.getTime() - r.t.createdAt.getTime());
-        await this.save(r, {
-          status: work,
-          resolutionDue: new Date(r.t.resolutionDue.getTime() + waited),
-          ...(r.t.responseMet === null ? { responseDue: new Date(r.t.responseDue.getTime() + waited) } : {}),
-        });
-        await this.loader.event(key, `Status: Pending approval → ${work} · routed to ${this.cfg.name(r.t.assigneeId)}`, 'status', now);
-        await this.notes.notify([r.t.requesterId, r.t.assigneeId], `${key} approved; work has started`, this.tk(r), u.id);
+        await this.startAfterApproval(u, r, now);
       }
     }
     if (n) await this.addComment(key, u.id, n, false);
     await this.save(r, {});
     await this.audit.record(u.id, 'ticket.approval', `${label} ${decision.toLowerCase()} ${key}`, { target: key });
     return { toast: `${decision}. ${this.cfg.name(r.t.requesterId)} has been notified.` };
+  }
+
+  /**
+   * Last approval given: the SLA clock starts now, with targets from the ticket's bound SLA version.
+   * The absence check runs here, because this is when the ticket becomes workable.
+   */
+  private async startAfterApproval(u: Principal, r: Row, now: Date) {
+    const key = r.t.key;
+    const work = this.cfg.statusModel(r.t.helpdesk).work;
+    const [rh, sh] = this.cfg.slaFor(r.t.helpdesk, r.t.categoryKey, r.t.priority, r.t.slaVer);
+    const c = this.cfg.category(r.t.helpdesk, r.t.categoryKey);
+    const cov = c ? await this.cover.cover(r.t.helpdesk as Helpdesk, c, r.t.assigneeId, now, r.t.slaVer) : null;
+    const asg = cov?.asg ?? r.t.assigneeId;
+    await this.save(r, {
+      status: work, slaStarted: true, slaStart: now, assigneeId: asg,
+      responseDue: new Date(now.getTime() + rh * 3600000), resolutionDue: new Date(now.getTime() + sh * 3600000),
+      ...(cov?.coverFor ? { ladderBase: cov.ladderBase, asgHist: this.asg(r, asg, 'absence', cov.coverFor) } : {}),
+    });
+    await this.loader.event(key, `SLA started on approval · response due ${fdt(r.t.responseDue)}, resolution due ${fdt(r.t.resolutionDue)}`, 'sla', now);
+    if (cov?.event) await this.loader.event(key, cov.event, 'assign', now);
+    await this.loader.event(key, `Status: Pending approval → ${work} · routed to ${this.cfg.name(asg)}`, 'status', now);
+    await this.notes.notify([r.t.requesterId], `${key} approved; work has started`, this.tk(r), u.id);
+    const coverTxt = cov?.coverFor ? ` (covering for ${this.cfg.name(cov.coverFor)})` : '';
+    await this.notes.notify([asg], `${key} approved; work has started${coverTxt}`, this.tk(r), u.id);
+    if (cov?.unattended) await this.notes.notify(this.cover.hdAdmins(), `Unattended: ${key} has no available cover`, this.tk(r), u.id);
   }
 
   // ---------- attachments ----------

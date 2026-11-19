@@ -1,25 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, In } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { clock, fmtH } from '../common/clock';
 import { badRequest, forbidden, notFound } from '../common/errors';
-import { CategoryEntity, EventEntity, FormFieldEntity, SettingEntity, SlaVersionEntity, TicketEntity, UserHrCategoryEntity, UserRoleEntity } from '../database/entities';
+import { CategoryEntity, FormFieldEntity, SettingEntity, SlaChange, SlaVersionEntity, TicketEntity, UserHrCategoryEntity, UserRoleEntity } from '../database/entities';
 import { allowedHds, hdAllowed } from '../domain/policy';
-import { isAtRisk, isBreachedRes, isOverdue } from '../domain/sla';
 import { Principal, Role } from '../domain/types';
 import { AuditService } from '../audit/audit.service';
 import { HelpdeskConfigService } from '../helpdesk-config/config.service';
 
 const LEAD_HDS = ['HR', 'IT', 'ADM'];
 const SLA_LABEL: Record<string, string> = { IT: 'IT and Support', ADM: 'Admin Desk', shared: 'HR and L&D' };
-const HDL: Record<string, string> = { HR: 'HR', LND: 'L&D', IT: 'IT and Support', ADM: 'Admin Desk', SF: 'Salesforce' };
-
-export interface PerfRow {
-  userId: string | null; name: string; title: string | null; helpdesk: string;
-  handled: number; withinSla: number; withinAfterManual: number; resolvedLate: number; responseBreached: number; resolutionBreached: number;
-  escalatedAuto: number; escalatedManual: number; coveredForAbsence: number; receivedViaEscalation: number;
-  open: number; overdue: number; atRisk: number; reopened: number; avgFirstMs: number | null; avgResolutionMs: number | null; compliancePct: number | null;
-}
+const MERGE_MS = 60000;
+const STEP_LABEL: Record<string, string> = { lnd: 'L&D', ith: 'IT head', adm: 'Admin head' };
 
 /** Admin console (Helpdesk admin only). Every change is audited and applies to new tickets straight away. */
 @Injectable()
@@ -52,8 +45,12 @@ export class AdminService {
     if (!agents.HR.includes(userId)) await this.setSetting('agents', { ...agents, HR: [...agents.HR, userId] });
   }
 
-  /** Fix 2: freeze the current SLA policy as a new immutable version. Tickets raised from now bind to it. */
-  private async snapshotVersion(setBy: string, note: string): Promise<SlaVersionEntity> {
+  /**
+   * Freezes the current SLA policy as a new immutable version; tickets raised from now bind to it.
+   * A same-admin edit of the same cell within 60 s updates the newest version instead, but only while
+   * no ticket has been raised under it.
+   */
+  private async snapshotVersion(setBy: string, change: SlaChange): Promise<SlaVersionEntity> {
     const sla = this.cfg.setting<Record<string, Record<string, [number, number]>>>('sla');
     const esc = this.cfg.setting<Record<string, { who: string; role: string; pct: number }[]>>('escalation');
     const ladderPct: Record<string, number[]> = {};
@@ -61,10 +58,18 @@ export class AdminService {
     const catOv: Record<string, Record<string, [number, number]>> = {};
     for (const c of this.cfg.categories()) if (c.slaOverride) catOv[`${c.helpdesk}:${c.key}`] = c.slaOverride;
     const repo = this.ds.getRepository(SlaVersionEntity);
-    return repo.save(repo.create({
-      effectiveFrom: clock.now(), setBy, tables: JSON.parse(JSON.stringify(sla)),
-      categoryOverrides: Object.keys(catOv).length ? catOv : null, ladderPct, note,
-    }));
+    // DATETIME keeps whole seconds and MySQL rounds, so truncate: the version must already be effective.
+    const now = new Date(Math.floor(clock.nowMs() / 1000) * 1000);
+    const snap = { tables: JSON.parse(JSON.stringify(sla)), categoryOverrides: Object.keys(catOv).length ? catOv : null, ladderPct };
+    const last = await repo.findOne({ where: {}, order: { id: 'DESC' } });
+    const sameCell = last && last.id > 1 && last.setBy === setBy && now.getTime() - last.effectiveFrom.getTime() < MERGE_MS
+      && last.changes?.length === 1 && last.changes[0].what === change.what;
+    if (sameCell && !(await this.ds.getRepository(TicketEntity).count({ where: { slaVer: last.id } }))) {
+      const merged: SlaChange = { what: change.what, before: last.changes![0].before, after: change.after };
+      Object.assign(last, snap, { changes: [merged], note: describe(merged) });
+      return repo.save(last);
+    }
+    return repo.save(repo.create({ effectiveFrom: now, setBy, ...snap, changes: [change], note: describe(change) }));
   }
 
   private async openPerVersion(): Promise<Map<number, number>> {
@@ -82,11 +87,14 @@ export class AdminService {
     const openVer = await this.openPerVersion();
     return {
       helpdesks: hds,
-      categories: this.cfg.categories().filter((c) => hds.includes(c.helpdesk as never)).map((c) => ({ ...c, leadName: this.cfg.name(c.leadId), ownerName: c.ownerId ? this.cfg.name(c.ownerId) : null, openCount: counts.get(`${c.helpdesk}.${c.key}`) || 0 })),
+      categories: this.cfg.categories().filter((c) => hds.includes(c.helpdesk as never)).map((c) => ({
+        ...c, leadName: this.cfg.name(c.leadId), ownerName: c.ownerId ? this.cfg.name(c.ownerId) : null, openCount: counts.get(`${c.helpdesk}.${c.key}`) || 0,
+        extraSteps: this.cfg.additionalSteps(c.helpdesk, c.key).map((x) => STEP_LABEL[x] ?? x),
+      })),
       fields: this.cfg.allFields().filter((f) => hds.includes(f.helpdesk as never)),
       sla: this.cfg.setting('sla'), escalation: this.cfg.setting('escalation'), rules: this.cfg.setting('rules'), ruleLabels: this.cfg.setting('ruleLabels'),
       slaVersions: this.cfg.slaVersions().map((v) => ({
-        id: v.id, effectiveFrom: v.effectiveFrom, setBy: v.setBy, setByName: this.cfg.name(v.setBy), note: v.note,
+        id: v.id, effectiveFrom: v.effectiveFrom, setBy: v.setBy, setByName: this.cfg.name(v.setBy), note: v.note, changes: v.changes ?? [],
         tables: v.tables, ladderPct: v.ladderPct, openOnVersion: openVer.get(v.id) || 0,
       })),
       agents: Object.fromEntries(Object.entries(this.cfg.setting<Record<string, string[]>>('agents')).filter(([h]) => hds.includes(h as never))
@@ -107,7 +115,10 @@ export class AdminService {
     };
   }
 
-  async saveCategory(u: Principal, id: number | null, b: { helpdesk: string; name: string; subs: string[]; defaultPriority?: string; ownerId?: string; confidential?: boolean; reopenAllowed?: boolean; requestType?: string }) {
+  async saveCategory(u: Principal, id: number | null, b: {
+    helpdesk: string; name: string; subs: string[]; defaultPriority?: string; ownerId?: string; confidential?: boolean; reopenAllowed?: boolean; requestType?: string;
+    mgrApproval?: boolean; mgrApprovalSubs?: string[] | null;
+  }) {
     this.guardHd(u, b.helpdesk);
     const subs = (b.subs || []).map((s) => s.trim()).filter(Boolean);
     const err: Record<string, string> = {};
@@ -130,7 +141,18 @@ export class AdminService {
     if (LEAD_HDS.includes(b.helpdesk)) Object.assign(c, { leadId: b.ownerId || null, confidential: !!b.confidential, reopenAllowed: !!b.reopenAllowed });
     else c.ownerId = b.ownerId || null;
     if (b.helpdesk === 'LND') c.requestType = b.requestType || 'portal';
+    const mgrBefore = isNew ? null : mgrText(c);
+    if (b.mgrApproval !== undefined) {
+      c.mgrApproval = b.mgrApproval;
+      const picked = (b.mgrApprovalSubs ?? []).filter((x) => subs.includes(x));
+      c.mgrApprovalSubs = b.mgrApproval && picked.length && picked.length < subs.length ? picked : null;
+    } else if (isNew) Object.assign(c, { mgrApproval: false, mgrApprovalSubs: null });
+    else if (c.mgrApprovalSubs) {
+      const kept = c.mgrApprovalSubs.filter((x) => subs.includes(x));
+      c.mgrApprovalSubs = kept.length ? kept : null;
+    }
     await repo.save(c);
+    if (mgrBefore !== null && mgrBefore !== mgrText(c)) await this.log(u, `${this.cfg.helpdeskLabel(b.helpdesk)} · ${c.name}: manager approval ${mgrBefore} → ${mgrText(c)}`, `category:${c.id}`);
     if (b.helpdesk === 'HR' && b.ownerId) await this.grantHr(b.ownerId, c.key);
     await this.log(u, `${isNew ? 'Added' : 'Edited'} ${this.cfg.helpdeskLabel(b.helpdesk)} category "${c.name}"`, `category:${c.id}`);
     await this.cfg.reload();
@@ -146,6 +168,20 @@ export class AdminService {
     await this.log(u, `${active ? 'Enabled' : 'Disabled'} ${this.cfg.helpdeskLabel(c.helpdesk)} category "${c.name}"`, `category:${id}`);
     await this.cfg.reload();
     return { toast: active ? `${c.name} is active and back in the Raise ticket form` : `${c.name} disabled. Hidden from the form; ${n} open ticket${n === 1 ? '' : 's'} keep it.` };
+  }
+
+  async setMgrApproval(u: Principal, id: number, on: boolean, subs: string[] | null) {
+    const c = await this.ds.getRepository(CategoryEntity).findOne({ where: { id } });
+    if (!c) throw notFound('Category');
+    this.guardHd(u, c.helpdesk);
+    const before = mgrText(c);
+    const picked = (subs ?? []).filter((x) => c.subs.includes(x));
+    c.mgrApproval = on;
+    c.mgrApprovalSubs = on && picked.length && picked.length < c.subs.length ? picked : on ? null : c.mgrApprovalSubs;
+    await this.ds.getRepository(CategoryEntity).save(c);
+    await this.log(u, `${this.cfg.helpdeskLabel(c.helpdesk)} · ${c.name}: manager approval ${before} → ${mgrText(c)}`, `category:${id}`);
+    await this.cfg.reload();
+    return { toast: `Manager approval ${on ? 'on' : 'off'} for ${c.name}. Applies to tickets raised from now.` };
   }
 
   async setCategoryLead(u: Principal, id: number, userId: string) {
@@ -219,8 +255,10 @@ export class AdminService {
     const before = sla[b.table][b.priority][b.index];
     sla[b.table][b.priority][b.index] = n;
     await this.setSetting('sla', sla);
-    const v = await this.snapshotVersion(u.id, `${SLA_LABEL[b.table]} · ${b.priority} ${b.index ? 'resolution' : 'first response'}: ${fmtH(before)} → ${fmtH(n)}`);
-    await this.log(u, `${SLA_LABEL[b.table]} · ${b.priority} priority ${b.index ? 'resolution' : 'first response'} target set to ${fmtH(n)} (SLA v${v.id})`);
+    if (before === n) return { toast: null };
+    const what = `${SLA_LABEL[b.table]} · ${b.priority} ${b.index ? 'resolution' : 'first response'}`;
+    const v = await this.snapshotVersion(u.id, { what, before, after: n });
+    await this.log(u, `${what} target: ${fmtH(before)} → ${fmtH(n)} (SLA v${v.id})`);
     await this.cfg.reload();
     return { toast: `${b.priority}: ${b.index ? 'resolution' : 'first response'} target is now ${n} h for tickets raised from now (SLA v${v.id})`, version: v.id };
   }
@@ -246,10 +284,13 @@ export class AdminService {
       await this.log(u, `${this.cfg.helpdeskLabel(b.helpdesk)} escalation L${b.level + 1} now goes to ${b.who === 'lead' ? 'the category lead' : this.cfg.name(b.who)}`);
     }
     if (b.pct !== undefined) {
+      const before = l.pct;
       l.pct = Math.min(100, Math.max(10, Math.round(Number(b.pct)) || l.pct));
-      await this.log(u, `${this.cfg.helpdeskLabel(b.helpdesk)} escalation L${b.level + 1} now triggers at ${l.pct}%`);
+      if (before === l.pct) return { toast: null };
+      const what = `${this.cfg.helpdeskLabel(b.helpdesk)} escalation L${b.level + 1} trigger`;
       await this.setSetting('escalation', esc);
-      await this.snapshotVersion(u.id, `${this.cfg.helpdeskLabel(b.helpdesk)} escalation L${b.level + 1} trigger → ${l.pct}%`);
+      const v = await this.snapshotVersion(u.id, { what, before: `${before}%`, after: `${l.pct}%` });
+      await this.log(u, `${what}: ${before}% → ${l.pct}% (SLA v${v.id})`);
       await this.cfg.reload();
       return { toast: 'Escalation ladder updated' };
     }
@@ -287,111 +328,9 @@ export class AdminService {
     await this.cfg.reload();
     return { toast: `Roles saved for ${p.name}` };
   }
-
-  /**
-   * Fix 4: Assignee performance. Aggregates each person's handled tickets by SLA outcome, escalation,
-   * absence cover and reopening. Reconciliation: Σ Handled + Unassigned = every ticket in scope.
-   */
-  async performance(u: Principal, b: { hd?: string; range?: string; q?: string }) {
-    const hds = allowedHds(u);
-    const scope = b.hd && hds.includes(b.hd as never) ? b.hd : 'ALL';
-    const range = ['7', '30', '90', 'year'].includes(b.range ?? '') ? b.range! : '30';
-    const days = range === 'year' ? 365 : Number(range);
-    const now = clock.nowMs();
-    const since = now - days * 86400000;
-    const all = await this.ds.getRepository(TicketEntity).find({ where: scope === 'ALL' ? { helpdesk: In(hds) } : { helpdesk: scope as never } });
-    const rows = all.filter((t) => t.createdAt.getTime() >= since || (!!t.closedAt && t.closedAt.getTime() >= since));
-    const keys = rows.map((r) => r.key);
-    const evs = keys.length ? await this.ds.getRepository(EventEntity).find({ where: { ticketKey: In(keys) } }) : [];
-    const firstResp = new Map<string, number>();
-    const reopened = new Set<string>();
-    const unattended = new Set<string>();
-    for (const e of evs) {
-      if (e.text.startsWith('First response sent')) firstResp.set(e.ticketKey, e.at.getTime());
-      if (e.text.startsWith('Reopened')) reopened.add(e.ticketKey);
-      if (e.text.startsWith('No cover available')) unattended.add(e.ticketKey);
-    }
-    const map = new Map<string, any>();
-    const un = { handled: 0, open: 0, overdue: 0, atRisk: 0, keys: [] as string[] };
-    for (const t of rows) {
-      const closed = this.cfg.statusModel(t.helpdesk).closed.includes(t.status);
-      const p = this.cfg.person(t.assigneeId);
-      if (!p || p.isQueue) {
-        un.handled++;
-        un.keys.push(t.key);
-        if (!closed) {
-          un.open++;
-          if (isOverdue(t, closed, now)) un.overdue++;
-          else if (isAtRisk(t, closed, now)) un.atRisk++;
-        }
-        continue;
-      }
-      const row = map.get(p.id) ?? {
-        userId: p.id, name: p.name, title: p.title, helpdesk: t.helpdesk,
-        handled: 0, withinSla: 0, withinAfterManual: 0, resolvedLate: 0, responseBreached: 0, resolutionBreached: 0,
-        escalatedAuto: 0, escalatedManual: 0, coveredForAbsence: 0, receivedViaEscalation: 0, open: 0, overdue: 0, atRisk: 0, reopened: 0,
-        frSum: 0, frN: 0, resSum: 0, resN: 0, keys: [] as string[],
-      };
-      row.handled++;
-      row.keys.push(t.key);
-      const breachedRes = isBreachedRes(t, closed, now);
-      const hasManual = (t.escLog ?? []).some((e) => e.how === 'manual');
-      if (closed) {
-        if (breachedRes) row.resolvedLate++;
-        else if (hasManual) row.withinAfterManual++;
-        else row.withinSla++;
-        if (t.closedAt) { row.resSum += t.closedAt.getTime() - t.createdAt.getTime(); row.resN++; }
-      } else {
-        row.open++;
-        if (isOverdue(t, closed, now)) row.overdue++;
-        else if (isAtRisk(t, closed, now)) row.atRisk++;
-      }
-      if (t.responseMet === false) row.responseBreached++;
-      if (breachedRes) row.resolutionBreached++;
-      const fr = firstResp.get(t.key);
-      if (fr) { row.frSum += fr - t.createdAt.getTime(); row.frN++; }
-      if (reopened.has(t.key)) row.reopened++;
-      for (const e of t.escLog ?? []) if (e.how === 'manual') row.escalatedManual++; else row.escalatedAuto++;
-      for (const a of t.asgHist ?? []) {
-        if (a.how === 'absence' && a.u === p.id) row.coveredForAbsence++;
-        if (a.how === 'escalation' && a.u === p.id) row.receivedViaEscalation++;
-      }
-      map.set(p.id, row);
-    }
-    let list: PerfRow[] = [...map.values()].map((r) => {
-      const resolved = r.withinSla + r.withinAfterManual + r.resolvedLate;
-      const { frSum, frN, resSum, resN, ...rest } = r;
-      return {
-        ...rest,
-        avgFirstMs: frN ? Math.round(frSum / frN) : null,
-        avgResolutionMs: resN ? Math.round(resSum / resN) : null,
-        compliancePct: resolved ? Math.round(((r.withinSla + r.withinAfterManual) / resolved) * 100) : null,
-      };
-    });
-    const handled = [...map.values()].reduce((s, r) => s + r.handled, 0);
-    const q = (b.q ?? '').trim().toLowerCase();
-    if (q) list = list.filter((r) => r.name.toLowerCase().includes(q));
-    list.sort((a, b2) => (b2.compliancePct ?? -1) - (a.compliancePct ?? -1) || b2.handled - a.handled);
-    const sum = (k: keyof PerfRow) => list.reduce((s, r) => s + (Number(r[k]) || 0), 0);
-    const unattendedList = rows.filter((t) => unattended.has(t.key)).map((t) => ({
-      key: t.key, title: t.title, helpdesk: t.helpdesk, assignee: this.cfg.name(t.assigneeId),
-      status: t.status, priority: t.priority, createdAt: t.createdAt,
-    }));
-    const resolvedAll = sum('withinSla') + sum('withinAfterManual') + sum('resolvedLate');
-    return {
-      scope, scopes: [['ALL', 'All helpdesks'], ...hds.map((h) => [h, HDL[h]] as [string, string])],
-      range, rangeLabel: range === 'year' ? 'This year' : `Last ${range} days`, helpdesks: hds,
-      cards: [
-        { l: 'Handled', n: handled, h: `${list.length} assignee${list.length === 1 ? '' : 's'}`, ic: 'inbox', tone: 'info' },
-        { l: 'Within SLA', n: sum('withinSla') + sum('withinAfterManual'), h: 'resolved inside target', ic: 'check', tone: 'ok' },
-        { l: 'Resolved late', n: sum('resolvedLate'), h: 'resolution target missed', ic: 'clock', tone: 'bad' },
-        { l: 'Escalated (auto)', n: sum('escalatedAuto'), h: 'by SLA threshold', ic: 'up', tone: 'warn' },
-        { l: 'Escalated (manual)', n: sum('escalatedManual'), h: 'by an agent', ic: 'up', tone: 'warn' },
-        { l: 'Compliance', n: resolvedAll ? `${Math.round(((sum('withinSla') + sum('withinAfterManual')) / resolvedAll) * 100)}%` : '—', h: 'resolved within SLA', ic: 'target', tone: 'accent' },
-      ],
-      rows: list, unassigned: un, unattended: unattendedList,
-      reconciliation: { handled, unassigned: un.handled, total: rows.length },
-      chart: list.slice(0, 12).map((r) => ({ label: r.name, n: r.compliancePct ?? 0, v: `${r.compliancePct ?? 0}%` })),
-    };
-  }
 }
+
+const fmtVal = (v: number | string | null) => (typeof v === 'number' ? fmtH(v) : v ?? '—');
+const describe = (c: SlaChange) => `${c.what}: ${fmtVal(c.before)} → ${fmtVal(c.after)}`;
+const mgrText = (c: Pick<CategoryEntity, 'mgrApproval' | 'mgrApprovalSubs'>) =>
+  !c.mgrApproval ? 'off' : c.mgrApprovalSubs?.length ? `on for ${c.mgrApprovalSubs.join(', ')}` : 'on for all sub-categories';

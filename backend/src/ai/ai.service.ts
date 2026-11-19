@@ -75,7 +75,7 @@ export class AiService {
         const kb = new KnowledgeBase(h);
         const pol = this.cfg.categories(h).filter((c) => c.active).map((c) => ({
           title: `${HDL[h]} · ${c.name}`,
-          text: `${c.name}: ${c.subs.join(', ')}. Default priority ${c.defaultPriority ?? 'Medium'}; ${this.cfg.slaText(h, c.key, c.defaultPriority ?? 'Medium')}.${c.confidential ? ' Confidential category.' : ''}`,
+          text: `${c.name}: ${c.subs.join(', ')}. Targets: ${this.cfg.slaText(h, c.key, c.defaultPriority ?? 'Medium')}.${c.confidential ? ' Confidential category.' : ''}`,
         }));
         kb.build(faqs.filter((f) => f.helpdesk === h), pol);
         this.kbs.set(h, kb);
@@ -177,7 +177,8 @@ export class AiService {
       const c = cat ? this.cfg.category(hd, cat) : null;
       const pri = c?.defaultPriority || 'Medium';
       const [r, x] = this.cfg.slaFor(hd, cat, pri);
-      push({ t: c ? 'b' : 'text', v: c ? `${HDL[hd]} · ${c.name}` : HDL[hd] }, { t: 'text', v: ` tickets at ${pri} priority get a first response within ` }, { t: 'b', v: fmtH(r) },
+      const staff = isWorker(u) || HEAD_ROLES.some((x) => u.roles.has(x));
+      push({ t: c ? 'b' : 'text', v: c ? `${HDL[hd]} · ${c.name}` : HDL[hd] }, { t: 'text', v: staff ? ` tickets at ${pri} priority get a first response within ` : ' tickets get a first response within ' }, { t: 'b', v: fmtH(r) },
         { t: 'text', v: ' and are resolved within ' }, { t: 'b', v: fmtH(x) }, { t: 'text', v: '. Time waiting for you or for an approval does not count. ' }, { t: 'tc', v: 'TC: targets awaiting sign-off' });
       if (faqs[0]) src.push({ type: 'faq', id: faqs[0].faqId, helpdesk: faqs[0].helpdesk, label: faqs[0].title });
       src.push({ type: 'policy', label: 'SLA targets' });

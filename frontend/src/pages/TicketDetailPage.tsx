@@ -58,7 +58,7 @@ function ActionBar({ t }: { t: Detail }) {
     return (
       <div className="actionbar">
         <label>Status{' '}
-          <select className="in" id="st-sel" value={t.status} disabled={!m.transitions.length} onChange={(e) => {
+          <select className="in" id="st-sel" value={t.status} disabled={!m.transitions.length || m.pending} title={m.pending ? 'Work starts after approval' : undefined} onChange={(e) => {
             const val = e.target.value;
             if (val === t.status) return;
             if (m.closing.includes(val)) set({ modal: { type: 'close', key: t.key, to: val } });
@@ -75,7 +75,8 @@ function ActionBar({ t }: { t: Detail }) {
         </label>
         <button className="btn" disabled={t.closed} onClick={() => set({ modal: { type: 'reassign', key: t.key } })}><Icon n="users" s={15} />Reassign</button>
         <button className="btn warn" disabled={t.closed || !m.canEscalate} onClick={() => set({ modal: { type: 'escalate', key: t.key } })}><Icon n="up" s={15} />Escalate{t.escalationLevel ? ` (L${(t.ladderBase ?? 0) + t.escalationLevel})` : ''}</button>
-        {!t.closed && <button className="btn" onClick={() => set({ modal: { type: 'close', key: t.key, to: m.closing[0] } })}><Icon n="check" s={15} />{m.stm ? 'Resolve' : 'Close'}</button>}
+        {!t.closed && !m.pending && <button className="btn" onClick={() => set({ modal: { type: 'close', key: t.key, to: m.closing[0] } })}><Icon n="check" s={15} />{m.stm ? 'Resolve' : 'Close'}</button>}
+        {m.pending && <span className="muted" style={{ fontSize: 12.5 }}>SLA starts after approval</span>}
         <span style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
           {m.canFollow && <button className="btn" onClick={follow}><Icon n="eye" s={15} />Follow</button>}
           {m.isHelpdeskAdmin && <ConfigureMenu t={t} />}
@@ -96,6 +97,7 @@ function Banners({ t }: { t: Detail }) {
   const m = t.me;
   const out: JSX.Element[] = [];
   if (m.isRequester && m.waiting) out.push(<div key="w" className="banner warn"><Icon n="info" s={18} /><p><b>{t.assignee.name} needs more information from you.</b> Reply below to resume work. The SLA clock is paused until you reply.</p></div>);
+  if (m.pending && m.canWork) out.push(<div key="p" className="banner info"><Icon n="clock" s={18} /><p><b>Waiting for approval. SLA starts after approval.</b> You can add notes, reply, attach files and reassign now. Starting work, resolving and escalating unlock once it is approved.</p></div>);
   if (t.confidential)
     out.push(
       <div key="c" className="banner conf"><Icon n="lock" s={18} />
@@ -193,8 +195,9 @@ function LeftColumn({ t }: { t: Detail }) {
           {t.related.length > 0 && (
             <><dt>Related tickets</dt><dd>{t.related.map((x, i) => <span key={x.key}>{i > 0 && <br />}{x.canView ? <><button className="linkbtn" onClick={() => nav(`/ticket/${x.key}`)}>{x.key}</button> <HdBadge hd={x.helpdesk} /></> : <><span className="mono">{x.key}</span> <span className="muted">(no access)</span></>}</span>)}</dd></>
           )}
+          {!t.slaStarted && !t.closed ? <><dt>SLA</dt><dd><b>Starts after approval</b> <span className="muted" style={{ fontSize: 12 }}>response and resolution due times are set when the last approver approves</span></dd></> : <>
           <dt>SLA response</dt><dd>{t.responseMet === true ? <span style={{ color: 'var(--ok)' }}>Met</span> : t.responseMet === false ? <span style={{ color: 'var(--bad)' }}>Breached</span> : `Due ${fdt(t.responseDue)}`}</dd>
-          <dt>SLA resolution</dt><dd>{fdt(t.resolutionDue)} · <b style={{ color: fillC === 'var(--line-strong)' ? 'var(--fg-3)' : fillC }}>{sla.txt}</b></dd>
+          <dt>SLA resolution</dt><dd>{fdt(t.resolutionDue)} · <b style={{ color: fillC === 'var(--line-strong)' ? 'var(--fg-3)' : fillC }}>{sla.txt}</b></dd></>}
           {t.escalationLevel > 0 && <><dt>Escalation</dt><dd><EscBadge lvl={t.escalationLevel} label={`Level ${(t.ladderBase ?? 0) + t.escalationLevel}`} /> {t.ladder[(t.ladderBase ?? 0) + t.escalationLevel - 1]?.whoName}</dd></>}
           {t.closed && (
             <>
@@ -203,14 +206,14 @@ function LeftColumn({ t }: { t: Detail }) {
             </>
           )}
         </dl>
-        {!t.closed && t.status !== 'Pending approval' && (
+        {!t.closed && t.slaStarted && (
           <div>
             <div className="slabar" role="img" aria-label={`Resolution time used ${Math.round(sla.usedPct)} percent`}>
               <div className="fill" style={{ width: `${sla.usedPct}%`, background: fillC }} />
               {t.ladder.length > 1 && t.ladder.map((l, i) => l.pct >= 100
                 ? <span key={i} className="mk" style={{ left: 'calc(100% - 8px)' }}>L{i + 1}</span>
                 : <span key={i}><span className="tick" style={{ left: `${l.pct}%` }} /><span className="mk" style={{ left: `${l.pct}%` }}>L{i + 1}</span></span>)}
-              <span className="ends" style={{ left: 0 }}>Created {fd(t.createdAt)}</span>
+              <span className="ends" style={{ left: 0 }}>{t.slaStart ? `SLA started ${fd(t.slaStart)}` : `Created ${fd(t.createdAt)}`}</span>
               <span className="ends" style={{ right: 0 }}>Due {fdt(t.resolutionDue)}</span>
             </div>
           </div>
@@ -400,8 +403,10 @@ export default function TicketDetailPage() {
         <h2>{t.title}</h2>
         <div className="row">
           <Pill t={t} /><PriFlag p={t.priority} />
-          {t.escalationLevel > 0 && <EscBadge lvl={t.escalationLevel} label={`Escalated · Level ${t.escalationLevel}`} />}
-          <span className={`sla ${t.sla.cls}`} style={{ flexDirection: 'row', gap: 6, fontSize: 12.5 }}>SLA <small>{t.sla.txt}</small></span>
+          {t.escalationLevel > 0 && <EscBadge lvl={t.escalationLevel} label={`Escalated · Level ${(t.ladderBase ?? 0) + t.escalationLevel}`} />}
+          {!t.slaStarted && !t.closed
+            ? <span className="sla pause" style={{ flexDirection: 'row', gap: 6, fontSize: 12.5 }}>SLA <small>starts after approval</small></span>
+            : <span className={`sla ${t.sla.cls}`} style={{ flexDirection: 'row', gap: 6, fontSize: 12.5 }}>SLA <small>{t.sla.txt}</small></span>}
         </div>
         <ActionBar t={t} />
       </div>

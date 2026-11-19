@@ -6,6 +6,8 @@ import { AppError } from '../common/errors';
 import { Public } from '../common/decorators';
 import { AuditService } from '../audit/audit.service';
 import { HelpdeskConfigService } from '../helpdesk-config/config.service';
+import { clock } from '../common/clock';
+import { CoverService } from '../tickets/cover.service';
 import { AuthService } from './auth.service';
 
 export class DemoLoginDto {
@@ -15,17 +17,18 @@ export class DemoLoginDto {
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly auth: AuthService, private readonly cfg: HelpdeskConfigService, private readonly audit: AuditService) {}
+  constructor(private readonly auth: AuthService, private readonly cfg: HelpdeskConfigService, private readonly audit: AuditService, private readonly cover: CoverService) {}
 
   /** Personas offered by the demo "Demo role" switcher, grouped as in the artifact. */
   @Public()
   @Get('personas')
-  personas() {
+  async personas() {
     if (env.authMode !== 'demo') throw new AppError(404, 'NOT_FOUND', 'Demo sign-in is turned off.');
     const groups = this.cfg.setting<[string, string[]][]>('personaGroups');
+    const away = await this.cover.awayFn(clock.now());
     return {
       defaultUserId: groups[0][1][0],
-      groups: groups.map(([label, ids]) => ({ label, people: ids.map((id) => ({ id, name: this.cfg.name(id), title: this.cfg.person(id)?.title ?? '' })) })),
+      groups: groups.map(([label, ids]) => ({ label, people: ids.map((id) => ({ id, name: this.cfg.name(id), title: this.cfg.person(id)?.title ?? '', onLeave: away(id) })) })),
     };
   }
 

@@ -5,17 +5,15 @@ import { randomUUID } from 'crypto';
 import { clock, fdt, istDate } from '../common/clock';
 import { env } from '../common/env';
 import { badRequest, forbidden } from '../common/errors';
-import {
-  AbsenceEntity, AsgRecord, ApprovalEntity, AttachmentEntity, AttendanceEntity, CategoryEntity, EventEntity, FollowerEntity, SequenceEntity, TicketEntity, UserEntity,
-} from '../database/entities';
-import { isUnavailable } from '../domain/availability';
-import { allowedHds, canWork, hdAllowed } from '../domain/policy';
+import { AsgRecord, ApprovalEntity, AttachmentEntity, CategoryEntity, EventEntity, FollowerEntity, SequenceEntity, TicketEntity, UserEntity } from '../database/entities';
+import { allowedHds, hdAllowed } from '../domain/policy';
 import { evalCond } from '../domain/sla';
-import { Helpdesk, Principal, TicketCtx } from '../domain/types';
+import { Helpdesk, Principal } from '../domain/types';
 import { AuditService } from '../audit/audit.service';
 import { HelpdeskConfigService } from '../helpdesk-config/config.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { ProvidersRegistry } from '../providers/providers.registry';
+import { CoverService } from './cover.service';
 import { TicketLoader } from './ticket-loader.service';
 import { TicketQueryService } from './ticket-query.service';
 
@@ -42,6 +40,7 @@ const HD_FIELD_KEYS: Record<string, string[]> = {
   SF: ['account', 'oppId', 'record', 'impact'],
 };
 const LND_SOURCE_CATS = ['CONTENT', 'CERT', 'SESSION', 'ACCESS', 'ENROL'];
+const URGENCY_PRI: Record<string, string> = { 'Can wait': 'Low', Today: 'Medium', 'Immediately (safety risk)': 'High' };
 
 export function checkFiles(files: UploadedFileLike[], already = 0) {
   if (files.length + already > FILE_RULES.maxFiles) throw badRequest(`Maximum ${FILE_RULES.maxFiles} files per ticket`, 'FILE_LIMIT');
@@ -67,53 +66,19 @@ export class TicketCreateService {
     private readonly notes: NotificationsService,
     private readonly providers: ProvidersRegistry,
     private readonly audit: AuditService,
+    private readonly cover: CoverService,
   ) {}
 
-  /** True when a person can work this category (mirrors canWork) — used to skip ineligible ladder entries (Fix 1). */
-  private canWorkPerson(p: { id: string; name: string; dept: string | null; title: string | null; managerId: string | null; roles: string[]; hrCats: string[] }, hd: Helpdesk, c: CategoryEntity): boolean {
-    const u: Principal = { id: p.id, name: p.name, dept: p.dept, title: p.title, location: null, managerId: p.managerId, roles: new Set(p.roles as never[]), hrCats: new Set(p.hrCats) };
-    const ctx: TicketCtx = {
-      key: '', helpdesk: hd, categoryKey: c.key, status: 'New', requesterId: '', assigneeId: p.id, confidential: c.confidential,
-      closeResponse: null, closedAt: null, followers: [], approvals: [],
-      category: { leadId: c.leadId, ownerId: c.ownerId, restricted: c.restricted, reopenAllowed: c.reopenAllowed, name: c.name }, requesterManagerId: null,
-    };
-    return canWork(u, ctx);
-  }
-
   /**
-   * Fix 1 routing. When a ticket would route to a person (lead/owner) who is unavailable today,
-   * reassign to the next available, eligible person in the escalation ladder. Queues are never changed.
-   * Returns the assignee, the ladder base, the cover record and a neutral note when there is no cover.
+   * Priority is not chosen in the raise form; it is set internally: the category default (HR, IT,
+   * Admin Desk, Salesforce), the Facilities urgency mapping, the L&D session-date rule, and AI voice
+   * analysis, which may only raise it for urgent speech.
    */
-  private async route(hd: Helpdesk, c: CategoryEntity, now: Date): Promise<{ asg: string; ladderBase: number; coverFor: string | null; unattended: boolean }> {
-    const base = c.queueId || c.leadId || c.ownerId!;
-    if (c.queueId || !(c.leadId || c.ownerId)) return { asg: base, ladderBase: 0, coverFor: null, unattended: false };
-    const [absences, attendance] = await Promise.all([
-      this.loader.ds.getRepository(AbsenceEntity).find(),
-      this.loader.ds.getRepository(AttendanceEntity).find(),
-    ]);
-    const away = (id: string) => isUnavailable(absences, attendance, id, now);
-    if (!away(base)) return { asg: base, ladderBase: 0, coverFor: null, unattended: false };
-    const ladder = this.cfg.ladder(hd, c.key);
-    for (let i = 1; i < ladder.length; i++) {
-      const p = this.cfg.person(ladder[i].who);
-      if (!p || p.isQueue || away(p.id) || !hdAllowed(p, hd) || !this.canWorkPerson(p, hd, c)) continue;
-      return { asg: p.id, ladderBase: i, coverFor: base, unattended: false };
-    }
-    return { asg: base, ladderBase: 0, coverFor: null, unattended: true };
-  }
-
-  private hdAdmins(): string[] {
-    return this.cfg.peopleList().filter((p) => !p.isQueue && p.roles.includes('HD_ADMIN')).map((p) => p.id);
-  }
-
-  /** Fix 3: priority is no longer chosen in the raise form. It is derived internally (AI/urgency may still raise it). */
-  private priorityFor(hd: Helpdesk, c: CategoryEntity, f: Record<string, string>): string {
-    const chosen = f.pri && this.cfg.priorities(hd).includes(f.pri) ? f.pri : null;
-    if (hd === 'HR') return c.defaultPriority || chosen || 'Medium';
-    if (hd === 'SF') return chosen || 'Medium';
-    if (hd === 'LND') return chosen || this.lndPriority(f);
-    return chosen || c.defaultPriority || 'Medium';
+  private priorityFor(hd: Helpdesk, c: CategoryEntity, f: Record<string, string>, ai: boolean): string {
+    const order = ['Low', 'Medium', 'High', 'Critical'];
+    const base = hd === 'LND' ? this.lndPriority(f) : hd === 'ADM' && f.urgency ? URGENCY_PRI[f.urgency] ?? c.defaultPriority ?? 'Medium' : c.defaultPriority || 'Medium';
+    const voice = ai && hd !== 'HR' && f.pri && this.cfg.priorities(hd).includes(f.pri) ? f.pri : null;
+    return voice && order.indexOf(voice) > order.indexOf(base) ? voice : base;
   }
   private lndPriority(f: Record<string, string>): string {
     const raw = f.sessionAt;
@@ -159,7 +124,6 @@ export class TicketCreateService {
       if (c?.needsImpact) req('impact', 'Describe the business need and impact.');
       if (f.oppId && !/^006[A-Za-z0-9]{12}([A-Za-z0-9]{3})?$/.test(f.oppId.trim())) err.oppId = 'Opportunity IDs start with 006 and have 15 or 18 characters.';
     }
-    if (f.pri && hd !== 'HR' && !this.cfg.priorities(hd).includes(f.pri)) err.pri = 'This field is required.';
     if (c) {
       const today = istDate(clock.now());
       for (const x of this.cfg.formFields(hd, c.key)) {
@@ -194,15 +158,17 @@ export class TicketCreateService {
     checkFiles(files);
     const f = input.fields;
     const c = this.cfg.category(hd, f.cat)!;
-    const pri = this.priorityFor(hd, c, f);
+    const pri = this.priorityFor(hd, c, f, !!input.aiTranscript?.trim());
     const now = clock.now();
     const slaVer = this.cfg.currentVersionId();
     const [rh, sh] = this.cfg.slaFor(hd, c.key, pri, slaVer);
-    const route = await this.route(hd, c, now);
-    const asg = route.asg;
-    const asgHist: AsgRecord[] = [{ u: asg, at: now.toISOString(), how: route.coverFor ? 'absence' : 'routing', coverFor: route.coverFor }];
     const course = hd === 'LND' && f.reqType === 'course';
     const chain = this.cfg.approvalChain(hd, c.key, f);
+    // The absence check runs when the ticket becomes workable: now, or at the last approval.
+    const base = hd === 'SF' ? c.ownerId! : c.queueId || c.leadId || c.ownerId!;
+    const route = chain ? { asg: base, ladderBase: 0, coverFor: null, unattended: false, event: null } : await this.cover.cover(hd, c, base, now, slaVer);
+    const asg = route.asg;
+    const asgHist: AsgRecord[] = [{ u: asg, at: now.toISOString(), how: route.coverFor ? 'absence' : 'routing', coverFor: route.coverFor }];
     const steps = this.cfg.setting<Record<string, { l: string }>>('approvalSteps');
 
     // fields kept on the ticket
@@ -232,7 +198,8 @@ export class TicketCreateService {
       const rel = await this.loader.ds.getRepository(TicketEntity).findOne({ where: { key: input.related } });
       if (rel && rel.requesterId === u.id) related = rel.key;
     }
-    const mgrApprover = f.approver && this.cfg.person(f.approver)?.roles.includes('MANAGER') ? f.approver : u.managerId;
+    // A requester without a manager has the manager step routed to a Helpdesk admin (TC).
+    const mgrApprover = (f.approver && this.cfg.person(f.approver)?.roles.includes('MANAGER') ? f.approver : u.managerId) || this.cover.hdAdmins()[0] || null;
 
     const key = await this.loader.ds.transaction(async (em) => {
       const seq = await em.getRepository(SequenceEntity).createQueryBuilder('s').setLock('pessimistic_write').where('s.helpdesk = :hd', { hd }).getOne();
@@ -245,7 +212,7 @@ export class TicketCreateService {
         assigneeId: asg, createdAt: now, updatedAt: now, closedAt: null, closedById: null, responseDue: new Date(now.getTime() + rh * 3600000),
         resolutionDue: new Date(now.getTime() + sh * 3600000), responseMet: null, confidential: hd !== 'SF' && c.confidential,
         escalationLevel: 0, paused: false, relatedKey: related, fields, aiTranscript: input.aiTranscript?.trim() || null,
-        slaVer, ladderBase: route.ladderBase, asgHist, escLog: null,
+        slaVer, ladderBase: route.ladderBase, asgHist, escLog: null, slaStarted: !chain, slaStart: chain ? null : now,
       });
       await em.getRepository(TicketEntity).insert(t);
       for (const fl of followers) await em.getRepository(FollowerEntity).insert({ ticketKey: key, ...fl });
@@ -258,13 +225,12 @@ export class TicketCreateService {
       const ccNames = followers.map((x) => this.cfg.name(x.userId)).join(', ');
       await ev(hd === 'SF' ? `Case created in Salesforce by ${u.name} (origin: NPSTX platform)` : `Raised by ${u.name}${followers.length ? ' · CC: ' + ccNames : ''}${t.aiTranscript ? ' · with AI voice assist (transcript saved, audio not stored)' : ''}`, 'raise');
       let routed: string;
-      if (hd === 'SF') routed = `Assignment rule → ${this.cfg.name(asg)}`;
+      if (route.event) routed = route.event;
+      else if (hd === 'SF') routed = `Assignment rule → ${this.cfg.name(asg)}`;
       else if (chain) {
         const tmpRow = { t, ctx: { approvals: [{ step: 'mgr', seq: 0, status: 'Pending', approverId: mgrApprover, decidedById: null, decidedAt: null }], requesterManagerId: u.managerId } } as never;
         routed = `Status: New → Pending approval · ${steps[chain[0]].l.toLowerCase()} approval requested from ${this.query.approverText(tmpRow, chain[0])}`;
-      } else if (route.coverFor) routed = `Reassigned to ${this.cfg.name(asg)} (assignee unavailable)`;
-      else if (route.unattended) routed = `No cover available, kept with the category lead ${this.cfg.name(asg)}`;
-      else if (c.queueId) routed = `Placed in ${this.cfg.name(asg)} (category lead ${this.cfg.name(c.leadId)})`;
+      } else if (c.queueId) routed = `Placed in ${this.cfg.name(asg)} (category lead ${this.cfg.name(c.leadId)})`;
       else routed = `Routed to ${this.cfg.name(asg)}${c.leadId ? ` (category lead, ${c.name})` : ''}`;
       await ev(routed, chain ? 'status' : 'assign');
       if (related) {
@@ -278,7 +244,7 @@ export class TicketCreateService {
     const tk = { key, confidential: hd !== 'SF' && c.confidential };
     const coverTxt = route.coverFor ? ` (covering for ${this.cfg.name(route.coverFor)})` : '';
     await this.notes.notify([asg], `New ticket ${key} assigned to you${coverTxt}`, tk, u.id);
-    if (route.unattended) await this.notes.notify(this.hdAdmins(), `Unattended: ${key} has no available cover`, tk, u.id);
+    if (route.unattended) await this.notes.notify(this.cover.hdAdmins(), `Unattended: ${key} has no available cover`, tk, u.id);
     for (const fl of followers) await this.notes.notify([fl.userId], `You were CC'd on ${key}`, tk, u.id);
     if (chain) {
       const [row] = await this.loader.withCtx([(await this.loader.ds.getRepository(TicketEntity).findOne({ where: { key } }))!]);
@@ -287,7 +253,7 @@ export class TicketCreateService {
     const t = (await this.loader.ds.getRepository(TicketEntity).findOne({ where: { key } }))!;
     return {
       key,
-      toast: `${key} raised · ${chain ? `waiting for ${steps[chain[0]].l.toLowerCase()} approval` : 'assigned to ' + this.cfg.name(asg)} · resolution due ${fdt(t.resolutionDue)}`,
+      toast: `${key} raised · ${chain ? `waiting for ${steps[chain[0]].l.toLowerCase()} approval · SLA starts after approval` : `assigned to ${this.cfg.name(asg)} · resolution due ${fdt(t.resolutionDue)}`}`,
     };
   }
 

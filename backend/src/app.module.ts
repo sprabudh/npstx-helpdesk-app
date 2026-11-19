@@ -20,8 +20,11 @@ import { ConfigController } from './helpdesk-config/config.controller';
 import { HelpdeskConfigService } from './helpdesk-config/config.service';
 import { MeController } from './me/me.controller';
 import { NotificationsService } from './notifications/notifications.service';
+import { PerformanceController } from './performance/performance.controller';
+import { PerformanceService } from './performance/performance.service';
 import { ProvidersRegistry } from './providers/providers.registry';
 import { SlaScheduler } from './sla/sla.scheduler';
+import { CoverService } from './tickets/cover.service';
 import { TicketActionsService } from './tickets/ticket-actions.service';
 import { TicketCreateService } from './tickets/ticket-create.service';
 import { TicketLoader } from './tickets/ticket-loader.service';
@@ -32,11 +35,11 @@ import { TicketsController, TicketViewsController } from './tickets/tickets.cont
   imports: [TypeOrmModule.forRoot({ ...dataSourceOptions, migrationsRun: false }), TypeOrmModule.forFeature([...ENTITIES, AuditEntity]), AuthModule],
   controllers: [
     HealthController, AuthController, ConfigController, MeController, TicketsController, TicketViewsController, AnalyticsController, FaqController,
-    AdminController, AiController, DemoController,
+    AdminController, AiController, DemoController, PerformanceController,
   ],
   providers: [
     AuditService, HelpdeskConfigService, NotificationsService, ProvidersRegistry, TicketLoader, TicketQueryService, TicketCreateService,
-    TicketActionsService, AnalyticsService, FaqService, AdminService, SlaScheduler, AiService,
+    TicketActionsService, AnalyticsService, FaqService, AdminService, SlaScheduler, AiService, CoverService, PerformanceService,
   ],
 })
 export class AppModule implements NestModule {

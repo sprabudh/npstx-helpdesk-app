@@ -59,11 +59,12 @@ Diagrams are Mermaid and render in GitHub, GitLab and VS Code. Wireframes are AS
 |---|---|---|
 | 0.1 | 4 Nov 2026 | Draft: three helpdesks (HR, L&D, Salesforce), Spring Boot design, research reference sheets |
 | 1.0 | 13 Nov 2026 | Rebased on the v2 mock: five helpdesks, AI voice assist and AI search, dashboard analytics, separate My tickets / Assigned to me pages, Admin console. NestJS + React + MySQL design with a runnable code base |
+| 1.1 | 18 Nov 2026 | v0.3 change request (seven sections): demo roles and out-of-office panel, absence-based reassignment, SLA versioning, manager-approval toggle with SLA start on approval, priority removed from the raise form, one source for dashboard numbers, and the assignee performance report replacing SLA compliance (see §1.4) |
 
 ### 1.2 Executive summary
 
 - Employees raise and track HR, L&D, IT and Support, Admin Desk and (for Sales, Presales and Solutions only) Salesforce tickets from one Helpdesk module inside NPSTX. **Fact**
-- The Dashboard combines an AI "Ask anything" bar, three large actions, a "Pending my approval" table and analytics (16 cards, a 30-day trend and four bar charts). **Fact**
+- The Dashboard combines an AI "Ask anything" bar, three large actions, a "Pending my approval" table and analytics (14 cards, a 30-day trend and four bar charts). **Fact**
 - Agents work tickets from **Assigned to me** and the ticket page: status, priority, reassign, escalate, resolve or close, public replies and internal notes. **Fact**
 - Approvals run as chains: manager → L&D for course requests, manager (→ IT head for admin rights) for software and access, manager for travel, manager → Admin head for purchases. **Fact**
 - SLA clocks pause while waiting for the employee and escalate automatically along per-helpdesk ladders. **Fact**
@@ -87,6 +88,21 @@ Diagrams are Mermaid and render in GitHub, GitLab and VS Code. Wireframes are AS
 | Data model | Proposed tables (14.3) | Implemented schema (22 tables) with migrations and seed | Code base |
 | Auth | OIDC resource server | Demo sign-in (persona switcher) for local and test, OIDC (RS256 / JWKS) for real deployments; token carries the user id only | Code-base brief |
 
+### 1.4 Changes in v0.3 (mock)
+
+Seven additive sections, each backed by acceptance tests (`backend/test/v03.e2e-spec.ts`, 26 tests)
+and the frontend regression suite (Playwright, 18 tests). **Fact**
+
+| § | Change | Where |
+|---|---|---|
+| 1 | Demo roles grouped by department; new Senior SFO Case Admin (u27); "Out of office (demo)" is a per-helpdesk panel with a switch per person, not a single toggle | 3, 4.1, 4.10 |
+| 2 | Absence cover: a ticket whose lead/owner is away steps **down** the ladder to the next available, eligible person; queues and restricted ladders untouched; `asgHist` / `ladderBase` | 5.2, 9, 10 |
+| 3 | SLA **versioning**: every admin save appends an immutable version; tickets bind the version in force when raised | 4.9, 5.5, 6.4 |
+| 4 | **Manager approval** is a per-category toggle with an optional sub-category list; the SLA clock starts at the **last** approval | 4.9, 5.4, 5.5 |
+| 5 | **Priority is not chosen in the raise form**; the category default applies (AI may still raise it) | 4.5, 6.4 |
+| 6 | **One source** for every dashboard number (`metrics()`); Open = Not started + In progress + Pending input; the "Following / CC'd" sub-nav tab is removed | 4.1, 4.2 |
+| 7 | **Assignee performance** from holder intervals replaces the SLA-compliance report; new My performance page | 4.9, 9, 10 |
+
 ---
 
 ## 2. Scope
@@ -101,7 +117,7 @@ Diagrams are Mermaid and render in GitHub, GitLab and VS Code. Wireframes are AS
 | 4 | Ticket detail: action bar, Configure menu (admins), banners, details, SLA bar with ladder ticks, approval box, Salesforce case box, request, people, timeline, activity feed, composer | Fact |
 | 5 | Raise drawer: helpdesk picker, AI voice assist, redirect suggestion, HR / L&D / Salesforce / schema forms, CC, attachments, related ticket | Fact |
 | 6 | Following / CC'd, History (with CSV export), FAQs (vote, "No, raise a ticket") | Fact |
-| 7 | Admin console: categories, form fields, SLA and escalation, role mapping, configuration audit log | Fact |
+| 7 | Admin console: categories (with the manager-approval toggle), form fields, SLA and escalation (versioned), assignee performance, role mapping, configuration audit log | Fact |
 | 8 | Notifications: in-app panel and e-mail outbox (console adapter) | Fact (in-app) / Proposal (outbox) |
 | 9 | SLA scheduler and automatic escalation | Fact (rules) / Proposal (scheduler) |
 | 10 | Salesforce provider with a mock adapter and a REST adapter | Proposal |
@@ -126,21 +142,24 @@ Diagrams are Mermaid and render in GitHub, GitLab and VS Code. Wireframes are AS
 
 ## 3. Personas and roles
 
-The demo role switcher in the top bar offers these personas (**Fact**). Signing in as one of them loads roles and department from the database; nothing about roles is stored in the token.
+The demo role switcher in the top bar offers these personas, **grouped by department** (**Fact**, v0.3).
+Signing in as one of them loads roles and department from the database; nothing about roles is stored
+in the token. Each person carries an `onLeave` flag and the switcher appends "· on leave today".
 
 | Group | Id | Name | Title | Department | Roles | Manager | Location |
 |---|---|---|---|---|---|---|---|
 | Employees | u1 | Arjun Kumar | Software Engineer | Engineering | Employee | Sanjay Menon | Mumbai HQ |
-| Employees | u6 | Sanjay Menon | Engineering Manager | Engineering | Employee, Team lead / Manager | Lata Verma | Mumbai HQ |
-| HR and L&D | u3 | Priya Rao | HR Executive | HR | Employee, HR agent (PAY, LEAVE) | Anil Gupta | Mumbai HQ |
-| HR and L&D | u8 | Kavya Nair | HR / L&D Admin | HR (L&D) | Employee, L&D coordinator, HR / L&D admin | Meera Iyer | Mumbai HQ |
-| HR and L&D | u4 | Meera Iyer | L&D Head | HR (L&D) | Employee, L&D Head | Lata Verma | Bengaluru |
+| Managers | u6 | Sanjay Menon | Engineering Manager | Engineering | Employee, Team lead / Manager | Lata Verma | Mumbai HQ |
+| HR | u3 | Priya Rao | HR Executive | HR | Employee, HR agent (PAY, LEAVE) | Anil Gupta | Mumbai HQ |
+| L&D | u8 | Kavya Nair | HR / L&D Admin | HR (L&D) | Employee, L&D coordinator, HR / L&D admin | Meera Iyer | Mumbai HQ |
+| L&D | u4 | Meera Iyer | L&D Head | HR (L&D) | Employee, L&D Head | Lata Verma | Bengaluru |
 | IT and Support | u21 | Nikhil Rane | IT Support Engineer | IT | Employee, IT agent | Suresh Pai | Mumbai HQ |
 | IT and Support | u23 | Suresh Pai | IT Head | IT | Employee, IT head, Team lead / Manager | Lata Verma | Mumbai HQ |
 | Admin Desk | u24 | Pooja Shetty | Admin Desk Executive | Administration | Employee, Admin desk agent | Rahul Kapoor | Mumbai HQ |
 | Admin Desk | u25 | Rahul Kapoor | Admin Head | Administration | Employee, Admin head, Team lead / Manager | Lata Verma | Mumbai HQ |
-| SFO · Sales Front Office (Salesforce) | u2 | Neha Shah | SFO Sales Rep | Sales | Employee | Vikram Joshi | Mumbai HQ |
-| SFO · Sales Front Office (Salesforce) | u5 | Rohan Das | SFO Case Admin | Sales | Employee, SFO case admin (Salesforce queues) | Vikram Joshi | Pune |
+| Sales Front Office (Salesforce) | u2 | Neha Shah | SFO Sales Rep | Sales | Employee | Vikram Joshi | Mumbai HQ |
+| Sales Front Office (Salesforce) | u5 | Rohan Das | SFO Case Admin | Sales | Employee, SFO case admin (Salesforce queues) | Vikram Joshi | Pune |
+| Sales Front Office (Salesforce) | u27 | Karan Mehta | Senior SFO Case Admin | Sales | Employee, SFO case admin (Salesforce queues) | Vikram Joshi | Pune |
 | Governance | u20 | Asha Kulkarni | Helpdesk Admin | HR Operations | Employee, Helpdesk admin | Lata Verma | Mumbai HQ |
 | Governance | u26 | Ritu Desai | Internal Auditor | Internal Audit | Employee, Auditor (read-only) | Lata Verma | Mumbai HQ |
 
@@ -148,11 +167,11 @@ The demo role switcher in the top bar offers these personas (**Fact**). Signing 
 
 | Role key | Label shown | People in the seed |
 |---|---|---|
-| `EMP` | Employee | Arjun Kumar, Neha Shah, Priya Rao, Meera Iyer, Rohan Das, Sanjay Menon, Vikram Joshi, Kavya Nair, Anil Gupta, Farah Khan, Deepa Pillai, Lata Verma, Imran Sheikh, Kiran Bose, Asha Kulkarni, Nikhil Rane, Farhan Ali, Suresh Pai, Pooja Shetty, Rahul Kapoor, Ritu Desai |
+| `EMP` | Employee | Arjun Kumar, Neha Shah, Priya Rao, Meera Iyer, Rohan Das, Sanjay Menon, Vikram Joshi, Kavya Nair, Anil Gupta, Farah Khan, Deepa Pillai, Lata Verma, Imran Sheikh, Kiran Bose, Asha Kulkarni, Nikhil Rane, Farhan Ali, Suresh Pai, Pooja Shetty, Rahul Kapoor, Ritu Desai, Karan Mehta |
 | `HR_AGENT` | HR agent | Priya Rao, Anil Gupta, Farah Khan, Lata Verma |
 | `LND_HEAD` | L&D Head | Meera Iyer |
 | `LND_COORD` | L&D coordinator | Kavya Nair |
-| `SF_ADMIN` | SFO case admin (Salesforce queues) | Rohan Das |
+| `SF_ADMIN` | SFO case admin (Salesforce queues) | Rohan Das, Karan Mehta |
 | `MANAGER` | Team lead / Manager | Sanjay Menon, Vikram Joshi, Lata Verma, Suresh Pai, Rahul Kapoor |
 | `HRLND_ADMIN` | HR / L&D admin | Kavya Nair |
 | `HD_ADMIN` | Helpdesk admin | Asha Kulkarni |
@@ -187,7 +206,7 @@ Common rules for every page:
 │ WORKSPACE  ├──────────────────────────────────────────────────────────────────────────┤
 │ ⌂ Home     │ Helpdesk                                   [🔍 Check status…] [+ Raise]   │
 │ 👤 Profile │ HR, L&D, IT and Support and Admin Desk support in one place               │
-│ … Leave    │ Dashboard | My tickets | Assigned to me (n) | Following (n) | History | FAQs│
+│ … Leave    │ Dashboard | My tickets | Assigned to me (n) | History | FAQs             │
 │ ● Helpdesk2│ ┌ SIGNED IN AS Arjun Kumar · role chips · helpdesk badges   What can… ┐  │
 │ ⚙ Settings │ └ DEMO STATES Loading · Error · Reset demo data                          ┘  │
 │            │ (page body)                                                               │
@@ -203,8 +222,10 @@ Common rules for every page:
 | Global search | On every page except Dashboard; ID or title; only tickets the person can see; empty text explains confidential and other helpdesks are never listed | Fact |
 | Configure | Helpdesk admins only, opens the Admin console | Fact |
 | Raise ticket | Opens the Raise drawer at step 1 | Fact |
-| Subnav | Assigned to me only for workers; Admin console only for helpdesk admins; counts from `/api/me` | Fact |
+| Subnav | Assigned to me only for workers; Admin console only for helpdesk admins; counts from `/api/me`. **v0.3:** the redundant "Following / CC'd" tab is removed (the Dashboard button and the `/following` route remain) | Fact |
 | Role strip | Name, title, department, role chips (HR agent shows categories), helpdesk badges, "What can this role do?" (Can / Cannot lists), demo states | Fact |
+| Out of office (demo) | Opens the demo attendance panel (section 4.10), not a single toggle. Lists assignees, category leads and ladder people by helpdesk with an "On leave today" switch. **v0.3** | Fact |
+| Footer | Sidebar footer reads "NPSTX HR platform · Helpdesk module v0.3 (mock)". **v0.3** | Fact |
 
 ### 4.2 Dashboard
 
@@ -222,9 +243,9 @@ TRY [Check my ticket status] [Raise a ticket] [Pending tickets] [Escalated…] [
 [+ Raise ticket          ] [📄 My tickets 8 open · 8 closed] [👁 Following / CC'd]
 PENDING MY APPROVAL (approvers only): ID | Domain | Request | Requester | Step | Waiting since | Approve / Reject
 ANALYTICS  [My tickets|My work and queues|Helpdesk-wide] [All|HR|L&D|IT|Admin] [Last 30 days ▾]
-[Total][Open][In progress][Pending input][Escalated][SLA breached]
-[At risk][Overdue][Resolved this month][Reopened][Avg first response][Avg resolution]
-[SLA compliance][Following / CC'd][Pending my approval*]
+[Open][Not started][In progress][Pending input][Escalated][Overdue]
+[At risk][Unassigned][Raised][Closed][Reopened][SLA breached]
+[Avg first response][Avg resolution][Pending my approval*]
 [Tickets raised, last 30 days — line chart          ][By helpdesk — bars]
 [Top categories][By priority][Ageing of open tickets]
 [Latest updates ……………………………………………………………………………………]
@@ -238,7 +259,7 @@ ANALYTICS  [My tickets|My work and queues|Helpdesk-wide] [All|HR|L&D|IT|Admin] [
 | Big buttons | Raise ticket (lists helpdesks), My tickets (open / closed counts), Assigned to me (workers) or Following / CC'd (others) | — | Fact |
 | Pending my approval | Rows where the person can act on the current step; Approve / Reject inline | Managers, L&D head, HR / L&D admin, IT head, Admin head | Fact |
 | Scope | "My tickets" (own), "My work and queues" (workers), "Helpdesk-wide" (heads, admins, auditors); default is the widest allowed | Server picks allowed scopes | Fact |
-| Cards | 16 cards (17 with Pending my approval). Hover shows the formula; click opens My tickets or Assigned to me with a "From Dashboard: …" flag chip | — | Fact |
+| Cards | **v0.3:** 14 cards grouped Live / Attention / In date range (15 with Pending my approval). Every number comes from one `metrics()` definition; Open = Not started + In progress + Pending input. Hover shows the formula; click opens the list and reproduces the count (the by-helpdesk and top-category bars sum to Raised). The old "Total" card is gone | — | Fact |
 | Charts | Trend (SVG, data table under "Show data"), by helpdesk, top categories (5), by priority, ageing; bars drill down | — | Fact |
 | Latest updates | The person's 6 newest notifications | — | Fact (Proposal: newest first, see 20.2) |
 | States | Skeleton while loading; "No tickets in this range." for empty charts; "No approvals waiting" empty state | — | Fact |
@@ -329,7 +350,7 @@ Denied states: 404 "Ticket not found"; 403 "You do not have access to this ticke
 │ (Step 2) ⓘ This looks like an IT and Support request. [Switch] Keep HR               │
 │ Category* ▾  Sub-category* ▾  ⓘ Routes to … · SLA … TC   🔒 confidential note       │
 │ ✦ AI filled ✕ on each AI field · yellow "AI was not sure about this. Please check it."│
-│ category fields · custom fields · Priority* · Title* (0/150) · Description*         │
+│ category fields · custom fields · Title* (0/150) · Description*                     │
 │ CC colleagues [Add a colleague… ▾][Add]  · Attachments (drop / browse)              │
 │ These FAQs may answer it [New] … [This answered it] [No, continue]                  │
 │ Related ticket (optional) ▾                                                         │
@@ -342,9 +363,10 @@ Denied states: 404 "Ticket not found"; 403 "You do not have access to this ticke
 |---|---|---|
 | Helpdesk cards | Only helpdesks the person may use; Salesforce card for Sales, Presales, Solutions only | Fact |
 | HR form | Category, Sub-category, routing note (lead, priority set by category, SLA, reopen 30 days), confidential note, Title, Description, custom fields, Location, Manager CC checkbox (off by default for confidential categories), CC, attachments | Fact |
-| L&D form | Request type (Course request / Portal problem), category, sub, learning source and item, session date (Sessions), justification (course) or problem and device (portal), priority, approval chain note or routing note | Fact |
-| Salesforce form | Note "Submitting creates a Case in Salesforce", Type, Reason, Account, Opportunity ID (006…, 15 or 18 chars), Record link (required for data changes), Business need (enhancements), priority, routing note | Fact |
-| IT and Admin Desk form | Schema driven: fields with show / required conditions, defaults (approver = my manager), patterns, `notPast` and `gteField` checks, approval note, priority hint | Fact |
+| L&D form | Request type (Course request / Portal problem), category, sub, learning source and item, session date (Sessions), justification (course) or problem and device (portal), approval chain note or routing note | Fact |
+| Salesforce form | Note "Submitting creates a Case in Salesforce", Type, Reason, Account, Opportunity ID (006…, 15 or 18 chars), Record link (required for data changes), Business need (enhancements), routing note | Fact |
+| IT and Admin Desk form | Schema driven: fields with show / required conditions, defaults (approver = my manager), patterns, `notPast` and `gteField` checks, approval note | Fact |
+| Priority | **v0.3:** there is no priority control for any helpdesk. A priority sent by the client is ignored and the category default applies (Admin Desk urgency mapping and the AI voice assist may still raise it). Priority stays visible to workers | Fact |
 | Redirect | Keyword check on title and description; "Switch to X" keeps title and description; "Keep Y" hides it | Fact |
 | AI assist | Mic → listening (timer) → transcribing → analysing → filled. Errors: denied, no speech, unclear, network, blocked (Salesforce for others). Undo per field, Clear all, Re-analyse after editing the transcript | Fact |
 | Live speech | When the browser has the Web Speech API, "Your microphone (live)" appears in the sample list | Proposal |
@@ -372,6 +394,7 @@ FAQ editing: the mock shows "Manage FAQs" as a toast. v1.0 adds an **Edit** butt
 │ Form fields     │ │ Category | Sub-categories | (Type) | Default priority | Lead / owner | Conf │
 │ SLA and escal.  │ │ Reopen | Open | Active ◉ | [Edit]                                          │
 │ Role mapping    │ └───────────────────────────────────────────────────────────────────────────┘
+│ Assignee perf.  │ ┌ VERSION HISTORY: version | effective from | by | change | open tickets ┐
 └─────────────────┘ ┌ CONFIGURATION AUDIT LOG: who, what, when (6 latest) ┐
 ```
 
@@ -379,7 +402,9 @@ FAQ editing: the mock shows "Manage FAQs" as a toast. v1.0 adds an **Edit** butt
 |---|---|---|
 | Categories | Table per helpdesk; Active toggle ("X disabled. Hidden from the form; N open tickets keep it."); Add / Edit modal | Fact |
 | Form fields | Category select; custom field table with Required / Active toggles, Edit, Remove; locked core fields; live form preview; "Open the real form" | Fact |
-| SLA and escalation | SLA tables (HR and L&D shared, IT, Admin Desk) editable in hours; category overrides; rules (pause on wait, business hours TC, breach e-mail); escalation ladders per helpdesk (target and trigger %) | Fact |
+| SLA and escalation | SLA tables (HR and L&D shared, IT, Admin Desk) editable in hours; category overrides; rules (pause on wait, business hours TC, breach e-mail); escalation ladders per helpdesk (target and trigger %). **v0.3:** every save appends an immutable SLA version and a **Version history** table (version, effective from, changed by, change, open tickets on that version) is shown with the note "Changes apply to tickets raised after you save" | Fact |
+| Manager approval | **v0.3:** a per-category toggle (`PATCH /admin/categories/:id/mgr-approval`) with an optional sub-category "Applies to" list; turning it off removes the manager step for new tickets while any additional step still applies; every change is audited | Fact |
+| Assignee performance | **v0.3:** helpdesk scope, 7/30/90/This-year range, name search, assignee / category grouping, KPI cards, sortable table, per-cell drill-down that opens the tickets, **Unassigned (queues)** row, **Unattended** list, Export CSV and a reconciliation line. Replaces the earlier SLA-compliance report | Fact |
 | Role mapping | Category leads and routing per helpdesk; people with helpdesk roles, Assign role / Edit modal | Fact |
 | Denied | "The Admin console is for Helpdesk admins only." | Fact |
 
@@ -398,6 +423,7 @@ FAQ editing: the mock shows "Manage FAQs" as a toast. v1.0 adds an **Edit** butt
 | Add / Edit field | Label*, Type, Placeholder, Options* (Dropdown), Required | Add a label. · Add at least one option. | Fact |
 | Assign / Edit roles | Employee* (new), role checkboxes, HR categories (HR agent), notes | Select an employee. | Fact |
 | Edit FAQ | Question*, Answer* | Write the question. · Write the answer. | Proposal |
+| Out of office (demo) | **v0.3:** per-helpdesk list of assignees, category leads and ladder people, each with an "On leave today" switch and an "On leave tomorrow" chip; "Done" closes. Changes last until Reset | — | Fact |
 
 ---
 
@@ -448,6 +474,8 @@ flowchart LR
 ```
 
 Rules (**Fact**): HR routes to the category lead; L&D to the category owner or queue; IT and Admin Desk to the category queue when set, otherwise the lead; Salesforce to the assignment-rule owner. Changing a lead in Role mapping applies to new tickets only. An HR lead automatically gets HR agent access to that category (**Fact**).
+
+**v0.3 — absence cover (not escalation).** Before assigning, routing checks whether the lead/owner is **unavailable** — an approved full-day leave or an Absent attendance after the 11:00 IST cut-off (`isUnavailable()`, `backend/src/domain/availability.ts`). If so it steps **down the escalation ladder** to the next available and eligible person, keeping `escalationLevel` at 0 and writing a neutral `assign` event ("Reassigned to <name> (assignee unavailable)"); `tickets.asg_hist` records `how: absence` and `coverFor`, and `tickets.ladder_base` marks the rung so a later escalation starts above the cover and never back to the absent lead. The cover notification appends "(covering for <name>)"; the absent person is not notified. If **nobody** is available the ticket stays with the category lead, the helpdesk admins are alerted and it is listed as **Unattended**. **Confidential** categories (HR payroll, records, onboarding, performance) reassign to the next ladder person too; the **restricted** Grievance / IT-Security ladders are never widened (the cover must already qualify), and queue-routed tickets are unchanged. Approval categories run the check at the **last** approval. Eligibility reuses `canWork()`. **Fact** (**TC**: the 11:00 cut-off and the Unattended fallback)
 
 ### 5.3 Status models per helpdesk
 
@@ -679,7 +707,7 @@ sequenceDiagram
   participant M as Manager
   participant X as Second approver (L&D / IT head / Admin head)
   E->>S: Submit (category has a chain)
-  S->>S: status = Pending approval, SLA shows "Awaiting approval"
+  S->>S: status = Pending approval, SLA not started (it starts at the last approval)
   S-->>M: Notification "Approval needed: KEY from E"
   M->>S: POST /tickets/KEY/approval {Approved, note}
   alt chain has a second step
@@ -706,6 +734,19 @@ sequenceDiagram
 
 The requester can never approve their own step; a helpdesk admin cannot approve course requests (**Fact**).
 
+**v0.3 — manager-approval toggle and SLA start.** The manager step is per category
+(`categories.mgr_approval` and `mgr_approval_subs`). Migrated defaults: IT **Software and
+installation** on for *Install new software* and *Software licence request*; IT **Access** on; Admin
+Desk **Travel** and **Purchase** on; L&D **Course request** on; everything else off. Turning the
+manager step **off** removes it for new tickets while any additional step (for example the Admin head
+on purchases) still applies; turning it back on accepts a sub-category "Applies to" list; every
+toggle is audited. The **SLA clock starts at the last approval**, not at raise
+(`tickets.sla_started` / `tickets.sla_start`; timeline event "SLA started on approval …"). While
+pending, the assignee may add notes and reassign but **cannot** start, resolve, escalate or record a
+first response (`PENDING_APPROVAL`). A requester without a manager has the manager step routed to the
+Helpdesk admin. A ticket rejected at approval never starts its SLA and is left out of SLA metrics.
+**Fact**
+
 ### 5.5 SLA and escalation
 
 ```mermaid
@@ -729,6 +770,7 @@ flowchart TD
 - While paused the due date is not moved, as in the mock. Extending the due date by the paused time is **TC: helpdesk owners**.
 - Salesforce clocks and escalation stay in Salesforce (entitlements, milestones, escalation rules); the scheduler skips Salesforce cases. **Fact**
 - The scheduler is off by default in development (`SLA_SCHEDULER_ENABLED=false`) so the sample data stays as in the mock; `POST /api/admin/sla/run` runs one tick on demand. **Proposal**
+- **v0.3 — SLA versioning.** Admin edits never overwrite the live values: each save appends an immutable `sla_versions` row (`tables`, `category_overrides`, `ladder_pct`, `changes`, `effective_from`, `set_by`, `note`) and `tickets.sla_ver` binds the version in force when the ticket was raised. Every calculation (creation, reopen, priority change, category change, approval completion, escalation % snapshot, analytics) reads the bound version, so older tickets keep their targets and due dates. A 60-second coalescing window merges same-cell edits only when no ticket has been raised under the newest version. **Fact** (**TC**: the coalescing window)
 
 ### 5.6 Reopen
 
@@ -808,7 +850,7 @@ sequenceDiagram
   W->>DB: sent_at or attempts+1, last_error
 ```
 
-Events that notify (**Fact**): new ticket to assignee; CC and tag; approval needed; approval decision; status change and replies to requester and followers; waiting for employee; escalation to level owner; reopen to assignee; removal from a ticket; SLA breaches and warnings.
+Events that notify (**Fact**): new ticket to assignee; CC and tag; approval needed; approval decision; status change and replies to requester and followers; waiting for employee; escalation to level owner; reopen to assignee; removal from a ticket; SLA breaches and warnings. **v0.3:** when a ticket is covered the assignee notification appends "(covering for <name>)"; when no cover is available the helpdesk admins are alerted (confidential tickets are masked in the text).
 
 ### 5.11 Access decision
 
@@ -1087,6 +1129,8 @@ See the diagrams and mapping tables in 5.3. Transitions a worker may pick:
 
 Salesforce uses entitlement milestones in Salesforce; the shared table is only a fallback for display. Rules: Pause the clock while waiting for the employee (on); Count business hours only (on); Email the category lead on response breach (on).
 
+**v0.3:** priority is **not chosen in the raise form**; a priority sent by the client is ignored and the category default applies (the Admin Desk urgency mapping and the AI voice assist may still raise it). `PRIORITY_VISIBLE_TO_REQUESTER` (default **true**) controls whether plain requesters see priority in tables, filters, detail and the By-priority chart. The values above are the **v1** targets; an admin edit appends a new SLA version (§5.5) and each ticket uses the version bound when it was raised. **Fact** (**TC**: the default values)
+
 ### 6.5 Escalation ladders
 
 | Helpdesk | Level | Escalate to | Role shown | Trigger |
@@ -1105,6 +1149,10 @@ Salesforce uses entitlement milestones in Salesforce; the shared table is only a
 | Admin Desk | L3 | Lata Verma | HR head | 100 % of resolution time |
 
 Salesforce: Senior admin queue (Salesforce escalation rule), resolution milestone at risk.
+
+**v0.3:** when a ticket is covered because its lead/owner is away, `tickets.ladder_base` records the
+rung of the cover so a later escalation goes to the level **above** the cover, never back to the
+absent lead; absence cover never changes `escalationLevel`. **Fact**
 
 ### 6.6 Closing messages and canned responses
 
@@ -1354,10 +1402,10 @@ erDiagram
 |---|---|
 | `users` | People and queues (`is_queue`), e-mail, department, title, location, manager, active |
 | `user_roles`, `user_hr_categories` | Roles and HR categories worked; read on every request |
-| `categories` | Per helpdesk: key, name, sub-categories (JSON), default priority, lead, owner, queue, confidential, restricted, reopen, request type, Salesforce flags, SLA override (JSON), approval rule (JSON), sort, active |
+| `categories` | Per helpdesk: key, name, sub-categories (JSON), default priority, lead, owner, queue, confidential, restricted, reopen, request type, Salesforce flags, SLA override (JSON), approval rule (JSON), manager approval (`mgr_approval`) and sub-category list (`mgr_approval_subs`), sort, active |
 | `form_fields` | Category fields: type, options, placeholder, hint, min, pattern + message, default, required and show conditions (JSON), validation (JSON), custom flag, active, sort |
 | `settings` | Key / JSON value: statuses, UI map, priorities, SLA, escalation, rules, canned replies, closing messages, labels, AI samples and keywords, redirect patterns, persona groups |
-| `tickets` | Key (`HR-000123`, `SF-00337`), helpdesk, category, sub, title, description, fields (JSON), priority, status, requester, assignee, confidential, response and resolution due, response met, paused, escalation level, close response / message / by / at, related key, AI transcript, timestamps. Reopens are counted from `ticket_events` |
+| `tickets` | Key (`HR-000123`, `SF-00337`), helpdesk, category, sub, title, description, fields (JSON), priority, status, requester, assignee, confidential, response and resolution due, response met, paused, escalation level, close response / message / by / at, related key, AI transcript, timestamps. **v0.3:** SLA version (`sla_ver`), assignment history (`asg_hist` with `how` / `coverFor`), ladder base (`ladder_base`), escalation log (`esc_log`), and `sla_started` / `sla_start`. Reopens are counted from `ticket_events` |
 | `ticket_comments` | Body, internal flag, author, time |
 | `ticket_events` | Timeline text and kind (raise, assign, status, esc, close, sla) |
 | `ticket_followers` | Relation FOLLOWER / CC / TAGGED / CASE_TEAM, added by |
@@ -1369,6 +1417,8 @@ erDiagram
 | `faqs`, `faq_votes` | FAQ content per helpdesk and helpful votes |
 | `audit_log` | Time, actor, action, target, outcome (ok / denied), summary, detail (JSON, no message bodies) |
 | `ticket_sequences` | Next number per helpdesk, locked `FOR UPDATE` when raising |
+| `absences`, `attendance` | **v0.3** demo stand-in for the Attendance and Leave modules: per-user approved leave (from / to date, type, status) and daily attendance; `isUnavailable()` reads them for absence cover |
+| `sla_versions` | **v0.3** immutable SLA policy versions: tables, category overrides, ladder %, change list (`changes`), effective from, set by, note |
 
 ### 9.2 DDL (generated with `mysqldump --no-data` from the migrated schema)
 
@@ -1724,6 +1774,13 @@ Base path `/api`. JSON unless stated. Every route needs `Authorization: Bearer <
 | PUT | `/admin/sla`, `/admin/rules`, `/admin/escalation` | SLA tables, rules, ladders | HD_ADMIN |
 | PUT | `/admin/people/:id/roles` | `{roles, hrCategories}` | HD_ADMIN |
 | GET | `/admin/audit` · POST `/admin/sla/run` | Audit list, one scheduler tick | HD_ADMIN |
+| PATCH | `/admin/categories/:id/mgr-approval` | **v0.3** `{on, subs?}` — toggle the manager-approval step | HD_ADMIN |
+| GET | `/admin/performance` | **v0.3** Assignee performance report (`hd, range, q, group`) | HD_ADMIN |
+| POST | `/admin/performance/log` | **v0.3** Record an export / filter action | HD_ADMIN |
+| GET | `/performance/me` | **v0.3** My performance (own rows, by category) | Workers (403 `NOT_A_WORKER` otherwise) |
+| GET | `/demo/absences` | **v0.3** People who can receive tickets, by helpdesk, with on-leave status | Any, `DEMO_MODE=true` only |
+| PUT | `/demo/absences/:userId` | **v0.3** `{on}` — set / clear "on leave today" | Any, `DEMO_MODE=true` only |
+| POST | `/demo/out-of-office` | Toggle out of office for the signed-in person | Any, `DEMO_MODE=true` only |
 | POST | `/demo/reset` | Restore sample data | Any, `DEMO_MODE=true` only |
 
 ### 10.2 Main DTOs
@@ -1859,12 +1916,13 @@ Model timeout or error → rules engine result (draft, answer) or the server-bui
 
 ## 14. Testing
 
-| Level | Tool | What | Result on 13 Nov 2026 |
+| Level | Tool | What | Result on 18 Nov 2026 |
 |---|---|---|---|
-| Unit (backend) | Jest + ts-jest | Role-by-action matrix (36 persona × ticket rows plus approvals, Salesforce scope, reopen, views, FAQ editors), SLA and condition rules, AI rules engine on the mock's samples, guardrails, knowledge base | 73 passed |
+| Unit (backend) | Jest + ts-jest | Role-by-action matrix (36 persona × ticket rows plus approvals, Salesforce scope, reopen, views, FAQ editors), SLA and condition rules, AI rules engine on the mock's samples, guardrails, knowledge base | 80 passed |
 | API (backend) | Jest + Supertest on MySQL | 401 / public health, token contents, roles read from DB each request, Salesforce 403 + audit for ticket, FAQs, people list and raise, confidential 403, auditor read-only, admin-only console, raise with validation and file rules, download access, pause and resume on reply, invalid transition, wrong approver, demo reset | 16 passed |
+| v0.3 acceptance (backend) | Jest + Supertest on MySQL (`test/v03.e2e-spec.ts`) | Demo roles + out-of-office panel; absence cover (A1–A9, incl. confidential-category cover and the A4 ineligible-skip fallback); SLA versioning; manager-approval toggle and SLA start (M1–M7); priority not chosen in the raise form; dashboard metrics (D1); assignee performance and My performance (F1–F3) | 28 passed |
 | Unit (frontend) | Vitest + Testing Library | Date and duration formats, form conditions, FAQ markup without HTML injection, mentions, AI answer links, field errors, dialog Escape, store reset on persona switch, toasts | 12 passed |
-| End-to-end | Playwright (Chromium) | 1 raise HR ticket · 1b validation messages · 2 agent status change and reply · 3 requester reply resumes SLA · 4 escalate · 5 manager then L&D approval · 6 reopen · 7 follow / unfollow · 8 FAQ "No, raise a ticket" · 9 Sales sees Salesforce, Engineering does not · 10 403 on forbidden tickets · 11 400 px layout on seven pages | 12 passed |
+| End-to-end | Playwright (Chromium) | flows: 1 raise HR ticket · 1b validation messages · 2 agent status change and reply · 3 requester reply resumes SLA · 4 escalate · 5 manager then L&D approval · 6 reopen · 7 follow / unfollow · 8 FAQ "No, raise a ticket" · 9 Sales sees Salesforce, Engineering does not · 10 403 on forbidden tickets · 11 400 px layout on seven pages. fixes: no priority field · SLA versioning note + history · new version on save · assignee performance · out-of-office panel · absent lead covered | 18 passed |
 | Visual | Headless screenshots at 1440 px compared with the mock (standards mode) | Dashboard, My tickets, ticket detail and drawer match; differences listed in 20.2 | Checked manually |
 
 Commands: `make test`, `make test-api`, `make e2e` (needs `make dev`).
@@ -1959,7 +2017,7 @@ Format: **As a** role, **I want** …, **so that** …; acceptance criteria are 
 | ID | Story | Acceptance criteria |
 |---|---|---|
 | US-3.1 | As an employee I want to ask "What is the status of my laptop ticket?" | Answer cites my matching tickets with links and sources; no other person's tickets appear |
-| US-3.2 | As anyone I want analytics for my scope | 16 cards with the same numbers as the mock for Arjun Kumar (Total 15, Open 1, In progress 3, Pending input 4, Escalated 1, SLA breached 2, At risk 1, Overdue 1, Resolved this month 1, Reopened 0, Avg first response 2h 28m, Avg resolution 2d 2h, SLA compliance 83 %, Following 1); hovering shows the formula; clicking opens the filtered list with a flag chip |
+| US-3.2 | As anyone I want analytics for my scope | **v0.3:** 14 cards (15 with Pending my approval) from one `metrics()` definition; Open = Not started + In progress + Pending input; hovering shows the formula; every numeric card reproduces its count in the filtered list, and the by-helpdesk / top-category bars sum to Raised |
 | US-3.3 | As an employee I want My tickets with filters, sort and paging | Tabs Open / Closed with counts, filters per 4.3, sort toggles, 8 per page, empty states |
 | US-3.4 | As an agent I want Assigned to me with my queues and unassigned work | Views Assigned to me / My queues / Unassigned; non-workers see a 403 page |
 
@@ -2085,12 +2143,19 @@ Format: **As a** role, **I want** …, **so that** …; acceptance criteria are 
 | 7 | History Export CSV downloads a real file | The mock shows a "Mock: exports…" toast |
 | 8 | Latest updates are listed newest first | The mock lists them in sample-data order |
 | 9 | Top categories: ties are ordered by helpdesk and category order | The mock used sample-data order; the fifth bar can differ (L&D · Course request vs L&D · Content) |
-| 10 | Sidebar footer reads "Helpdesk module v1.0" | The mock reads "module mock v0.2" |
+| 10 | Sidebar footer reads "Helpdesk module v0.3 (mock)" | The v2 mock reads "module mock v0.2"; v0.3 aligns the label with this change request |
 | 11 | The page has no 8 px body margin | The mock is a document inside the artifact viewer |
 | 12 | Request fields on a ticket are shown in form order | MySQL JSON does not keep key order |
 | 13 | `isReadOnly` now also requires view access | Found by the unit matrix: an auditor was flagged read-only on a Salesforce case they cannot open (they still could not open it) |
 | 14 | History section headers wrap on narrow screens | The mock overflowed by ~50 px at 400 px on History; fixed so the 400 px rule holds |
 | 15 | Fonts load from Google Fonts like the mock; where they are blocked (as in the test sandbox) system fonts are used | Same files as the mock |
+| 16 | The "Following / CC'd" sub-nav tab is removed | v0.3 removes the redundant entry point; the Dashboard button and the `/following` route remain |
+| 17 | The raise form has no priority control | v0.3: priority is assigned internally (category default, Admin urgency mapping or AI voice) and stays visible to workers |
+| 18 | SLA targets are versioned; an admin edit appends a version instead of overwriting | v0.3: tickets keep the targets in force when they were raised |
+| 19 | Manager approval is a per-category toggle; the SLA clock starts at the last approval | v0.3 |
+| 20 | The dashboard has 14 cards (no "Total", no SLA-compliance) and every number comes from one `metrics()` definition | v0.3 |
+| 21 | Assignee performance replaces the SLA-compliance report; "My performance" is a new page | v0.3 |
+| 22 | "Out of office (demo)" opens a per-helpdesk panel with a switch per person | v0.3 |
 
 Not verified in this environment (honest status):
 
@@ -2118,6 +2183,10 @@ Not verified in this environment (honest status):
 | 13 | Who may reset demo data outside local environments | IT | Any signed-in user when `DEMO_MODE=true`; set `false` in shared environments |
 | 14 | FAQ editors per helpdesk | Helpdesk owners | 4.8 |
 | 15 | Approval chains (for example finance step for purchases above a limit) | Admin head, finance | Mock chains (5.4) |
+| 16 | Attendance cut-off hour for "absent today" (default 11:00 IST, `ATTENDANCE_CUTOFF_HOUR_IST`) | HR ops | 11:00 IST |
+| 17 | Absence cover: what happens when nobody is available (default: keep the lead, alert HD admins, list as Unattended) and whether queues may be covered | Helpdesk owners | Never widen queues; Unattended fallback |
+| 18 | `PRIORITY_VISIBLE_TO_REQUESTER` — may plain requesters see priority in tables, filters, detail and the By-priority chart? | Helpdesk owners | true |
+| 19 | SLA-version coalescing window for same-cell edits (default 60 s, only before any ticket is raised on the new version) | HR ops | 60 s |
 
 ---
 
@@ -2361,21 +2430,24 @@ Generated from `db/seed/seed-data.json` and `db/seed/helpdesk-config.json` (extr
 
 ### A.7 Analytics cards
 
+**v0.3:** 14 cards grouped Live / Attention / In date range; every number comes from one `metrics()`
+definition. "Total", "SLA compliance", "Following / CC'd" and "Resolved this month" were removed.
+
 | Card | Formula (shown on hover) |
 |---|---|
-| Total tickets | Tickets raised in the range, with the change against the previous range of the same length |
-| Open | Open tickets with employee status Open |
+| Open | Not closed = Not started + In progress + Pending input |
+| Not started | Open tickets with employee status Open |
 | In progress | Open tickets with employee status In Progress |
 | Pending input | Open tickets waiting for the employee or an approval |
-| Escalated | Open tickets at any escalation level |
-| SLA breached | First response or resolution missed |
-| At risk | Resolution due within 24 h |
-| Overdue | Open and past resolution due |
-| Resolved this month | Closed or resolved this calendar month |
-| Reopened | Tickets reopened at least once |
-| Avg first response | Mean time to the first agent reply |
-| Avg resolution time | Mean created → closed in range (cancelled excluded) |
-| SLA compliance | Closed on time ÷ closed |
-| Following / CC'd | Open tickets you watch |
+| Escalated | Open tickets at escalation level ≥ 1 or status Escalated |
+| Overdue | Open, SLA running, not paused, past resolution due |
+| At risk | Open, SLA running, not paused, resolution due within 24 h |
+| Unassigned | Open tickets still held by a queue |
+| Raised | Tickets raised in the date range (open or closed) |
+| Closed | Raised in the range and now closed (resolved / rejected / cancelled) |
+| Reopened | Raised in the range, reopened at least once |
+| SLA breached | Raised in the range, first response or resolution missed (rejected, cancelled and never-started excluded) |
+| Avg first response | Mean SLA start → first public staff reply (raised in range) |
+| Avg resolution | Mean SLA start → resolution (resolved, raised in range) |
 | Pending my approval | Requests at a step you can act on (approvers) |
 

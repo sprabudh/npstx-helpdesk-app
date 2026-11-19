@@ -2,7 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { env } from '../common/env';
 import { CurrentUser } from '../common/decorators';
-import { allowedHds } from '../domain/policy';
+import { allowedHds, isHeadish, isWorker, PRIORITY_VISIBLE_TO_REQUESTER } from '../domain/policy';
 import type { Principal } from '../domain/types';
 import { FILE_RULES } from '../tickets/ticket-create.service';
 import { HelpdeskConfigService } from './config.service';
@@ -27,6 +27,7 @@ export class ConfigController {
         ownerId: c.ownerId, ownerName: c.ownerId ? this.cfg.name(c.ownerId) : null, queueId: c.queueId, queueName: c.queueId ? this.cfg.name(c.queueId) : null,
         confidential: c.confidential, restricted: c.restricted, reopenAllowed: c.reopenAllowed, requestType: c.requestType, needsRecord: c.needsRecord,
         needsImpact: c.needsImpact, slaOverride: c.slaOverride, approvalRule: c.approvalRule, active: c.active,
+        mgrApproval: c.mgrApproval, mgrApprovalSubs: c.mgrApprovalSubs, extraSteps: this.cfg.additionalSteps(c.helpdesk, c.key),
       })),
       formFields: this.cfg.allFields().filter((f) => f.active && hds.includes(f.helpdesk as never)),
       statuses: pick(s('statuses')), uiMap: pick(s('uiMap')), priorities: pick(s('priorities')),
@@ -39,6 +40,7 @@ export class ConfigController {
       fileRules: { maxFiles: FILE_RULES.maxFiles, maxBytes: FILE_RULES.maxBytes, pattern: FILE_RULES.allowed.source },
       managers: this.cfg.peopleList().filter((p) => !p.isQueue && p.roles.includes('MANAGER')).map((p) => ({ id: p.id, name: p.name })),
       displayTimeZone: env.displayTimeZone, demoMode: env.demoMode, ai: this.ai.status(),
+      priorityVisible: PRIORITY_VISIBLE_TO_REQUESTER || isWorker(u) || isHeadish(u),
     };
   }
 }

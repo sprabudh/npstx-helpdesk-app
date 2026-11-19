@@ -13,7 +13,13 @@ export interface SlaTicket {
   paused: boolean;
   escalationLevel: number;
   closeResponse: string | null;
+  /** False until the last approval; such tickets never had an SLA clock. */
+  slaStarted?: boolean;
 }
+
+/** Rejected, Cancelled and never-started tickets are left out of every SLA metric. */
+export const slaCounts = (t: SlaTicket) =>
+  t.slaStarted !== false && !['Rejected', 'Cancelled'].includes(t.status) && !['Rejected', 'Cancelled'].includes(t.closeResponse ?? '');
 
 export const isClosed = (st: StatusModel, s: string) => st.closed.includes(s);
 
@@ -25,6 +31,7 @@ export interface SlaInfo {
 
 /** Same rules as the artifact's slaInfo(): Met/Breached when closed; Paused; Awaiting approval; Overdue; Due in; On track. */
 export function slaInfo(t: SlaTicket, closed: boolean, nowMs: number): SlaInfo {
+  if (closed && t.slaStarted === false) return { cls: 'pause', txt: 'Not started', due: t.resolutionDue };
   if (closed) {
     const met = !!t.closedAt && t.closedAt.getTime() <= t.resolutionDue.getTime();
     return { cls: met ? 'ok' : 'over', txt: met ? 'Met' : 'Breached', due: t.resolutionDue };
@@ -38,11 +45,11 @@ export function slaInfo(t: SlaTicket, closed: boolean, nowMs: number): SlaInfo {
 }
 
 export const isOverdue = (t: SlaTicket, closed: boolean, nowMs: number) =>
-  !closed && !t.paused && t.status !== 'Pending approval' && t.resolutionDue.getTime() < nowMs;
+  !closed && !t.paused && t.status !== 'Pending approval' && t.slaStarted !== false && t.resolutionDue.getTime() < nowMs;
 export const isAtRisk = (t: SlaTicket, closed: boolean, nowMs: number) =>
-  !closed && !t.paused && t.status !== 'Pending approval' && t.resolutionDue.getTime() >= nowMs && t.resolutionDue.getTime() - nowMs < 86400000;
+  !closed && !t.paused && t.status !== 'Pending approval' && t.slaStarted !== false && t.resolutionDue.getTime() >= nowMs && t.resolutionDue.getTime() - nowMs < 86400000;
 export const isBreachedRes = (t: SlaTicket, closed: boolean, nowMs: number) =>
-  t.status !== 'Cancelled' && (closed ? !!t.closedAt && t.closedAt.getTime() > t.resolutionDue.getTime() : isOverdue(t, closed, nowMs));
+  slaCounts(t) && (closed ? !!t.closedAt && t.closedAt.getTime() > t.resolutionDue.getTime() : isOverdue(t, closed, nowMs));
 
 /** UI status (Open, In Progress, Pending Input, Resolved, Rejected, Cancelled) for a helpdesk status. */
 export function uiOf(st: StatusModel, uiMap: Record<string, string>, s: string, closeResponse?: string | null): string {

@@ -150,18 +150,10 @@ function AiBar() {
 }
 
 function Welcome({ me }: { me: Me }) {
-  const nav = useNavigate();
   const now = new Date(me.now);
   const hour = Number(new Intl.DateTimeFormat('en-IN', { hour: 'numeric', hour12: false, timeZone: 'Asia/Kolkata' }).format(now));
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const day = new Intl.DateTimeFormat('en-IN', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Asia/Kolkata' }).format(now);
-  const c = me.counts;
-  const stats: { n: number; l: string; to: string; tone?: string }[] = [
-    { n: c.myOpen, l: 'open tickets', to: '/tickets' },
-    { n: c.waiting, l: 'waiting for you', to: '/tickets', tone: c.waiting ? 'warn' : '' },
-    ...(me.flags.worker ? [{ n: c.assignedOpen, l: 'assigned to you', to: '/assigned' }] : []),
-    { n: c.followCount, l: 'following', to: '/following' },
-  ];
   return (
     <section className="welcome" aria-label="Summary">
       <div className="wtxt">
@@ -169,28 +161,22 @@ function Welcome({ me }: { me: Me }) {
         <h2>{greet}, {me.name.split(' ')[0]}</h2>
         <p>{me.title}{me.dept ? ` · ${me.dept}` : ''}</p>
       </div>
-      <div className="wstats">
-        {stats.map((s) => (
-          <button key={s.l} className={`wstat ${s.tone ?? ''}`} onClick={() => nav(s.to)}>
-            <b>{s.n}</b><span>{s.l}</span>
-          </button>
-        ))}
-      </div>
     </section>
   );
 }
 
+/** Shortcuts only. Counts live in the Analytics cards so there is one source for every number. */
 function BigButtons({ me }: { me: Me }) {
   const nav = useNavigate();
   const set = useUi((s) => s.set);
   return (
     <div className="bigbtns">
       <button className="bigbtn primary" onClick={() => set({ drawer: {} })}><span className="bi"><Icon n="plus" s={22} /></span><span className="bt"><b>Raise ticket</b><small>{me.helpdesks.map((h) => HDL[h]).join(' · ')}</small></span></button>
-      <button className="bigbtn" onClick={() => nav('/tickets')}><span className="bi"><Icon n="file" s={22} /></span><span className="bt"><b>My tickets</b><small>{me.counts.myOpen} open · {me.counts.myClosed} closed</small></span></button>
+      <button className="bigbtn" onClick={() => nav('/tickets')}><span className="bi"><Icon n="file" s={22} /></span><span className="bt"><b>My tickets</b><small>Tickets you raised</small></span></button>
       {me.flags.worker ? (
-        <button className="bigbtn" onClick={() => nav('/assigned')}><span className="bi"><Icon n="users" s={22} /></span><span className="bt"><b>Assigned to me</b><small>{me.counts.assignedOpen} open · {me.counts.unassignedInQueues} unassigned in my queues</small></span></button>
+        <button className="bigbtn" onClick={() => nav('/assigned')}><span className="bi"><Icon n="users" s={22} /></span><span className="bt"><b>Assigned to me</b><small>Your tickets and the queues you work</small></span></button>
       ) : (
-        <button className="bigbtn" onClick={() => nav('/following')}><span className="bi"><Icon n="eye" s={22} /></span><span className="bt"><b>Following / CC'd</b><small>{me.counts.followCount} open tickets you watch</small></span></button>
+        <button className="bigbtn" onClick={() => nav('/following')}><span className="bi"><Icon n="eye" s={22} /></span><span className="bt"><b>Following / CC'd</b><small>Tickets you watch</small></span></button>
       )}
     </div>
   );
@@ -246,17 +232,18 @@ function HBars({ items, onPick }: { items: { label: string; n: number; color?: s
     </div>
   );
 }
+const Tag = ({ t }: { t: 'live' | 'range' }) => <span className={`kchip ${t === 'live' ? 'live' : 'rng'}`}>{t === 'live' ? 'Live' : 'In date range'}</span>;
 const DataTable = ({ h1, h2, rows }: { h1: string; h2: string; rows: [string, number][] }) => (
   <details className="cdata"><summary>Show data</summary><table><thead><tr><th>{h1}</th><th>{h2}</th></tr></thead><tbody>{rows.map((r) => <tr key={r[0]}><td>{r[0]}</td><td>{r[1]}</td></tr>)}</tbody></table></details>
 );
-function Trend({ series }: { series: { d: string; n: number }[] }) {
+function Trend({ series, label }: { series: { d: string; n: number }[]; label: string }) {
   const W = 600, H = 150, pl = 26, pr = 10, pt = 12, pb = 24, n = series.length, max = Math.max(2, ...series.map((x) => x.n));
   const step = (W - pl - pr) / (n - 1);
   const X = (i: number) => pl + i * step, Y = (v: number) => pt + (H - pt - pb) * (1 - v / max);
   const pts = series.map((x, i) => `${X(i).toFixed(1)},${Y(x.n).toFixed(1)}`).join(' ');
   const ticks = [...new Set([0, Math.round(max / 2), max])];
   return (
-    <svg className="svgc" viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Tickets raised per day over the last 30 days">
+    <svg className="svgc" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Tickets raised per day, ${label}`}>
       {ticks.map((v) => <g key={v}><line x1={pl} x2={W - pr} y1={Y(v)} y2={Y(v)} style={{ stroke: 'var(--line)', strokeWidth: 1 }} /><text x={pl - 6} y={Y(v) + 3.5} textAnchor="end">{v}</text></g>)}
       <polygon points={`${X(0)},${Y(0)} ${pts} ${X(n - 1)},${Y(0)}`} style={{ fill: 'var(--chart-1)', fillOpacity: 0.12 }} />
       <polyline points={pts} style={{ fill: 'none', stroke: 'var(--chart-1)', strokeWidth: 2, strokeLinejoin: 'round', strokeLinecap: 'round' }} />
@@ -286,7 +273,7 @@ function AnalyticsSection({ me }: { me: Me }) {
   };
   const onBar = (v: string) => {
     const [kind, val] = [v.slice(0, v.indexOf(':')), v.slice(v.indexOf(':') + 1)];
-    const { w, f } = target({});
+    const { w, f } = target({ from: data.fromDate });
     f.hd = kind === 'hd' ? val : kind === 'cat' ? val.split('.')[0] : data.hd;
     if (kind === 'cat') f.cat = val;
     if (kind === 'pri') f.pri = val;
@@ -306,20 +293,28 @@ function AnalyticsSection({ me }: { me: Me }) {
           {[['7', 'Last 7 days'], ['30', 'Last 30 days'], ['90', 'Last 90 days'], ['year', 'This year']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
       </div>
-      <p className="annote">{data.note} · {data.hd === 'ALL' ? 'all your helpdesks' : HDL[data.hd]}. Flow numbers use the date range; open-state numbers are live. Hover a card for its formula; select it to open the matching tickets.</p>
-      <div className="kpis">
-        {data.cards.map((c) => (
-          <button key={c.k} className={`kpi tone-${c.tone ?? 'info'}`} data-tip={c.f} onClick={() => (c.route ? nav(`/${c.route}`) : openWith(c.go ?? {}))}>
-            <span className="l"><span className="ki"><Icon n={c.ic} s={16} /></span>{c.l}</span><span className="n">{c.n}</span><span className="h">{c.h}</span>
-          </button>
-        ))}
-      </div>
+      <p className="annote">{data.note} · {data.hd === 'ALL' ? 'all your helpdesks' : HDL[data.hd]}. Cards marked <b>Live</b> count tickets as they are now; cards marked <b>In date range</b> count tickets raised {data.rangeLabel}. Hover a card for its formula; select it to open the same tickets.</p>
+      {([['live', 'Open tickets'], ['attention', 'Needs attention (subset of open)'], ['range', `Raised ${data.rangeLabel}`]] as const).map(([g, title]) => {
+        const cards = data.cards.filter((c) => c.g === g);
+        return cards.length ? (
+          <div key={g} className="kgrp">
+            <h3 className="kgrp-h">{title}</h3>
+            <div className={`kpis k${cards.length}`}>
+              {cards.map((c) => (
+                <button key={c.k} className={`kpi tone-${c.tone ?? 'info'}`} data-tip={c.f} onClick={() => (c.route ? nav(`/${c.route}`) : openWith(c.go ?? {}))}>
+                  <span className="l"><span className="ki"><Icon n={c.ic} s={16} /></span>{c.l}<span className={`kchip ${c.chip === 'Live' ? 'live' : 'rng'}`}>{c.chip}</span></span><span className="n">{c.n}</span><span className="h">{c.h}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null;
+      })}
       <div className="charts">
-        <section className="panel chart wide"><h3>Tickets raised, last 30 days</h3><p className="cs">{series.reduce((a, b) => a + b.n, 0)} raised · today {series[29].n}</p><Trend series={series} /><DataTable h1="Day" h2="Raised" rows={series.filter((x) => x.n).map((x) => [fd(x.d + 'T12:00:00+05:30'), x.n])} /></section>
-        <section className="panel chart"><h3>By helpdesk</h3><p className="cs">Raised {data.rangeLabel}</p><HBars items={byHd} onPick={onBar} /><DataTable h1="Helpdesk" h2="Tickets" rows={byHd.map((x) => [x.label, x.n])} /></section>
-        <section className="panel chart"><h3>Top categories</h3><p className="cs">Raised {data.rangeLabel}</p>{topCats.length ? <HBars items={topCats} onPick={onBar} /> : <span className="muted" style={{ fontSize: 13 }}>No tickets in this range.</span>}<DataTable h1="Category" h2="Tickets" rows={topCats.map((x) => [x.label, x.n])} /></section>
-        <section className="panel chart"><h3>By priority</h3><p className="cs">Raised {data.rangeLabel}</p><HBars items={byPri} onPick={onBar} /><DataTable h1="Priority" h2="Tickets" rows={byPri.map((x) => [x.label, x.n])} /></section>
-        <section className="panel chart"><h3>Ageing of open tickets</h3><p className="cs">{data.openCount} open, by time since raised</p><HBars items={ageing} /><DataTable h1="Age" h2="Open tickets" rows={ageing.map((x) => [x.label, x.n])} /></section>
+        <section className="panel chart wide"><h3>Tickets raised, {data.rangeLabel}<Tag t="range" /></h3><p className="cs">{series.reduce((a, b) => a + b.n, 0)} raised · today {series[series.length - 1]?.n ?? 0}</p>{series.length > 1 && <Trend series={series} label={data.rangeLabel} />}<DataTable h1="Day" h2="Raised" rows={series.filter((x) => x.n).map((x) => [fd(x.d + 'T12:00:00+05:30'), x.n])} /></section>
+        <section className="panel chart"><h3>By helpdesk<Tag t="range" /></h3><p className="cs">Raised {data.rangeLabel}, open and closed</p><HBars items={byHd} onPick={onBar} /><DataTable h1="Helpdesk" h2="Tickets" rows={byHd.map((x) => [x.label, x.n])} /></section>
+        <section className="panel chart"><h3>Top categories<Tag t="range" /></h3><p className="cs">Raised {data.rangeLabel}, open and closed</p>{topCats.length ? <HBars items={topCats} onPick={onBar} /> : <span className="muted" style={{ fontSize: 13 }}>No tickets in this range.</span>}<DataTable h1="Category" h2="Tickets" rows={topCats.map((x) => [x.label, x.n])} /></section>
+        {data.priorityVisible && byPri.length > 0 && <section className="panel chart"><h3>By priority<Tag t="range" /></h3><p className="cs">Raised {data.rangeLabel}, open and closed</p><HBars items={byPri} onPick={onBar} /><DataTable h1="Priority" h2="Tickets" rows={byPri.map((x) => [x.label, x.n])} /></section>}
+        <section className="panel chart"><h3>Ageing of open tickets<Tag t="live" /></h3><p className="cs">{data.openCount} open, by time since raised</p><HBars items={ageing} /><DataTable h1="Age" h2="Open tickets" rows={ageing.map((x) => [x.label, x.n])} /></section>
         <section className="panel chart full"><h3>Latest updates</h3>
           {data.updates.length ? (
             <ul className="updates">{data.updates.map((x) => <li key={x.id}><button onClick={() => x.ticketKey && nav(`/ticket/${x.ticketKey}`)}><Icon n="bell" s={14} /><span>{x.text}<time>{fdt(x.createdAt)}</time></span></button></li>)}</ul>

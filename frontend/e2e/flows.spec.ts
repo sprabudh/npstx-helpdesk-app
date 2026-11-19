@@ -5,7 +5,7 @@ test.beforeEach(async ({ request }) => resetDemo(request));
 
 test('1. raise an HR ticket', async ({ page }) => {
   await openAs(page, 'u1');
-  await page.locator('.mh-actions .btn.primary', { hasText: 'Raise ticket' }).click();
+  await page.locator('.bigbtn.primary', { hasText: 'Raise ticket' }).click();
   await page.locator('.hdcard', { hasText: 'HR helpdesk' }).click();
   await page.selectOption('#d-cat', 'PAY');
   await page.selectOption('#d-sub', 'Salary credit');
@@ -20,7 +20,7 @@ test('1. raise an HR ticket', async ({ page }) => {
 
 test('1b. raise form shows the artifact validation messages', async ({ page }) => {
   await openAs(page, 'u1');
-  await page.locator('.mh-actions .btn.primary', { hasText: 'Raise ticket' }).click();
+  await page.locator('.bigbtn.primary', { hasText: 'Raise ticket' }).click();
   await page.locator('.hdcard', { hasText: 'HR helpdesk' }).click();
   await page.locator('.dr-foot .btn.primary').click();
   await expect(page.locator('.fld.bad .err').first()).toHaveText('Choose a category.');
