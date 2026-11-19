@@ -10,7 +10,7 @@ import { Principal } from '../domain/types';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AuditService } from '../audit/audit.service';
 import { HelpdeskConfigService } from '../helpdesk-config/config.service';
-import { holderAt, Interval, intervals, startsIn } from './intervals';
+import { holderAt, intervals, startsIn } from './intervals';
 
 const HDL: Record<string, string> = { HR: 'HR', LND: 'L&D', IT: 'IT and Support', ADM: 'Admin Desk', SF: 'Salesforce' };
 
