@@ -6,12 +6,12 @@ import { clock, fdt } from '../common/clock';
 import { env } from '../common/env';
 import { badRequest, conflict, forbidden, notFound } from '../common/errors';
 import { ApprovalEntity, AsgRecord, AttachmentEntity, CommentEntity, EscRecord, EventEntity, FollowerEntity, TicketEntity } from '../database/entities';
-import { approvalStage, canAddPeople, canWork, chainOf, hdAllowed, isReadOnly, relOf, reopenInfo, stm } from '../domain/policy';
+import { approvalStage, canAddPeople, canView, canWork, chainOf, hdAllowed, isReadOnly, relOf, reopenInfo, stm } from '../domain/policy';
 import { evalCond } from '../domain/sla';
 import { Helpdesk, Principal } from '../domain/types';
 import { AuditService } from '../audit/audit.service';
 import { HelpdeskConfigService } from '../helpdesk-config/config.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { TicketEventEmitter, TicketRef } from '../notifications/event-emitter.service';
 import { ProvidersRegistry } from '../providers/providers.registry';
 import { CoverService } from './cover.service';
 import { checkFiles, storeFile, UploadedFileLike } from './ticket-create.service';
@@ -27,7 +27,7 @@ export class TicketActionsService {
     private readonly loader: TicketLoader,
     private readonly query: TicketQueryService,
     private readonly cfg: HelpdeskConfigService,
-    private readonly notes: NotificationsService,
+    private readonly events: TicketEventEmitter,
     private readonly providers: ProvidersRegistry,
     private readonly audit: AuditService,
     private readonly cover: CoverService,
@@ -36,8 +36,15 @@ export class TicketActionsService {
   private get repo() {
     return this.loader.ds.getRepository(TicketEntity);
   }
-  private tk(r: Row) {
-    return { key: r.t.key, confidential: r.t.confidential };
+  private ref(r: Row): TicketRef {
+    return {
+      key: r.t.key, helpdesk: r.t.helpdesk as Helpdesk, categoryKey: r.t.categoryKey, requesterId: r.t.requesterId,
+      assigneeId: r.t.assigneeId, confidential: r.t.confidential, status: r.t.status, priority: r.t.priority,
+      followers: r.ctx.followers, requesterManagerId: this.cfg.person(r.t.requesterId)?.managerId ?? null,
+    };
+  }
+  private actor(u: Principal) {
+    return { id: u.id, name: u.name };
   }
   private asg(r: Row, u: string, how: AsgRecord['how'], coverFor: string | null = null): AsgRecord[] {
     return [...(r.t.asgHist ?? []), { u, at: clock.now().toISOString(), how, coverFor }];
@@ -96,7 +103,7 @@ export class TicketActionsService {
       await this.save(r, { paused: false, ...(pausedMs > 0 ? { resolutionDue: new Date(r.t.resolutionDue.getTime() + pausedMs) } : {}) });
       await this.loader.event(r.t.key, `SLA resolution clock resumed${pausedMs > 0 ? ` · due date moved to ${fdt(r.t.resolutionDue)}` : ''}`, 'sla');
     }
-    await this.notes.notify([r.t.requesterId, ...this.followerIds(r)], `${u.name} changed ${r.t.key} to ${to}`, this.tk(r), u.id);
+    await this.events.emitTicketEvent('TICKET_STATUS_CHANGED', this.ref(r), this.actor(u));
     await this.providers.for(r.t.helpdesk).onStatusChanged(r.t, from, to);
   }
 
@@ -122,7 +129,7 @@ export class TicketActionsService {
     if (!r.t.slaStarted) {
       await this.save(r, { priority: pri });
       await this.loader.event(key, `Priority: ${from} → ${pri} by ${u.name} · SLA starts after approval`, 'status');
-      await this.notes.notify([r.t.requesterId], `Priority of ${key} changed to ${pri}`, this.tk(r), u.id);
+      await this.events.emitTicketEvent('TICKET_PRIORITY_CHANGED', this.ref(r), this.actor(u));
       return { toast: `Priority set to ${pri}` };
     }
     const [oldRh, oldSh] = this.cfg.slaFor(r.t.helpdesk, r.t.categoryKey, from, r.t.slaVer);
@@ -133,7 +140,7 @@ export class TicketActionsService {
       ...(r.t.responseMet === null ? { responseDue: new Date(r.t.responseDue.getTime() + (rh - oldRh) * 3600000) } : {}),
     });
     await this.loader.event(key, `Priority: ${from} → ${pri} by ${u.name} · SLA targets recalculated (TC)`, 'status');
-    await this.notes.notify([r.t.requesterId], `Priority of ${key} changed to ${pri}`, this.tk(r), u.id);
+    await this.events.emitTicketEvent('TICKET_PRIORITY_CHANGED', this.ref(r), this.actor(u));
     return { toast: `Priority set to ${pri}` };
   }
 
@@ -147,7 +154,13 @@ export class TicketActionsService {
     await this.save(r, { assigneeId: to, asgHist: this.asg(r, to, this.cfg.person(old)?.isQueue ? 'queue-claim' : 'manual') });
     await this.loader.event(key, `Reassigned from ${this.cfg.name(old)} to ${this.cfg.name(to)} by ${u.name}`, 'assign');
     if (note?.trim()) await this.addComment(key, u.id, 'Handover: ' + note.trim(), true);
-    await this.notes.notify([to], `${key} assigned to you`, this.tk(r), u.id);
+    const claim = !!this.cfg.person(old)?.isQueue;
+    if (claim) {
+      await this.events.emitTicketEvent('TICKET_REASSIGNED', this.ref(r), this.actor(u), { recipients: [to], newAssigneeId: to });
+      await this.events.emitTicketEvent('TICKET_QUEUE_CLAIMED', this.ref(r), this.actor(u), { recipients: [r.t.requesterId] });
+    } else {
+      await this.events.emitTicketEvent('TICKET_REASSIGNED', this.ref(r), this.actor(u), { newAssigneeId: to, oldAssigneeId: old });
+    }
     return { toast: `Reassigned to ${this.cfg.name(to)}` };
   }
 
@@ -174,8 +187,10 @@ export class TicketActionsService {
       await this.save(r, { status: 'Escalated', assigneeId: l.who });
       await this.loader.event(key, `Status: ${from} → Escalated · owner set by escalation rule`, 'status');
     }
-    await this.notes.notify([l.who, r.t.assigneeId], `${key} escalated to Level ${base + lvl}`, this.tk(r), u.id);
-    await this.notes.notify([r.t.requesterId], `${key} was escalated to Level ${base + lvl}`, this.tk(r), u.id);
+    const lvlAbs = base + lvl;
+    const agentTargets = [l.who, from, ...this.followerIds(r), ...(lvlAbs >= 2 ? this.cover.hdAdmins() : [])];
+    await this.events.emitTicketEvent('TICKET_ESCALATED', this.ref(r), this.actor(u), { recipients: agentTargets, variant: 'agent', level: lvlAbs });
+    await this.events.emitTicketEvent('TICKET_ESCALATED', this.ref(r), this.actor(u), { recipients: [r.t.requesterId], variant: 'requester', level: lvlAbs });
     await this.audit.record(u.id, 'ticket.escalate', `Escalated ${key} to Level ${base + lvl}`, { target: key });
     return { toast: `Escalated to ${this.cfg.name(l.who)}. They have been notified.` };
   }
@@ -198,7 +213,7 @@ export class TicketActionsService {
     await this.save(r, { status: to, closeResponse: isStm ? null : resp, closeMessage: body.message.trim(), closedById: u.id, closedAt: now, paused: false });
     await this.loader.event(key, `${isStm ? to : 'Closed · ' + resp} by ${u.name} (was ${from})`, 'close', now);
     await this.addComment(key, u.id, body.message.trim(), false);
-    await this.notes.notify([r.t.requesterId, ...this.followerIds(r)], `${key} ${isStm ? to.toLowerCase() : 'closed · ' + resp}`, this.tk(r), u.id);
+    await this.events.emitTicketEvent('TICKET_CLOSED', this.ref(r), this.actor(u), { closeResp: isStm ? to.toLowerCase() : 'closed · ' + resp });
     await this.providers.for(r.t.helpdesk).onStatusChanged(r.t, from, to);
     return { toast: `${key} ${isStm ? to.toLowerCase() : 'closed'}. The requester was notified.` };
   }
@@ -215,7 +230,10 @@ export class TicketActionsService {
     await this.save(r, { status: stm(r.ctx) ? 'Reopened' : 'Open', closeResponse: null, closedAt: null, closedById: null, resolutionDue: new Date(now.getTime() + res * 3600000) });
     await this.loader.event(key, `Reopened by ${u.name} (was ${from}) · SLA clocks restarted`, 'status', now);
     await this.addComment(key, u.id, 'Reopen note: ' + note.trim(), false);
-    await this.notes.notify([r.t.assigneeId], `${key} was reopened by ${u.name}`, this.tk(r), u.id);
+    const cat = this.cfg.category(r.t.helpdesk, r.t.categoryKey);
+    const cov = cat ? await this.cover.cover(r.t.helpdesk as Helpdesk, cat, r.t.assigneeId, now, r.t.slaVer) : null;
+    const target = cov && cov.coverFor ? cov.asg : r.t.assigneeId;
+    await this.events.emitTicketEvent('TICKET_REOPENED', this.ref(r), this.actor(u), { newAssigneeId: target });
     return { toast: `${key} reopened and sent back to ${this.cfg.name(r.t.assigneeId)}` };
   }
 
@@ -226,7 +244,9 @@ export class TicketActionsService {
     const from = r.t.status;
     await this.save(r, { status: 'Cancelled', closedById: u.id, closedAt: now, closeMessage: note?.trim() || 'Cancelled by requester.' });
     await this.loader.event(key, `Cancelled by ${u.name} (was ${from})`, 'close', now);
-    await this.notes.notify([r.t.assigneeId], `${key} was cancelled by the requester`, this.tk(r), u.id);
+    const pending = chainOf(r.ctx).find((a) => a.status === 'Pending');
+    const approverIds = pending ? this.query.approverIds(r, pending.step) : [];
+    await this.events.emitTicketEvent('TICKET_CANCELLED', this.ref(r), this.actor(u), { approverIds });
     return { toast: `${key} cancelled. It is now in History.` };
   }
 
@@ -258,7 +278,7 @@ export class TicketActionsService {
     await this.loader.ds.getRepository(FollowerEntity).insert({ ticketKey: key, userId, relation, addedById: u.id });
     await this.loader.event(key, `${u.name} added ${p.name} as ${REL_LABEL[relation]}${r.t.confidential ? ' · confidential access granted (audited)' : ''}`, 'assign');
     if (r.t.confidential) await this.audit.record(u.id, 'ticket.grant', `Granted ${p.name} access to confidential ${key}`, { target: key });
-    await this.notes.notify([userId], `You were ${relation === 'CC' ? "CC'd" : 'added as a follower'} on ${key}`, this.tk(r), u.id);
+    await this.events.emitTicketEvent(relation === 'CC' ? 'TICKET_CC_ADDED' : 'FOLLOWER_ADDED', this.ref(r), this.actor(u), { targetUserId: userId, targetName: p.name });
     return { toast: `${p.name} added. It now appears on their Following page.` };
   }
 
@@ -275,7 +295,7 @@ export class TicketActionsService {
       return { toast: `Unfollowed ${key}` };
     }
     await this.loader.event(key, `${u.name} removed ${this.cfg.name(userId)} (kept in audit log)`, 'assign');
-    await this.notes.notify([userId], `You were removed from ${key}`, this.tk(r), u.id);
+    await this.events.emitTicketEvent('FOLLOWER_REMOVED', this.ref(r), this.actor(u), { targetUserId: userId });
     return { toast: `${this.cfg.name(userId)} removed` };
   }
 
@@ -300,11 +320,11 @@ export class TicketActionsService {
       const pCtxView = { id: p.id, name: p.name, dept: p.dept, title: p.title, location: null, managerId: p.managerId, roles: new Set(p.roles), hrCats: new Set(p.hrCats) };
       if (internal && !canWork(pCtxView, r.ctx)) { warnings.push(`${p.name} was not tagged: internal notes are agents only`); continue; }
       if (r.t.confidential && u.id !== r.t.requesterId && u.id !== r.t.assigneeId) { warnings.push(`Cannot tag ${p.name} on a confidential ticket`); continue; }
-      if (!hdAllowed(p, r.t.helpdesk)) { warnings.push(`${p.name} has no access to this helpdesk`); continue; }
+      if (!canView(pCtxView, r.ctx)) { warnings.push(`${p.name} has no access to this helpdesk`); continue; }
       await this.loader.ds.getRepository(FollowerEntity).insert({ ticketKey: key, userId: p.id, relation: 'TAGGED', addedById: u.id });
       r.ctx.followers.push({ userId: p.id, relation: 'TAGGED', addedById: u.id });
       await this.loader.event(key, `${u.name} tagged ${p.name}`, 'assign', now);
-      await this.notes.notify([p.id], `${u.name} tagged you on ${key}`, this.tk(r), u.id);
+      await this.events.emitTicketEvent('TICKET_TAGGED', this.ref(r), this.actor(u), { targetUserId: p.id, targetName: p.name });
     }
     await this.addComment(key, u.id, text, internal);
     await this.save(r, {});
@@ -315,8 +335,8 @@ export class TicketActionsService {
     }
     if (internal) {
       const agents = this.cfg.setting<Record<string, string[]>>('agents')[r.t.helpdesk] || [];
-      if (agents.includes(r.t.assigneeId)) await this.notes.notify([r.t.assigneeId], `Internal note on ${key}`, this.tk(r), u.id);
-    } else await this.notes.notify([r.t.requesterId, r.t.assigneeId, ...this.followerIds(r)], `${u.name} replied on ${key}`, this.tk(r), u.id);
+      if (agents.includes(r.t.assigneeId)) await this.events.emitTicketEvent('INTERNAL_NOTE_ADDED', this.ref(r), this.actor(u));
+    } else await this.events.emitTicketEvent('PUBLIC_REPLY_ADDED', this.ref(r), this.actor(u));
     let resumed = false;
     if (!internal && u.id === r.t.requesterId && r.t.status === this.cfg.statusModel(r.t.helpdesk).wait) {
       await this.applyStatus(u, r, this.cfg.statusModel(r.t.helpdesk).work, 'requester replied');
@@ -340,13 +360,13 @@ export class TicketActionsService {
     await this.loader.event(key, `${label} approval: ${decision} by ${u.name}${n ? ' · ' + n : ''}`, decision === 'Rejected' ? 'close' : 'status', now);
     if (decision === 'Rejected') {
       await this.save(r, { status: 'Rejected', closedById: u.id, closedAt: now, closeMessage: n || `Rejected at the ${label.toLowerCase()} step.` });
-      await this.notes.notify([r.t.requesterId], `${key} was rejected at the ${label.toLowerCase()} step`, this.tk(r), u.id);
+      await this.events.emitTicketEvent('APPROVAL_REJECTED', this.ref(r), this.actor(u), { preAssignedId: r.t.assigneeId, label });
     } else {
       const nx = chainOf(r.ctx).find((a) => a.status === 'Pending');
       if (nx) {
         await this.loader.event(key, `${steps[nx.step].l} approval requested from ${this.query.approverText(r, nx.step)}`, 'assign', now);
-        await this.notes.notify(this.query.approverIds(r, nx.step), `Approval needed: ${key} from ${this.cfg.name(r.t.requesterId)}`, this.tk(r), u.id);
-        await this.notes.notify([r.t.requesterId], `${key}: ${label.toLowerCase()} approved, now with ${steps[nx.step].l}`, this.tk(r), u.id);
+        await this.events.emitTicketEvent('APPROVAL_NEEDED', this.ref(r), this.actor(u), { approverIds: this.query.approverIds(r, nx.step) });
+        await this.events.emitTicketEvent('APPROVAL_PENDING', this.ref(r), this.actor(u), { label, nextLabel: steps[nx.step].l });
       } else {
         await this.startAfterApproval(u, r, now);
       }
@@ -376,10 +396,10 @@ export class TicketActionsService {
     await this.loader.event(key, `SLA started on approval · response due ${fdt(r.t.responseDue)}, resolution due ${fdt(r.t.resolutionDue)}`, 'sla', now);
     if (cov?.event) await this.loader.event(key, cov.event, 'assign', now);
     await this.loader.event(key, `Status: Pending approval → ${work} · routed to ${this.cfg.name(asg)}`, 'status', now);
-    await this.notes.notify([r.t.requesterId], `${key} approved; work has started`, this.tk(r), u.id);
+    await this.events.emitTicketEvent('APPROVAL_APPROVED', this.ref(r), this.actor(u), { recipients: [r.t.requesterId] });
     const coverTxt = cov?.coverFor ? ` (covering for ${this.cfg.name(cov.coverFor)})` : '';
-    await this.notes.notify([asg], `${key} approved; work has started${coverTxt}`, this.tk(r), u.id);
-    if (cov?.unattended) await this.notes.notify(this.cover.hdAdmins(), `Unattended: ${key} has no available cover`, this.tk(r), u.id);
+    await this.events.emitTicketEvent('APPROVAL_APPROVED', this.ref(r), this.actor(u), { recipients: [asg], cover: coverTxt || undefined });
+    if (cov?.unattended) await this.events.emitTicketEvent('UNATTENDED_NO_COVER', this.ref(r), this.actor(u), { recipients: this.cover.hdAdmins() });
   }
 
   // ---------- attachments ----------
@@ -393,6 +413,7 @@ export class TicketActionsService {
       await this.loader.event(key, `${u.name} attached ${f.originalname} · virus scan passed`, 'assign');
     }
     await this.save(r, {});
+    await this.events.emitTicketEvent('ATTACHMENT_ADDED', this.ref(r), this.actor(u));
     return { toast: `${files.map((f) => f.originalname).join(', ')} attached` };
   }
 

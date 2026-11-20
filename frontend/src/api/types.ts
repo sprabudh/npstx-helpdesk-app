@@ -69,7 +69,10 @@ export interface AskResult {
   answer: null | { parts: Part[]; sources: ({ type: 'ticket'; key: string } | { type: 'faq'; id: number; helpdesk: Hd; label: string } | { type: 'policy'; label: string })[]; mode: string };
 }
 export interface Faq { id: number; helpdesk: Hd; sortOrder: number; question: string; answer: string; categoryKey: string | null }
-export interface Notification { id: number; userId: string; text: string; ticketKey: string | null; createdAt: string; readAt: string | null }
+export interface Notification {
+  id: number; userId: string; text: string; ticketKey: string | null; createdAt: string; readAt: string | null;
+  eventType?: string | null; category?: string | null; channel?: string | null; dedupeKey?: string | null;
+}
 export interface Card { k: string; g: 'live' | 'attention' | 'range'; chip: 'Live' | 'In date range'; l: string; n: number | string; h: string; ic: string; cls?: string; tone?: string; f: string; go?: Record<string, string>; route?: string }
 export interface Analytics {
   scope: string; scopes: [string, string][]; hd: string; range: string; rangeLabel: string; fromDate: string; openCount: number; priorityVisible: boolean; note: string; cards: Card[];

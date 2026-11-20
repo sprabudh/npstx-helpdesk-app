@@ -7,10 +7,10 @@ number was changed unless listed below.
 
 Legend: **Fact** = built and tested. **TC** = time-boxed / confirm with the business owner.
 
-Verification on this branch: backend `npm run build` clean · backend `npx jest --forceExit` **80
-passed** · backend v0.3 e2e **26 passed** · frontend `npm run build` clean · frontend `npx vitest
-run` **12 passed** · Playwright **18 passed**. The v0.3 acceptance tests live in
-`backend/test/v03.e2e-spec.ts` (they reseed the development database).
+Verification on this branch: backend `npm run build` clean · backend `npx jest --forceExit --runInBand` **80
+passed** · backend v0.3 e2e **28 passed** · notification e2e **4 passed** · frontend `npm run build` clean · frontend `npx vitest
+run` **12 passed** · Playwright **18 passed**. The acceptance tests live in
+`backend/test/v03.e2e-spec.ts` and `backend/test/notifications.e2e-spec.ts` (they reseed the development database).
 
 ---
 
@@ -228,6 +228,38 @@ escHandovers`, `overdueRows = overdueCard`. There is no compliance column.
 
 ---
 
+## 8. Notification catalogue (additive)
+
+- **Single catalogue** `backend/src/notifications/event-catalogue.ts` defines 25 notification events
+  and 4 reminder events, each with fixed channel set, recipient rule and fixed short copy. The
+  event key is authoritative; the matrix/catalogue files were not supplied, so names, templates and
+  recipient rules were derived from the existing notify calls and the v0.3 requirements. **TC**
+- **One emitter** `TicketEventEmitter.emitTicketEvent()` is now used by ticket creation, ticket
+  actions and the SLA scheduler. It resolves recipients, expands queues to active members, drops
+  the actor, de-duplicates per person, applies the confidential override and hands a typed event to
+  `NotificationGateway`. `NotificationsService` keeps the list/read APIs and the email outbox
+  worker unchanged. **Fact**
+- **Local gateway** `LocalNotificationGateway` writes the in-app row plus the email outbox row in
+  one transaction, including subject `[NPSTX Helpdesk] <key>`, body with the
+  `/helpdesk/tickets/<key>` deep link, and masked text for confidential tickets. Dedupe hits are
+  swallowed by the unique `dedupe_key` index. **Fact**
+- **Additive DB shape** `notifications` gains `event_type`, `category`, `recipient_user_id`,
+  `ticket_id`, `actor_user_id`, `channel`, `dedupe_key`, `payload`, `email_status`, `email_sent_at`
+  and `error`, all nullable; new indexes are `ix_notifications_recipient`,
+  `uq_notifications_dedupe`, `ix_notifications_ticket`. New `notification_reminders` stores one row
+  per `(ticket_key, reminder_type, threshold)`. Old rows are backfilled and remain valid. **Fact**
+- **Reminders** are idempotent: SLA at-risk (75% / 2 h), stuck approval (24 h / 48 h), waiting for
+  employee (24 h / 48 h) and unattended (1 h / 4 h) fire once per threshold, persisted across
+  scheduler restarts. SLA breaches route through the same catalogue. **Fact**
+- **Two-line in-app cards** in the bell panel and dashboard "Latest updates" now show the short
+  message and `<DD HH:mm Mon> · in-app + email` (or `· in-app`). Mark-all/read/click behaviour and
+  the 50-item / 6-item limits are unchanged. **Fact**
+- **Integration contract** `docs/Notification_API_Spec.md` documents endpoints, JSON, auth,
+  idempotency, error codes and one sample payload per event type including confidential and
+  absence-cover variants. **Fact**
+
+---
+
 ## Assumptions (TC) and hook points
 
 - **Attendance cut-off** is 11:00 IST (`ATTENDANCE_CUTOFF_HOUR_IST`). **TC** — confirm the time.
@@ -241,6 +273,10 @@ escHandovers`, `overdueRows = overdueCard`. There is no compliance column.
 - `PRIORITY_VISIBLE_TO_REQUESTER` defaults to **true**; set `false` to hide priority from plain
   requesters in tables, filters, detail and the analytics "By priority" chart. **TC**.
 - Redirecting SLA/escalation notifications for an out-of-office owner is **off** by default. **TC**.
+- Notification event names, short copy, channel sets, recipient rules and reminder thresholds were
+  derived from the repository because NOTIFICATION_MATRIX / NOTIFICATION_CATALOGUE were not
+  provided. Confirm against the official matrix; hooks: `backend/src/notifications/event-catalogue.ts`
+  and `docs/Notification_API_Spec.md`. **TC**.
 
 ---
 

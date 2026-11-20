@@ -11,7 +11,7 @@ import { evalCond } from '../domain/sla';
 import { Helpdesk, Principal } from '../domain/types';
 import { AuditService } from '../audit/audit.service';
 import { HelpdeskConfigService } from '../helpdesk-config/config.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { TicketEventEmitter, TicketRef } from '../notifications/event-emitter.service';
 import { ProvidersRegistry } from '../providers/providers.registry';
 import { CoverService } from './cover.service';
 import { TicketLoader } from './ticket-loader.service';
@@ -63,7 +63,7 @@ export class TicketCreateService {
     private readonly loader: TicketLoader,
     private readonly query: TicketQueryService,
     private readonly cfg: HelpdeskConfigService,
-    private readonly notes: NotificationsService,
+    private readonly events: TicketEventEmitter,
     private readonly providers: ProvidersRegistry,
     private readonly audit: AuditService,
     private readonly cover: CoverService,
@@ -241,14 +241,20 @@ export class TicketCreateService {
       return key;
     });
 
-    const tk = { key, confidential: hd !== 'SF' && c.confidential };
+    const actor = { id: u.id, name: u.name };
+    const ticketRef: TicketRef = {
+      key, helpdesk: hd, categoryKey: c.key, requesterId: u.id, assigneeId: asg, confidential: hd !== 'SF' && c.confidential,
+      status: chain ? 'Pending approval' : hd === 'HR' ? 'Open' : 'New', priority: pri, followers,
+    };
     const coverTxt = route.coverFor ? ` (covering for ${this.cfg.name(route.coverFor)})` : '';
-    await this.notes.notify([asg], `New ticket ${key} assigned to you${coverTxt}`, tk, u.id);
-    if (route.unattended) await this.notes.notify(this.cover.hdAdmins(), `Unattended: ${key} has no available cover`, tk, u.id);
-    for (const fl of followers) await this.notes.notify([fl.userId], `You were CC'd on ${key}`, tk, u.id);
+    if (this.cfg.person(asg)?.isQueue) await this.events.emitTicketEvent('TICKET_CREATED_QUEUE', ticketRef, actor);
+    else await this.events.emitTicketEvent('TICKET_CREATED_DIRECT', ticketRef, actor, { cover: coverTxt || undefined, newAssigneeId: asg });
+    if (route.unattended) await this.events.emitTicketEvent('UNATTENDED_NO_COVER', ticketRef, actor, { recipients: this.cover.hdAdmins() });
+    for (const fl of followers)
+      await this.events.emitTicketEvent(fl.relation === 'CC' ? 'TICKET_CC_ADDED' : 'FOLLOWER_ADDED', ticketRef, actor, { targetUserId: fl.userId });
     if (chain) {
       const [row] = await this.loader.withCtx([(await this.loader.ds.getRepository(TicketEntity).findOne({ where: { key } }))!]);
-      await this.notes.notify(this.query.approverIds(row, chain[0]), `Approval needed: ${key} from ${u.name}`, tk, u.id);
+      await this.events.emitTicketEvent('APPROVAL_NEEDED', ticketRef, actor, { approverIds: this.query.approverIds(row, chain[0]) });
     }
     const t = (await this.loader.ds.getRepository(TicketEntity).findOne({ where: { key } }))!;
     return {

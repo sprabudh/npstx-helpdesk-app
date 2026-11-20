@@ -4,7 +4,7 @@ import { api, ApiError } from '../api/client';
 import { useAction, useAnalytics, useApprovals, useConfig, useMe } from '../api/hooks';
 import type { AskResult, Draft, ListItem, Me } from '../api/types';
 import { HdBadge, Parts, Pill, Who } from '../components/common/bits';
-import { fd, fdt, HDL } from '../lib/format';
+import { cardStamp, fd, fdt, HDL, notifyChannel } from '../lib/format';
 import { Icon } from '../lib/icons';
 import { emptyFilters, useUi } from '../store/ui';
 
@@ -317,7 +317,7 @@ function AnalyticsSection({ me }: { me: Me }) {
         <section className="panel chart"><h3>Ageing of open tickets<Tag t="live" /></h3><p className="cs">{data.openCount} open, by time since raised</p><HBars items={ageing} /><DataTable h1="Age" h2="Open tickets" rows={ageing.map((x) => [x.label, x.n])} /></section>
         <section className="panel chart full"><h3>Latest updates</h3>
           {data.updates.length ? (
-            <ul className="updates">{data.updates.map((x) => <li key={x.id}><button onClick={() => x.ticketKey && nav(`/ticket/${x.ticketKey}`)}><Icon n="bell" s={14} /><span>{x.text}<time>{fdt(x.createdAt)}</time></span></button></li>)}</ul>
+            <ul className="updates">{data.updates.map((x) => <li key={x.id}><button onClick={() => x.ticketKey && nav(`/ticket/${x.ticketKey}`)}><Icon n="bell" s={14} /><span>{x.text}<time>{cardStamp(x.createdAt)} · {notifyChannel(x.channel)}</time></span></button></li>)}</ul>
           ) : <span className="muted" style={{ fontSize: 13 }}>No updates yet.</span>}
         </section>
       </div>

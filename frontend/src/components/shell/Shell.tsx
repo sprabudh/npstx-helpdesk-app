@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { api, setToken } from '../../api/client';
 import { useAction, useConfig, useMe, useNotifications, usePersonas } from '../../api/hooks';
 import type { ListItem } from '../../api/types';
-import { fdt, HDL } from '../../lib/format';
+import { cardStamp, HDL, notifyChannel } from '../../lib/format';
 import { Icon } from '../../lib/icons';
 import { useUi } from '../../store/ui';
 import { Avatar, HdBadge, Pill } from '../common/bits';
@@ -49,7 +49,7 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
         {data?.length ? data.map((n) => (
           <button key={n.id} className={`it ${n.readAt ? '' : 'unread'}`} onClick={async () => { await act.run(() => api(`/notifications/${n.id}/read`, { method: 'POST' })); onClose(); if (n.ticketKey) nav(`/ticket/${n.ticketKey}`); }}>
             <Icon n="bell" s={15} />
-            <span>{n.text}<time>{fdt(n.createdAt)} · in-app + email</time></span>
+            <span>{n.text}<time>{cardStamp(n.createdAt)} · {notifyChannel(n.channel)}</time></span>
           </button>
         )) : <div className="gempty">No notifications yet.</div>}
       </div>

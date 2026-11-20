@@ -19,6 +19,8 @@ import { HealthController } from './health.controller';
 import { ConfigController } from './helpdesk-config/config.controller';
 import { HelpdeskConfigService } from './helpdesk-config/config.service';
 import { MeController } from './me/me.controller';
+import { TicketEventEmitter } from './notifications/event-emitter.service';
+import { LocalNotificationGateway, NOTIFICATION_GATEWAY } from './notifications/gateway';
 import { NotificationsService } from './notifications/notifications.service';
 import { PerformanceController } from './performance/performance.controller';
 import { PerformanceService } from './performance/performance.service';
@@ -40,6 +42,7 @@ import { TicketsController, TicketViewsController } from './tickets/tickets.cont
   providers: [
     AuditService, HelpdeskConfigService, NotificationsService, ProvidersRegistry, TicketLoader, TicketQueryService, TicketCreateService,
     TicketActionsService, AnalyticsService, FaqService, AdminService, SlaScheduler, AiService, CoverService, PerformanceService,
+    LocalNotificationGateway, { provide: NOTIFICATION_GATEWAY, useExisting: LocalNotificationGateway }, TicketEventEmitter,
   ],
 })
 export class AppModule implements NestModule {

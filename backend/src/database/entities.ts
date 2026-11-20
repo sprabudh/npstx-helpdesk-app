@@ -268,6 +268,28 @@ export class NotificationEntity {
   @Column({ name: 'ticket_key', type: 'varchar', length: 20, nullable: true }) ticketKey: string | null;
   @Column({ name: 'created_at', type: 'datetime' }) createdAt: Date;
   @Column({ name: 'read_at', type: 'datetime', nullable: true }) readAt: Date | null;
+  // ---- typed event model (additive, nullable so the legacy insert path keeps working) ----
+  @Column({ name: 'event_type', type: 'varchar', length: 48, nullable: true }) eventType: string | null;
+  @Column({ type: 'varchar', length: 12, nullable: true }) category: string | null;
+  @Index() @Column({ name: 'recipient_user_id', type: 'varchar', length: 32, nullable: true }) recipientUserId: string | null;
+  @Column({ name: 'ticket_id', type: 'varchar', length: 20, nullable: true }) ticketId: string | null;
+  @Column({ name: 'actor_user_id', type: 'varchar', length: 32, nullable: true }) actorUserId: string | null;
+  @Column({ type: 'varchar', length: 24, nullable: true }) channel: string | null;
+  @Column({ name: 'dedupe_key', type: 'varchar', length: 160, nullable: true }) dedupeKey: string | null;
+  @Column({ type: 'json', nullable: true }) payload: Record<string, any> | null;
+  @Column({ name: 'email_status', type: 'varchar', length: 12, nullable: true }) emailStatus: string | null;
+  @Column({ name: 'email_sent_at', type: 'datetime', nullable: true }) emailSentAt: Date | null;
+  @Column({ type: 'varchar', length: 300, nullable: true }) error: string | null;
+}
+
+/** Reminder state (Step 3). One row per (ticket, reminder type, threshold) so a reminder fires once. */
+@Entity('notification_reminders')
+export class ReminderStateEntity {
+  @PrimaryGeneratedColumn() id: number;
+  @Index() @Column({ name: 'ticket_key', type: 'varchar', length: 20 }) ticketKey: string;
+  @Column({ name: 'reminder_type', type: 'varchar', length: 40 }) reminderType: string;
+  @Column({ type: 'varchar', length: 24 }) threshold: string;
+  @Column({ name: 'last_sent_at', type: 'datetime' }) lastSentAt: Date;
 }
 
 @Entity('notification_outbox')
@@ -325,5 +347,5 @@ export const ENTITIES = [
   UserEntity, UserRoleEntity, UserHrCategoryEntity, CategoryEntity, FormFieldEntity, SettingEntity, TicketEntity,
   CommentEntity, EventEntity, FollowerEntity, ApprovalEntity, AttachmentEntity, SfCaseEntity, SfCaseTeamEntity,
   SfChildCaseEntity, NotificationEntity, OutboxEntity, FaqEntity, FaqVoteEntity, AuditEntity, SequenceEntity,
-  AbsenceEntity, AttendanceEntity, SlaVersionEntity,
+  AbsenceEntity, AttendanceEntity, SlaVersionEntity, ReminderStateEntity,
 ];

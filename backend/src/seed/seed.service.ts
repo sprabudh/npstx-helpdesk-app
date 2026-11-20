@@ -20,7 +20,7 @@ interface ConfigData {
 }
 
 const TABLES = [
-  'audit_log', 'faq_votes', 'faqs', 'notification_outbox', 'notifications', 'sf_child_cases', 'sf_case_team', 'sf_cases',
+  'audit_log', 'faq_votes', 'faqs', 'notification_outbox', 'notifications', 'notification_reminders', 'sf_child_cases', 'sf_case_team', 'sf_cases',
   'attachments', 'ticket_approvals', 'ticket_followers', 'ticket_events', 'ticket_comments', 'tickets', 'settings',
   'form_fields', 'categories', 'user_hr_categories', 'user_roles', 'users', 'ticket_sequences',
   'absences', 'attendance', 'sla_versions',

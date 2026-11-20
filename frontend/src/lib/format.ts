@@ -14,6 +14,14 @@ export const fdt = (d?: string | Date | null) => {
   const p = parts(d);
   return `${p.day} ${MON[Number(p.month) - 1]}, ${p.hour}:${p.minute}`;
 };
+/** Notification card stamp: "04 17:05 Nov" (DD HH:mm Mon). */
+export const cardStamp = (d?: string | Date | null) => {
+  if (!d) return '—';
+  const p = parts(d);
+  return `${p.day} ${p.hour}:${p.minute} ${MON[Number(p.month) - 1]}`;
+};
+/** In-app card second line: the channels the event actually used (legacy rows default to both). */
+export const notifyChannel = (c?: string | null) => (c === 'in-app' ? 'in-app' : 'in-app + email');
 /** YYYY-MM-DD in the display time zone. */
 export const isoDate = (d: string | Date) => {
   const p = parts(d);
