@@ -180,7 +180,12 @@ export function RoleStrip() {
               <button className="linkbtn" onClick={() => { set({ demo: 'loading' }); nav('/tickets'); setTimeout(() => set({ demo: null }), 1600); toast('Showing the loading state'); }}>Loading</button>
               <button className="linkbtn" onClick={() => { set({ demo: 'error' }); nav('/tickets'); toast('Showing the error state. Select Retry to recover.'); }}>Error</button>
               <button className="linkbtn" onClick={() => set({ modal: { type: 'ooo' } })}>Out of office (demo)</button>
-              <button className="linkbtn" onClick={async () => { await act.run(() => api('/demo/reset', { method: 'POST' })); qc.clear(); nav('/dashboard'); }}>Reset demo data</button>
+              <button className="linkbtn" onClick={async () => {
+                if (!window.confirm('Reset demo data? This deletes all tickets, logs and changes made since the sample data was loaded.')) return;
+                await act.run(() => api('/demo/reset', { method: 'POST' }));
+                qc.clear();
+                nav('/dashboard');
+              }}>Reset demo data</button>
             </>
           )}
         </span>

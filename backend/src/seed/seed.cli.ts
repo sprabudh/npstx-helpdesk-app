@@ -11,8 +11,8 @@ async function main() {
     process.exit(1);
   }
   if (process.argv.includes('--if-empty')) {
-    const [{ n }] = await dataSource.query('SELECT COUNT(*) AS n FROM users');
-    if (Number(n) > 0) {
+    const [{ users, tickets }] = await dataSource.query('SELECT (SELECT COUNT(*) FROM users) AS users, (SELECT COUNT(*) FROM tickets) AS tickets');
+    if (Number(users) > 0 || Number(tickets) > 0) {
       console.log('Database already has data; seed skipped (--if-empty).');
       await dataSource.destroy();
       return;

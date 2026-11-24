@@ -21,8 +21,17 @@ export class FaqService {
       await this.audit.record(u.id, 'faq.view', `Denied ${hd} FAQs`, { outcome: 'denied' });
       throw forbidden(hd === 'SF' ? 'The Salesforce helpdesk is available only to Sales, Presales and Solutions.' : 'Unknown helpdesk.', hd === 'SF' ? 'SALESFORCE_FORBIDDEN' : 'FORBIDDEN');
     }
-    const faqs = await this.ds.getRepository(FaqEntity).find({ where: { helpdesk: hd }, order: { sortOrder: 'ASC' } });
-    return { helpdesk: hd, canEdit: canEditFaq(u, hd, this.policyLead()), faqs };
+    const [faqs, votes] = await Promise.all([
+      this.ds.getRepository(FaqEntity).find({ where: { helpdesk: hd }, order: { sortOrder: 'ASC' } }),
+      this.ds.getRepository(FaqVoteEntity).find({ where: { userId: u.id }, order: { createdAt: 'DESC' } }),
+    ]);
+    const myVotes = new Map<number, boolean>();
+    for (const v of votes) if (!myVotes.has(v.faqId)) myVotes.set(v.faqId, v.helpful);
+    return {
+      helpdesk: hd,
+      canEdit: canEditFaq(u, hd, this.policyLead()),
+      faqs: faqs.map((f) => ({ ...f, myVote: myVotes.has(f.id) ? myVotes.get(f.id)! : null })),
+    };
   }
   /** All FAQs of the helpdesks this person may use (for the AI knowledge base and dashboard search). */
   async visible(u: Principal) {
@@ -32,8 +41,11 @@ export class FaqService {
   async vote(u: Principal, id: number, helpful: boolean) {
     const f = await this.ds.getRepository(FaqEntity).findOne({ where: { id } });
     if (!f || !allowedHds(u).includes(f.helpdesk as never)) throw notFound('FAQ');
-    await this.ds.getRepository(FaqVoteEntity).insert({ faqId: id, userId: u.id, helpful, createdAt: clock.now() });
-    return { ok: true, categoryKey: f.categoryKey, helpdesk: f.helpdesk };
+    const votes = this.ds.getRepository(FaqVoteEntity);
+    const existing = await votes.findOne({ where: { faqId: id, userId: u.id } });
+    if (existing) await votes.update(existing.id, { helpful, createdAt: clock.now() });
+    else await votes.insert({ faqId: id, userId: u.id, helpful, createdAt: clock.now() });
+    return { ok: true, myVote: helpful, categoryKey: f.categoryKey, helpdesk: f.helpdesk };
   }
   async update(u: Principal, id: number, body: { question: string; answer: string; categoryKey?: string | null }) {
     const f = await this.ds.getRepository(FaqEntity).findOne({ where: { id } });

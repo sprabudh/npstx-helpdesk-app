@@ -5,22 +5,49 @@ export class ApiError extends Error {
   }
 }
 const TOKEN_KEY = 'npstx.helpdesk.token';
-let token: string | null = null;
-try {
-  token = sessionStorage.getItem(TOKEN_KEY);
-} catch {
-  token = null;
+const memoryStore = new Map<string, string>();
+const stores = (): Storage[] => {
+  const out: Storage[] = [];
+  try {
+    if (window.localStorage) out.push(window.localStorage);
+  } catch {}
+  try {
+    if (window.sessionStorage) out.push(window.sessionStorage);
+  } catch {}
+  return out;
+};
+export function readStored(key: string): string | null {
+  for (const s of stores()) {
+    try {
+      const value = s.getItem(key);
+      if (value !== null) return value;
+    } catch {}
+  }
+  return memoryStore.get(key) ?? null;
 }
+export function writeStored(key: string, value: string): void {
+  memoryStore.set(key, value);
+  for (const s of stores()) {
+    try {
+      s.setItem(key, value);
+    } catch {}
+  }
+}
+export function removeStored(key: string): void {
+  memoryStore.delete(key);
+  for (const s of stores()) {
+    try {
+      s.removeItem(key);
+    } catch {}
+  }
+}
+let token: string | null = readStored(TOKEN_KEY);
 let onUnauthorized: (() => void) | null = null;
 export const setUnauthorizedHandler = (fn: () => void) => (onUnauthorized = fn);
 export function setToken(t: string | null) {
   token = t;
-  try {
-    if (t) sessionStorage.setItem(TOKEN_KEY, t);
-    else sessionStorage.removeItem(TOKEN_KEY);
-  } catch {
-    /* storage blocked: token stays in memory */
-  }
+  if (t) writeStored(TOKEN_KEY, t);
+  else removeStored(TOKEN_KEY);
 }
 export const getToken = () => token;
 

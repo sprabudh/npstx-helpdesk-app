@@ -68,7 +68,7 @@ export interface AskResult {
   q: string; tickets: ListItem[]; total: number; faqs: { id: number; helpdesk: Hd; question: string; categoryKey: string | null }[];
   answer: null | { parts: Part[]; sources: ({ type: 'ticket'; key: string } | { type: 'faq'; id: number; helpdesk: Hd; label: string } | { type: 'policy'; label: string })[]; mode: string };
 }
-export interface Faq { id: number; helpdesk: Hd; sortOrder: number; question: string; answer: string; categoryKey: string | null }
+export interface Faq { id: number; helpdesk: Hd; sortOrder: number; question: string; answer: string; categoryKey: string | null; myVote: boolean | null }
 export interface Notification {
   id: number; userId: string; text: string; ticketKey: string | null; createdAt: string; readAt: string | null;
   eventType?: string | null; category?: string | null; channel?: string | null; dedupeKey?: string | null;

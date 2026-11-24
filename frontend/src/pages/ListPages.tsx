@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useConfig, useFaqs, useFollowing, useHistory, useMe } from '../api/hooks';
@@ -150,15 +151,28 @@ export function FaqPage() {
   const f = useUi((s) => s.faq);
   const set = useUi((s) => s.set);
   const toast = useUi((s) => s.toast);
+  const qc = useQueryClient();
   const hd = me && !me.helpdesks.includes(f.hd) ? 'HR' : f.hd;
   const { data } = useFaqs(hd);
   if (!me || !cfg || !data) return <Skeleton />;
   const upd = (p: Partial<typeof f>) => set((s) => ({ faq: { ...s.faq, ...p } }));
   const q = f.q.trim().toLowerCase();
   const list = data.faqs.map((x, i) => ({ ...x, i })).filter((x) => !q || `${x.question} ${x.answer}`.toLowerCase().includes(q));
-  const vote = (id: number, helpful: boolean, cat: string | null) => {
+  const vote = async (id: number, helpful: boolean, cat: string | null) => {
+    const backendVote = data.faqs.find((x) => x.id === id)?.myVote;
+    const previous = f.voted[id] ?? (backendVote === true ? 'yes' : backendVote === false ? 'no' : undefined);
     upd({ voted: { ...f.voted, [id]: helpful ? 'yes' : 'no' } });
-    api(`/faqs/${id}/vote`, { body: { helpful } }).catch(() => undefined);
+    try {
+      await api(`/faqs/${id}/vote`, { body: { helpful } });
+      qc.invalidateQueries({ queryKey: ['faqs'] });
+    } catch (e) {
+      const restored = { ...f.voted };
+      if (previous) restored[id] = previous;
+      else delete restored[id];
+      upd({ voted: restored });
+      toast(e instanceof Error ? e.message : 'Could not save your feedback', 'bad');
+      return;
+    }
     if (helpful) toast('Thanks for the feedback', 'ok');
     else set({ drawer: { hd, cat } });
   };
@@ -175,7 +189,7 @@ export function FaqPage() {
         <div className="panel">
           {list.length ? list.map((x) => {
             const open = !!f.open[x.id];
-            const v = f.voted[x.id];
+            const v = f.voted[x.id] ?? (x.myVote === true ? 'yes' : x.myVote === false ? 'no' : undefined);
             return (
               <div key={x.id} className={`acc ${open ? 'open' : ''}`}>
                 <button aria-expanded={open} onClick={() => upd({ open: { ...f.open, [x.id]: !open } })}><span className="qn">{p2(x.i + 1)}</span><span>{x.question}</span><span className="chev"><Icon n="chev" s={16} /></span></button>

@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { api, ApiError, getToken, setToken, setUnauthorizedHandler } from './api/client';
+import { api, ApiError, getToken, readStored, setToken, setUnauthorizedHandler, writeStored } from './api/client';
 import { useConfig } from './api/hooks';
 import { TipLayer, Toasts } from './components/common/bits';
 import RaiseDrawer from './components/drawer/RaiseDrawer';
@@ -17,20 +17,8 @@ import TicketsPage from './pages/TicketsPage';
 import { useUi } from './store/ui';
 
 const USER_KEY = 'npstx.helpdesk.user';
-const readUser = () => {
-  try {
-    return sessionStorage.getItem(USER_KEY);
-  } catch {
-    return null;
-  }
-};
-const writeUser = (id: string) => {
-  try {
-    sessionStorage.setItem(USER_KEY, id);
-  } catch {
-    /* storage blocked: persona lives in memory */
-  }
-};
+const readUser = () => readStored(USER_KEY);
+const writeUser = (id: string) => writeStored(USER_KEY, id);
 
 type Boot = { state: 'loading' } | { state: 'ready' } | { state: 'signin'; message: string };
 
@@ -88,7 +76,7 @@ export default function App() {
     try {
       const params = new URLSearchParams(window.location.search);
       const wanted = params.get('as');
-      const personas = await api<{ defaultUserId: string }>('/auth/personas').catch((e: unknown) => {
+      const personas = await api<{ defaultUserId: string; groups: { people: { id: string }[] }[] }>('/auth/personas').catch((e: unknown) => {
         if (e instanceof ApiError && e.status === 404) return null;
         throw e;
       });
@@ -100,8 +88,10 @@ export default function App() {
         }
         return setBoot({ state: 'signin', message: 'Demo sign-in is turned off on this server. Sign in through your company single sign-on to get an access token.' });
       }
-      const uid = wanted || (getToken() ? readUser() : null) || personas.defaultUserId;
-      if (wanted || !getToken() || readUser() !== uid) await demoLogin(uid);
+      const remembered = readUser();
+      const known = new Set(personas.groups.flatMap((g) => g.people.map((p) => p.id)));
+      const uid = (wanted && known.has(wanted) && wanted) || (remembered && known.has(remembered) && remembered) || personas.defaultUserId;
+      if (wanted || !getToken() || remembered !== uid) await demoLogin(uid);
       resetForPersona(uid);
       setBoot({ state: 'ready' });
     } catch (e) {

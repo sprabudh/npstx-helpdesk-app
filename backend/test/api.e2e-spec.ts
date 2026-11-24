@@ -146,6 +146,21 @@ describe('Helpdesk API (e2e)', () => {
     await http().post('/api/tickets/LND-000048/approval').set(as('u6')).send({ decision: 'Approved' }).expect(200);
   });
 
+  it('FAQ feedback is upserted and returned to the same person after a reload', async () => {
+    const [faq] = await ds.query("SELECT id FROM faqs WHERE helpdesk='HR' ORDER BY sort_order LIMIT 1");
+    expect(faq).toBeDefined();
+    await http().post(`/api/faqs/${faq.id}/vote`).set(as('u1')).send({ helpful: true }).expect(200);
+    let list = await http().get('/api/faqs?helpdesk=HR').set(as('u1')).expect(200);
+    expect(list.body.faqs.find((f: { id: number }) => f.id === faq.id).myVote).toBe(true);
+    await http().post(`/api/faqs/${faq.id}/vote`).set(as('u1')).send({ helpful: false }).expect(200);
+    list = await http().get('/api/faqs?helpdesk=HR').set(as('u1')).expect(200);
+    expect(list.body.faqs.find((f: { id: number }) => f.id === faq.id).myVote).toBe(false);
+    const [{ n }] = await ds.query('SELECT COUNT(*) n FROM faq_votes WHERE faq_id=? AND user_id=?', [faq.id, 'u1']);
+    expect(Number(n)).toBe(1);
+    const other = await http().get('/api/faqs?helpdesk=HR').set(as('u3')).expect(200);
+    expect(other.body.faqs.find((f: { id: number }) => f.id === faq.id).myVote).toBe(null);
+  });
+
   it('demo reset restores the sample data', async () => {
     await http().post('/api/demo/reset').set(as('u1')).expect(200);
     const d = await http().get('/api/tickets/LND-000048').set(as('u1')).expect(200);

@@ -36,12 +36,12 @@ The app opens on the **Dashboard as Arjun Kumar** (Software Engineer, Engineerin
 | `make dev` | API with watch mode and Vite dev server |
 | `make seed` / `make reset` | Reload the mock's sample data (deletes ticket data) |
 | `make test` | Backend unit tests (access matrix, SLA, AI rules) and frontend unit tests |
-| `make test-api` | API tests with Supertest against the MySQL in `.env` (reseeds it) |
+| `make test-api` | API tests with Supertest against `DB_NAME` from `.env` (reseeds it; override `DB_NAME=helpdesk_e2e` to protect development data) |
 | `make e2e` | Playwright flows (run `make dev` first) |
 | `make lint` | ESLint for both apps |
 | `make up` / `make down` / `make clean` | Docker stack up / down / down and delete the volume |
 
-In the app, **Reset demo data** in the role strip does the same as `make seed` (only when `DEMO_MODE=true`).
+Tickets, logs, role selections and other saved changes persist across browser refresh and container restart; the sample data is loaded only for an empty database. In the app, **Reset demo data** in the role strip does the same as `make seed` (only when `DEMO_MODE=true`) and asks for confirmation because it deletes those changes.
 
 ## Personas
 

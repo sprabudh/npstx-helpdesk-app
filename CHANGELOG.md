@@ -8,9 +8,10 @@ number was changed unless listed below.
 Legend: **Fact** = built and tested. **TC** = time-boxed / confirm with the business owner.
 
 Verification on this branch: backend `npm run build` clean · backend `npx jest --forceExit --runInBand` **80
-passed** · backend v0.3 e2e **28 passed** · notification e2e **4 passed** · frontend `npm run build` clean · frontend `npx vitest
-run` **12 passed** · Playwright **18 passed**. The acceptance tests live in
-`backend/test/v03.e2e-spec.ts` and `backend/test/notifications.e2e-spec.ts` (they reseed the development database).
+passed** · backend e2e **49 passed** against a separate `helpdesk_e2e` database · frontend `npm run build` clean · frontend `npx vitest
+run` **12 passed** · Playwright **20 passed**. The acceptance tests live in
+`backend/test/v03.e2e-spec.ts`, `backend/test/notifications.e2e-spec.ts`, `backend/test/api.e2e-spec.ts` and
+`frontend/e2e/persistence.spec.ts`; the backend suites reseed only the database named by `DB_NAME`.
 
 ---
 
@@ -257,6 +258,23 @@ escHandovers`, `overdueRows = overdueCard`. There is no compliance column.
 - **Integration contract** `docs/Notification_API_Spec.md` documents endpoints, JSON, auth,
   idempotency, error codes and one sample payload per event type including confidential and
   absence-cover variants. **Fact**
+
+---
+
+## 9. Persistent demo data
+
+- **Demo data is a first-run baseline, not a refresh reset.** Docker startup still runs
+  `seed.cli --if-empty`, but the check now skips when either `users` or `tickets` contains data.
+  Browser refresh, persona switch and container restart no longer reseed the database. **Fact**
+- **Selected persona survives refresh and new tabs.** The demo token and user id are kept in
+  `localStorage` with `sessionStorage` fallback; an expired token re-signs in the remembered person
+  instead of silently dropping to the default persona. `?as=<userId>` still takes precedence.
+  **Fact**
+- **Reset is explicit and guarded.** "Reset demo data" now asks for confirmation before the
+  destructive seed; `make seed` / `make reset` remain the intentional CLI equivalents. **Fact**
+- **FAQ feedback is real persisted state.** `GET /api/faqs` returns the signed-in person's latest
+  vote as `myVote`, `POST /faqs/:id/vote` upserts one vote per person/FAQ, and the UI restores the
+  marker after refresh instead of relying on memory-only state. **Fact**
 
 ---
 
