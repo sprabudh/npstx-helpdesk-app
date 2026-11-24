@@ -146,8 +146,15 @@ export class HelpdeskConfigService implements OnModuleInit {
         };
       });
     }
+    if (hd !== 'SF') return [];
+    // Older databases have only the one-line Salesforce rule. Keep it usable as a three-step ladder
+    // until an admin saves the full ladder; no migration or destructive reseed is required.
     const sf = this.setting<{ who: string; role: string }>('sfEscalation');
-    return [{ who: sf.who, role: sf.role, pct: 100, th: 'Resolution milestone at risk' }];
+    const snap = (this.slaVersion(versionId)?.ladderPct as Record<string, number[]> | null)?.SF;
+    return [50, 75, 100].map((live, i) => {
+      const pct = snap && snap[i] != null ? snap[i] : live;
+      return { who: sf.who, role: sf.role, pct, th: pct >= 100 ? '100% · breach' : `${pct}% of resolution time` };
+    });
   }
   /** People behind a queue (setting queueMembers), so cover routing can reach a real person. */
   queueMembers(id: string): string[] {

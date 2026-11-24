@@ -7,14 +7,16 @@ vi.mock('../api/hooks', () => ({ useAction: () => ({ pending: false, run: (fn: (
 
 const adm = {
   people: [{ id: 'u1', name: 'Asha Kulkarni', dept: 'HR Operations', roles: ['EMP'], hrCategories: [] }],
-  assignableRoles: ['HR_AGENT', 'HD_ADMIN', 'SF_ADMIN'],
+  assignableRoles: ['HR_AGENT', 'IT_AGENT', 'HD_ADMIN', 'SF_ADMIN'],
 };
 const cfg = {
   categories: [
     { helpdesk: 'HR', key: 'PAY', name: 'Payroll and salary', active: true },
     { helpdesk: 'HR', key: 'OLD', name: 'Old category', active: false },
+    { helpdesk: 'IT', key: 'HW', name: 'Hardware', active: true },
+    { helpdesk: 'SF', key: 'ACCESS', name: 'Salesforce access and permissions', active: true },
   ],
-  roleLabels: { HR_AGENT: 'HR agent', HD_ADMIN: 'Helpdesk admin', SF_ADMIN: 'Salesforce case admin' },
+  roleLabels: { HR_AGENT: 'HR agent', IT_AGENT: 'IT agent', HD_ADMIN: 'Helpdesk admin', SF_ADMIN: 'Salesforce case admin' },
 };
 
 describe('role mapping modal', () => {
@@ -28,7 +30,23 @@ describe('role mapping modal', () => {
     expect(screen.queryByRole('checkbox', { name: 'Old category' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Save roles' }));
     expect(apiMock).toHaveBeenCalledWith('/admin/people/u1/roles', {
-      method: 'PUT', body: { roles: ['EMP', 'HR_AGENT'], hrCategories: [] },
+      method: 'PUT', body: { roles: ['EMP', 'HR_AGENT'], hrCategories: [], roleCategories: { HR: [] } },
+    });
+  });
+  it('shows category checkboxes for every department whose role is selected', () => {
+    render(<RoleForm m={{ type: 'role', userId: 'u1' }} adm={adm} cfg={cfg} onClose={() => {}} />);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'IT agent' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Salesforce case admin' }));
+    expect(screen.getByText('IT and Support categories worked')).toBeInTheDocument();
+    expect(screen.getByText('Salesforce categories worked')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Hardware' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Salesforce access and permissions' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save roles' }));
+    expect(apiMock).toHaveBeenCalledWith('/admin/people/u1/roles', {
+      method: 'PUT', body: {
+        roles: ['EMP', 'IT_AGENT', 'SF_ADMIN'], hrCategories: [],
+        roleCategories: { IT: ['HW'], SF: ['ACCESS'] },
+      },
     });
   });
 });

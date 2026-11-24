@@ -165,16 +165,19 @@ function Welcome({ me }: { me: Me }) {
   );
 }
 
-/** Shortcuts only. Counts live in the Analytics cards so there is one source for every number. */
-function BigButtons({ me }: { me: Me }) {
+export function BigButtons({ me }: { me: Me }) {
   const nav = useNavigate();
   const set = useUi((s) => s.set);
+  const assignedView = me.flags.worker || me.views.some(([key]) => key === 'assigned');
   return (
     <div className="bigbtns">
       <button className="bigbtn primary" onClick={() => set({ drawer: {} })}><span className="bi"><Icon n="plus" s={22} /></span><span className="bt"><b>Raise ticket</b><small>{me.helpdesks.map((h) => HDL[h]).join(' · ')}</small></span></button>
       <button className="bigbtn" onClick={() => nav('/tickets')}><span className="bi"><Icon n="file" s={22} /></span><span className="bt"><b>My tickets</b><small>Tickets you raised</small></span></button>
-      {me.flags.worker && <button className="bigbtn" onClick={() => nav('/assigned')}><span className="bi"><Icon n="users" s={22} /></span><span className="bt"><b>Assigned to me</b><small>Your tickets and the queues you work</small></span></button>}
-      <button className="bigbtn" onClick={() => nav('/following')}><span className="bi"><Icon n="eye" s={22} /></span><span className="bt"><b>Following / CC'd</b><small>Tickets you watch</small></span></button>
+      {assignedView ? (
+        <button className="bigbtn" onClick={() => nav('/assigned')}><span className="bi"><Icon n="users" s={22} /></span><span className="bt"><b>Assigned to me</b><small>{me.counts.assignedOpen} open · Your tickets and the queues you work</small></span></button>
+      ) : (
+        <button className="bigbtn" onClick={() => nav('/following')}><span className="bi"><Icon n="eye" s={22} /></span><span className="bt"><b>Following</b><small>{me.counts.followCount} open · Tickets you watch</small></span></button>
+      )}
     </div>
   );
 }

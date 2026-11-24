@@ -39,7 +39,7 @@ export const env = {
   displayTimeZone: str('DISPLAY_TIME_ZONE', 'Asia/Kolkata'),
   uploadDir: resolve(str('UPLOAD_DIR', resolve(__dirname, '..', '..', 'uploads'))),
   seedDir: resolve(str('SEED_DIR', resolve(__dirname, '..', '..', '..', 'db', 'seed'))),
-  slaSchedulerEnabled: bool('SLA_SCHEDULER_ENABLED', false),
+  slaSchedulerEnabled: bool('SLA_SCHEDULER_ENABLED', true),
   outboxIntervalMs: num('OUTBOX_INTERVAL_MS', 15000),
   emailAdapter: str('EMAIL_ADAPTER', 'console') as 'console' | 'smtp',
   ai: {

@@ -1,5 +1,5 @@
 import { istDate } from '../common/clock';
-import { isAtRisk, isBreachedRes, isOverdue, slaCounts } from '../domain/sla';
+import { hasEscalation, isAtRisk, isBreachedRes, isOverdue, isResponseBreached, slaCounts } from '../domain/sla';
 import type { Row } from '../tickets/ticket-loader.service';
 
 /** What metrics() needs besides the rows; kept as plain functions so the numbers can be unit tested. */
@@ -44,7 +44,7 @@ export function metrics(rows: Row[], c: MetricsCtx): Metrics {
   const closed = cohort.filter((r) => r.closed);
   const groups = closed.map((r) => closedGroup(c.uiStatus(r)));
   const counted = cohort.filter((r) => slaCounts(r.t));
-  const respB = counted.filter((r) => r.t.responseMet === false);
+  const respB = counted.filter((r) => isResponseBreached({ ...r.t, firstReply: c.firstReply.get(r.t.key) ?? null }, c.now));
   const resB = counted.filter((r) => isBreachedRes(r.t, r.closed, c.now));
   const first = counted.map((r) => (c.firstReply.has(r.t.key) ? c.firstReply.get(r.t.key)!.getTime() - slaFrom(r) : null)).filter((x): x is number => x !== null && x >= 0);
   const resolution = closed.filter((r) => slaCounts(r.t) && closedGroup(c.uiStatus(r)) === 'resolved' && r.t.closedAt).map((r) => r.t.closedAt!.getTime() - slaFrom(r));
@@ -52,7 +52,7 @@ export function metrics(rows: Row[], c: MetricsCtx): Metrics {
     live: {
       open: open.length, notStarted: ui('Open'), inProgress: ui('In Progress'), pendingInput: ui('Pending Input'),
       waitRequester: open.filter((r) => c.isWaiting(r)).length, waitApproval: open.filter((r) => r.t.status === 'Pending approval').length,
-      escalated: open.filter((r) => r.t.escalationLevel > 0 || r.t.status === 'Escalated').length,
+      escalated: open.filter((r) => hasEscalation(r.t)).length,
       overdue: open.filter((r) => isOverdue(r.t, false, c.now)).length,
       atRisk: open.filter((r) => isAtRisk(r.t, false, c.now)).length,
       unassigned: open.filter((r) => c.isQueue(r.t.assigneeId)).length,

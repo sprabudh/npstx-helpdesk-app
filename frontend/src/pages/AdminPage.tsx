@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
-import { useAction, useAdmin, useConfig, useMe, usePerformance } from '../api/hooks';
-import type { Condition } from '../api/types';
+import { useAdmin, useAdminAction, useConfig, useMe, usePerformance } from '../api/hooks';
 import { Avatar, Denied, HdBadge, PriFlag, Skeleton } from '../components/common/bits';
 import { PerfReport } from '../components/perf/PerfReport';
-import { evalCond } from '../lib/cond';
+import { isRequired } from '../lib/cond';
 import { fdt, fmtH, HDL } from '../lib/format';
 import { Icon } from '../lib/icons';
 import { useUi } from '../store/ui';
@@ -19,6 +18,13 @@ const ROUTING_NOTE: Record<string, string> = {
   LND: 'New L&D tickets route to this owner or queue. Course requests reach it after approval.',
   SF: 'Mirrors the Salesforce assignment rule owner for each type (mock).',
 };
+const SF_DEPTS = ['Sales', 'Presales', 'Solutions'];
+const sfEligible = (x: any, adm: Adm) => x.isQueue
+  ? (adm.agents?.SF ?? []).some((q: any) => q.isQueue && q.id === x.id)
+  : SF_DEPTS.includes(x.dept) && (x.roles?.includes('SF_ADMIN') || x.roles?.includes('HD_ADMIN'));
+const escalationPeople = (adm: Adm, hd: string) => hd === 'SF'
+  ? [...(adm.queues ?? []), ...(adm.people ?? [])].filter((x: any) => sfEligible(x, adm))
+  : (adm.people ?? []);
 
 function HdSeg({ hds }: { hds: string[] }) {
   const a = useUi((s) => s.adm);
@@ -27,19 +33,22 @@ function HdSeg({ hds }: { hds: string[] }) {
 }
 
 /** Number input that saves on blur or Enter, like the artifact's change event. */
-function NumIn({ id, value, min, max, step, width, label, onSave }: { id: string; value: number; min: number; max?: number; step?: number; width: number; label: string; onSave: (n: number) => void }) {
+function NumIn({ id, value, min, max, step, width, label, disabled, onSave }: { id: string; value: number; min: number; max?: number; step?: number; width: number; label: string; disabled?: boolean; onSave: (n: number) => void | Promise<unknown> }) {
   const [v, setV] = useState(String(value));
   useEffect(() => {
     setV(String(value));
   }, [value]);
-  const commit = () => v !== String(value) && onSave(Number(v));
-  return <input className="in" type="number" min={min} max={max} step={step} style={{ width }} id={id} aria-label={label} value={v} onChange={(e) => setV(e.target.value)} onBlur={commit} onKeyDown={(e) => e.key === 'Enter' && commit()} />;
+  const commit = () => {
+    if (disabled || v === String(value)) return;
+    void Promise.resolve(onSave(Number(v))).catch(() => setV(String(value)));
+  };
+  return <input className="in" type="number" min={min} max={max} step={step} style={{ width }} id={id} aria-label={label} value={v} disabled={disabled} onChange={(e) => setV(e.target.value)} onBlur={commit} onKeyDown={(e) => e.key === 'Enter' && commit()} />;
 }
 
 function Categories({ adm, leadHd }: { adm: Adm; leadHd: boolean }) {
   const a = useUi((s) => s.adm);
   const set = useUi((s) => s.set);
-  const act = useAction();
+  const act = useAdminAction();
   const cats = adm.categories.filter((c: any) => c.helpdesk === a.hd);
   const ownerL = leadHd ? 'Category lead' : a.hd === 'SF' ? 'Assignment owner' : 'Owner / queue';
   const name = (id: string) => adm.people.find((p: any) => p.id === id)?.name ?? adm.queues.find((q: any) => q.id === id)?.name ?? id;
@@ -70,12 +79,12 @@ function Categories({ adm, leadHd }: { adm: Adm; leadHd: boolean }) {
                     </>
                   )}
                   <td>
-                    <label className="sw"><input type="checkbox" id={`cat-mgr-${a.hd}-${c.key}`} checked={!!c.mgrApproval} aria-label={`Manager approval needed: ${c.name}`} onChange={(e) => act.run(() => api(`/admin/categories/${c.id}/mgr-approval`, { method: 'PATCH', body: { on: e.target.checked, subs: c.mgrApprovalSubs } }))} /></label>
+                    <label className="sw"><input type="checkbox" id={`cat-mgr-${a.hd}-${c.key}`} checked={!!c.mgrApproval} disabled={act.pending} aria-label={`Manager approval needed: ${c.name}`} onChange={(e) => { const on = e.target.checked; void act.runPatch(() => api(`/admin/categories/${c.id}/mgr-approval`, { method: 'PATCH', body: { on, subs: c.mgrApprovalSubs } }), (o) => { const row = o.categories.find((x: any) => x.id === c.id); if (row) row.mgrApproval = on; return o; }); }} /></label>
                     {c.mgrApproval && c.mgrApprovalSubs?.length ? <div className="sub">{c.mgrApprovalSubs.join(', ')}</div> : null}
                     {c.extraSteps?.length ? <div className="sub">Additional approval: {c.extraSteps.join(' → ')}</div> : null}
                   </td>
                   <td className="mono">{c.openCount}</td>
-                  <td><label className="sw"><input type="checkbox" id={`cat-on-${a.hd}-${c.key}`} checked={c.active} aria-label={`Active: ${c.name}`} onChange={(e) => act.run(() => api(`/admin/categories/${c.id}/active`, { method: 'PATCH', body: { active: e.target.checked } }))} /></label></td>
+                  <td><label className="sw"><input type="checkbox" id={`cat-on-${a.hd}-${c.key}`} checked={c.active} disabled={act.pending} aria-label={`Active: ${c.name}`} onChange={(e) => { const active = e.target.checked; void act.runPatch(() => api(`/admin/categories/${c.id}/active`, { method: 'PATCH', body: { active } }), (o) => { const row = o.categories.find((x: any) => x.id === c.id); if (row) row.active = active; return o; }); }} /></label></td>
                   <td><button className="btn sm" onClick={() => set({ modal: { type: 'cat', hd: a.hd, key: c.key } })}>Edit</button></td>
                 </tr>
               );
@@ -90,13 +99,13 @@ function Categories({ adm, leadHd }: { adm: Adm; leadHd: boolean }) {
 function Fields({ adm, cfg }: { adm: Adm; cfg: any }) {
   const a = useUi((s) => s.adm);
   const set = useUi((s) => s.set);
-  const act = useAction();
+  const act = useAdminAction();
   const cats = adm.categories.filter((c: any) => c.helpdesk === a.hd);
   const cat = cats.find((c: any) => c.key === a.cat) ?? cats[0];
   const all = adm.fields.filter((f: any) => f.helpdesk === a.hd && f.categoryKey === cat.key).sort((x: any, y: any) => x.sortOrder - y.sortOrder);
   const custom = all.filter((f: any) => f.custom);
   const schema = all.filter((f: any) => !f.custom && f.active);
-  const reqOf = (f: any) => evalCond(f.required as Condition | boolean | null, { sub: '' });
+  const reqOf = (f: any) => isRequired(f, { sub: '' });
   return (
     <section className="panel adm-sec">
       <div className="adm-head">
@@ -117,8 +126,8 @@ function Fields({ adm, cfg }: { adm: Adm; cfg: any }) {
                   <tr key={x.id} style={{ cursor: 'default' }} className={x.active ? '' : 'off'}>
                     <td><b style={{ fontWeight: 600 }}>{x.label}</b><div className="sub mono">{x.key}{x.options ? ` · ${x.options.join(', ')}` : ''}</div></td>
                     <td className="nowrap">{cfg.fieldTypes[x.type || 'text']}</td>
-                    <td><label className="sw"><input type="checkbox" id={`f-req-${x.key}`} checked={x.required === true} aria-label={`Required: ${x.label}`} onChange={(e) => act.run(() => api(`/admin/fields/${x.id}`, { method: 'PATCH', body: { required: e.target.checked } }))} /></label></td>
-                    <td><label className="sw"><input type="checkbox" id={`f-on-${x.key}`} checked={x.active} aria-label={`Active: ${x.label}`} onChange={(e) => act.run(() => api(`/admin/fields/${x.id}`, { method: 'PATCH', body: { active: e.target.checked } }))} /></label></td>
+                    <td><label className="sw"><input type="checkbox" id={`f-req-${x.key}`} checked={x.required === true} disabled={act.pending} aria-label={`Required: ${x.label}`} onChange={(e) => { const required = e.target.checked; void act.runPatch(() => api(`/admin/fields/${x.id}`, { method: 'PATCH', body: { required } }), (o) => { const row = o.fields.find((f: any) => f.id === x.id); if (row) row.required = required; return o; }); }} /></label></td>
+                    <td><label className="sw"><input type="checkbox" id={`f-on-${x.key}`} checked={x.active} disabled={act.pending} aria-label={`Active: ${x.label}`} onChange={(e) => { const active = e.target.checked; void act.runPatch(() => api(`/admin/fields/${x.id}`, { method: 'PATCH', body: { active } }), (o) => { const row = o.fields.find((f: any) => f.id === x.id); if (row) row.active = active; return o; }); }} /></label></td>
                     <td className="nowrap"><button className="btn sm" onClick={() => set({ modal: { type: 'field', hd: a.hd, cat: cat.key, id: x.id } })}>Edit</button> <button className="btn sm danger" onClick={() => act.run(() => api(`/admin/fields/${x.id}`, { method: 'DELETE' }))}>Remove</button></td>
                   </tr>
                 )) : <tr style={{ cursor: 'default' }}><td colSpan={5} className="muted">No custom fields for {cat.name} yet. Add one to collect extra details when someone raises a ticket.</td></tr>}
@@ -134,7 +143,7 @@ function Fields({ adm, cfg }: { adm: Adm; cfg: any }) {
           <b style={{ fontSize: 13 }}>Form preview · {cat.name}</b>
           {PREVIEW[a.hd].map((n) => <div key={n} className="pf"><span>{n}</span><i /></div>)}
           {schema.map((x: any) => <div key={x.id} className="pf"><span>{x.label}{reqOf(x) && <> <b style={{ color: 'var(--bad)' }}>*</b></>}{x.showWhen && <> <span className="muted">(conditional)</span></>}</span><i /></div>)}
-          {custom.filter((x: any) => x.active).map((x: any) => <div key={x.id} className="pf custom"><span>{x.label}{x.required === true && <> <b style={{ color: 'var(--bad)' }}>*</b></>}</span><i /></div>)}
+          {custom.filter((x: any) => x.active).map((x: any) => <div key={x.id} className="pf custom"><span>{x.label}{isRequired(x, { sub: '' }) && <> <b style={{ color: 'var(--bad)' }}>*</b></>}</span><i /></div>)}
           {['IT', 'ADM'].includes(a.hd) && <div className="pf"><span>Title, Description</span><i /></div>}
           <div className="pf"><span>Attachments</span><i /></div>
           <button className="btn sm" onClick={() => set({ drawer: { hd: a.hd, cat: cat.key } })}>Open the real form</button>
@@ -145,7 +154,7 @@ function Fields({ adm, cfg }: { adm: Adm; cfg: any }) {
 }
 
 function Sla({ adm, cfg }: { adm: Adm; cfg: any }) {
-  const act = useAction();
+  const act = useAdminAction();
   const hds: string[] = adm.helpdesks;
   const saveSla = (table: string, priority: string, index: 0 | 1, hours: number) => act.run(() => api('/admin/sla', { method: 'PUT', body: { table, priority, index, hours: Math.max(0.5, hours || 1) } }));
   const tbl = (title: string, obj: Record<string, [number, number]>, table: string, used: (p: string) => JSX.Element) => (
@@ -158,8 +167,8 @@ function Sla({ adm, cfg }: { adm: Adm; cfg: any }) {
             {Object.entries(obj).map(([p, [r, x]]) => (
               <tr key={p} style={{ cursor: 'default' }}>
                 <td><PriFlag p={p} /></td>
-                <td><NumIn id={`sla-${table}-${p}-0`} value={r} min={0.5} step={0.5} width={90} label={`${p} first response hours`} onSave={(n) => saveSla(table, p, 0, n)} /></td>
-                <td className="nowrap"><NumIn id={`sla-${table}-${p}-1`} value={x} min={1} width={90} label={`${p} resolution hours`} onSave={(n) => saveSla(table, p, 1, n)} /> <span className="muted" style={{ fontSize: 12 }}>{fmtH(x)}</span></td>
+                <td><NumIn id={`sla-${table}-${p}-0`} value={r} min={0.5} step={0.5} width={90} label={`${p} first response hours`} disabled={act.pending} onSave={(n) => saveSla(table, p, 0, n)} /></td>
+                <td className="nowrap"><NumIn id={`sla-${table}-${p}-1`} value={x} min={1} width={90} label={`${p} resolution hours`} disabled={act.pending} onSave={(n) => saveSla(table, p, 1, n)} /> <span className="muted" style={{ fontSize: 12 }}>{fmtH(x)}</span></td>
                 <td>{used(p)}</td>
               </tr>
             ))}
@@ -172,20 +181,19 @@ function Sla({ adm, cfg }: { adm: Adm; cfg: any }) {
     const list = adm.categories.filter((c: any) => c.helpdesk === h && c.slaOverride);
     return list.length ? list.map((c: any, i: number) => <span key={c.key}>{i > 0 && '; '}<b>{c.name}</b>: {Object.entries(c.slaOverride as Record<string, [number, number]>).map(([p, [r, x]]) => `${p} ${fmtH(r)} / ${fmtH(x)}`).join(' · ')}</span>) : 'none';
   };
-  const people = adm.people;
   return (
     <>
-      <div className="note info" style={{ margin: '0 0 16px' }}><Icon n="info" s={15} /><p>Changes apply to tickets raised after you save. Open tickets keep the SLA they were raised under. Each save creates a new version below; older versions stay readable.</p></div>
+      <div className="note info" style={{ margin: '0 0 16px' }}><Icon n="info" s={15} /><p>Changes apply to tickets raised after you save. Open tickets keep the SLA they were raised under. Each save creates a new version below; older versions stay readable.</p><button className="btn sm primary" disabled={act.pending} onClick={() => act.run(() => api('/admin/sla/run', { method: 'POST' }))}>Run SLA check now</button></div>
       {tbl('SLA targets · HR and L&D (shared)', adm.sla.shared, 'shared', (p) => <>{['HR', 'LND'].filter((h) => ((adm.priorities?.[h] ?? cfg.priorities[h]) ?? []).includes(p)).map((h) => <span key={h}><HdBadge hd={h} /> </span>)}</>)}
       {tbl('SLA targets · IT and Support', adm.sla.IT, 'IT', () => <HdBadge hd="IT" />)}
       <div className="note info" style={{ margin: '-6px 0 16px' }}><Icon n="info" s={15} /><p>Category overrides: {ov('IT')}. Security and incident tickets always start at Critical.</p></div>
       {tbl('SLA targets · Admin Desk', adm.sla.ADM, 'ADM', () => <HdBadge hd="ADM" />)}
       <div className="note info" style={{ margin: '-6px 0 16px' }}><Icon n="info" s={15} /><p>Category overrides: {ov('ADM')}.{hds.includes('SF') ? <> Salesforce category overrides: {ov('SF')}.</> : null}</p></div>
       <section className="panel adm-sec">
-        <div className="adm-head"><h3>SLA rules</h3><p>Apply to every helpdesk. Salesforce dates are still driven by its entitlement milestones.</p></div>
+        <div className="adm-head"><h3>SLA rules</h3><p>Apply to every helpdesk, including Salesforce. Salesforce also mirrors entitlement milestones as category targets.</p></div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, padding: '12px 16px' }}>
           {Object.keys(adm.rules).map((k) => (
-            <label key={k} className="sw"><input type="checkbox" id={`r-${k}`} checked={!!adm.rules[k]} onChange={(e) => act.run(() => api('/admin/rules', { method: 'PUT', body: { key: k, value: e.target.checked } }))} />{adm.ruleLabels[k]}{k === 'businessHours' && <> (Mon–Fri, 09:30–18:30 IST) <mark className="tc">TC</mark></>}</label>
+            <label key={k} className="sw"><input type="checkbox" id={`r-${k}`} checked={!!adm.rules[k]} disabled={act.pending} onChange={(e) => { const value = e.target.checked; void act.runPatch(() => api('/admin/rules', { method: 'PUT', body: { key: k, value } }), (o) => { o.rules[k] = value; return o; }); }} />{adm.ruleLabels[k]}{k === 'businessHours' && <> (Mon–Fri, 09:30–18:30 IST) <mark className="tc">TC</mark></>}</label>
           ))}
         </div>
         {hds.includes('SF') && <div className="note sf" style={{ margin: '0 16px 16px' }}><Icon n="cloud" s={15} /><p>Salesforce case dates use entitlement milestones mirrored from Salesforce. Categories, priority response/resolution targets and the escalation rule are editable here.</p></div>}
@@ -199,8 +207,8 @@ function Sla({ adm, cfg }: { adm: Adm; cfg: any }) {
               <tr key="sf" style={{ cursor: 'default' }}>
                 <td className="mono">L1</td>
                 <td>
-                  <select className="in" id="esc-sf-0" aria-label="Salesforce escalation target" value={adm.sfEscalation?.who ?? ''} onChange={(e) => act.run(() => api('/admin/sf-escalation', { method: 'PUT', body: { who: e.target.value } }))}>
-                    {[...adm.queues, ...people].map((x: any) => <option key={x.id} value={x.id}>{x.name}</option>)}
+                  <select className="in" id="esc-sf-0" aria-label="Salesforce escalation target" value={adm.sfEscalation?.who ?? ''} disabled={act.pending} onChange={(e) => { const who = e.target.value; void act.runPatch(() => api('/admin/sf-escalation', { method: 'PUT', body: { who } }), (o) => { if (o.sfEscalation) o.sfEscalation.who = who; return o; }); }}>
+                    {escalationPeople(adm, 'SF').map((x: any) => <option key={x.id} value={x.id}>{x.name}</option>)}
                   </select>
                 </td>
                 <td>{adm.sfEscalation?.role ?? 'Salesforce escalation rule'}</td>
@@ -210,7 +218,7 @@ function Sla({ adm, cfg }: { adm: Adm; cfg: any }) {
           </table>
         </div>
       </section>}
-      {['HR', 'LND', 'IT', 'ADM'].map((h) => (
+      {hds.filter((h) => adm.escalation[h]).map((h) => (
         <section key={h} className="panel adm-sec">
           <div className="adm-head"><HdBadge hd={h} /><h3>{HDL[h]} escalation ladder</h3><p>Tickets escalate automatically when this share of the resolution time is used. Agents can also escalate manually from the ticket.</p></div>
           <div className="tbl-wrap">
@@ -221,13 +229,13 @@ function Sla({ adm, cfg }: { adm: Adm; cfg: any }) {
                   <tr key={i} style={{ cursor: 'default' }}>
                     <td className="mono">L{i + 1}</td>
                     <td>
-                      <select className="in" id={`esc-${h}-${i}`} aria-label={`L${i + 1} escalation target`} value={l.who} onChange={(e) => act.run(() => api('/admin/escalation', { method: 'PUT', body: { helpdesk: h, level: i, who: e.target.value } }))}>
+                      <select className="in" id={`esc-${h}-${i}`} aria-label={`L${i + 1} escalation target`} value={l.who} disabled={act.pending} onChange={(e) => { const who = e.target.value; void act.runPatch(() => api('/admin/escalation', { method: 'PUT', body: { helpdesk: h, level: i, who } }), (o) => { if (o.escalation[h]?.[i]) o.escalation[h][i].who = who; return o; }); }}>
                         {h !== 'LND' && <option value="lead">Category lead (per category)</option>}
-                        {people.map((x: any) => <option key={x.id} value={x.id}>{x.name} · {x.title}</option>)}
+                        {escalationPeople(adm, h).map((x: any) => <option key={x.id} value={x.id}>{x.name}{x.title ? ` · ${x.title}` : ''}</option>)}
                       </select>
                     </td>
                     <td>{l.role}</td>
-                    <td className="nowrap"><NumIn id={`escp-${h}-${i}`} value={l.pct} min={10} max={100} width={80} label={`L${i + 1} trigger percent`} onSave={(n) => act.run(() => api('/admin/escalation', { method: 'PUT', body: { helpdesk: h, level: i, pct: Math.min(100, Math.max(10, Math.round(n) || l.pct)) } }))} /> % of resolution time</td>
+                    <td className="nowrap"><NumIn id={`escp-${h}-${i}`} value={l.pct} min={10} max={100} width={80} label={`L${i + 1} trigger percent`} disabled={act.pending} onSave={(n) => { const pct = Math.min(100, Math.max(10, Math.round(n) || l.pct)); return act.runPatch(() => api('/admin/escalation', { method: 'PUT', body: { helpdesk: h, level: i, pct } }), (o) => { if (o.escalation[h]?.[i]) o.escalation[h][i].pct = pct; return o; }); }} /> % of resolution time</td>
                   </tr>
                 ))}
               </tbody>
@@ -277,11 +285,12 @@ function Performance() {
 function Roles({ adm, cfg, leadHd }: { adm: Adm; cfg: any; leadHd: boolean }) {
   const a = useUi((s) => s.adm);
   const set = useUi((s) => s.set);
-  const act = useAction();
+  const act = useAdminAction();
   const cats = adm.categories.filter((c: any) => c.helpdesk === a.hd);
-  const cand = leadHd ? adm.people : [...((adm.agents[a.hd] ?? []) as any[]).filter((x) => x.isQueue), ...adm.people];
+  const cand = leadHd ? adm.people : [...((adm.agents[a.hd] ?? []) as any[]).filter((x) => x.isQueue), ...adm.people].filter((x: any) => a.hd !== 'SF' || sfEligible(x, adm));
   const staff = adm.people.filter((x: any) => x.roles.some((r: string) => r !== 'EMP' && r !== 'MANAGER'));
-  const hrName = (k: string) => cfg.categories.find((c: any) => c.helpdesk === 'HR' && c.key === k)?.name ?? k;
+  const catName = (hd: string, k: string) => cfg.categories.find((c: any) => c.helpdesk === hd && c.key === k)?.name ?? k;
+  const scoped = (x: any) => Object.entries(x.categories ?? (x.hrCategories?.length ? { HR: x.hrCategories } : {})).flatMap(([hd, keys]) => (keys as string[]).map((k) => `${HDL[hd] ?? hd} · ${catName(hd, k)}`));
   return (
     <>
       <section className="panel adm-sec">
@@ -294,7 +303,7 @@ function Roles({ adm, cfg, leadHd }: { adm: Adm; cfg: any; leadHd: boolean }) {
                 <tr key={c.key} style={{ cursor: 'default' }} className={`${a.flash === c.key ? 'flash' : ''} ${c.active ? '' : 'off'}`}>
                   <td>{c.name}</td>
                   <td>
-                    <select className="in" id={`lead-${a.hd}-${c.key}`} aria-label={`Lead for ${c.name}`} value={c.leadId || c.ownerId || ''} onChange={(e) => { set((s) => ({ adm: { ...s.adm, flash: c.key } })); act.run(() => api(`/admin/categories/${c.id}/lead`, { method: 'PATCH', body: { userId: e.target.value } })); }}>
+                    <select className="in" id={`lead-${a.hd}-${c.key}`} aria-label={`Lead for ${c.name}`} value={c.leadId || c.ownerId || ''} disabled={act.pending} onChange={(e) => { const userId = e.target.value; set((s) => ({ adm: { ...s.adm, flash: c.key } })); void act.runPatch(() => api(`/admin/categories/${c.id}/lead`, { method: 'PATCH', body: { userId } }), (o) => { const row = o.categories.find((x: any) => x.id === c.id); if (row) { if (leadHd) row.leadId = userId; else row.ownerId = userId; } return o; }); }}>
                       {cand.map((x: any) => <option key={x.id} value={x.id}>{x.name}{x.title ? ` · ${x.title}` : ''}</option>)}
                     </select>
                   </td>
@@ -310,14 +319,14 @@ function Roles({ adm, cfg, leadHd }: { adm: Adm; cfg: any; leadHd: boolean }) {
         <div className="adm-head"><h3>People with helpdesk roles</h3><span className="r"><button className="btn sm primary" onClick={() => set({ modal: { type: 'role' } })}><Icon n="plus" s={14} />Assign role</button></span><p>Managers come from reporting lines in NPSTX and are not edited here.</p></div>
         <div className="tbl-wrap">
           <table className="t">
-            <thead><tr><th>Employee</th><th>Department</th><th>Helpdesk roles</th><th>HR categories worked</th><th>Lead / owner of</th><th></th></tr></thead>
+            <thead><tr><th>Employee</th><th>Department</th><th>Helpdesk roles</th><th>Categories worked</th><th>Lead / owner of</th><th></th></tr></thead>
             <tbody>
               {staff.map((x: any) => (
                 <tr key={x.id} style={{ cursor: 'default' }}>
                   <td className="nowrap"><span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}><Avatar name={x.name} sm />{x.name}</span><div className="sub">{x.title}</div></td>
                   <td>{x.dept}</td>
                   <td><div className="subs">{x.roles.filter((r: string) => r !== 'EMP').map((r: string) => <span key={r} className="chip">{cfg.roleLabels[r] ?? r}</span>)}</div></td>
-                  <td><div className="subs">{x.hrCategories.length ? x.hrCategories.map((k: string) => <span key={k} className="chip">{hrName(k)}</span>) : <span className="muted">—</span>}</div></td>
+                  <td><div className="subs">{scoped(x).length ? scoped(x).map((l: string) => <span key={l} className="chip">{l}</span>) : <span className="muted">—</span>}</div></td>
                   <td><div className="subs">{x.leads.length ? x.leads.map((l: string) => <span key={l} className="chip">{l}</span>) : <span className="muted">—</span>}</div></td>
                   <td><button className="btn sm" onClick={() => set({ modal: { type: 'role', userId: x.id } })}>Edit</button></td>
                 </tr>

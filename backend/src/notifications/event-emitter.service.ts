@@ -119,6 +119,7 @@ export class TicketEventEmitter {
       // Hidden priority (TC): never send a priority value to a plain requester.
       if (type === 'TICKET_PRIORITY_CHANGED' && !PRIORITY_VISIBLE_TO_REQUESTER && recipient === ticket.requesterId) continue;
       const threshold = context.threshold ? `:${context.threshold}` : '';
+      const level = context.level != null ? `:L${context.level}` : '';
       await this.gateway.publish({
         eventType: type,
         category: def.category,
@@ -130,7 +131,7 @@ export class TicketEventEmitter {
         text,
         confidential: ticket.confidential,
         payload,
-        dedupeKey: `${type}:${ticket.key}:${recipient}${threshold}`,
+        dedupeKey: `${type}:${ticket.key}:${recipient}${level}${threshold}`,
         occurredAt: new Date().toISOString(),
       });
     }
@@ -179,6 +180,8 @@ export class TicketEventEmitter {
     const p: Record<string, any> = { eventType: type, ticketKey: ticket.key, text };
     if (actor) p.actorId = actor.id;
     if (ctx.targetUserId) p.targetUserId = ctx.targetUserId;
+    if (ctx.oldAssigneeId) p.oldAssigneeId = ctx.oldAssigneeId;
+    if (ctx.newAssigneeId) p.newAssigneeId = ctx.newAssigneeId;
     if (ctx.level != null) p.level = ctx.level;
     if (ctx.threshold) p.threshold = ctx.threshold;
     if (ctx.cover) p.coverFor = ctx.cover.trim();

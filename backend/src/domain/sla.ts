@@ -1,5 +1,5 @@
 import { dur } from '../common/clock';
-import type { Condition } from '../database/entities';
+import type { Condition, EscRecord } from '../database/entities';
 import type { StatusModel } from './types';
 
 /** Minimal ticket shape for SLA and flag calculations. */
@@ -9,12 +9,17 @@ export interface SlaTicket {
   createdAt: Date;
   closedAt: Date | null;
   resolutionDue: Date;
+  responseDue: Date;
   responseMet: boolean | null;
   paused: boolean;
   escalationLevel: number;
   closeResponse: string | null;
   /** False until the last approval; such tickets never had an SLA clock. */
   slaStarted?: boolean;
+  /** First public reply by someone other than the requester, when known. */
+  firstReply?: Date | null;
+  /** Escalation records, used so a manual escalation still counts as escalated. */
+  escLog?: EscRecord[] | null;
 }
 
 /** Rejected, Cancelled and never-started tickets are left out of every SLA metric. */
@@ -50,6 +55,27 @@ export const isAtRisk = (t: SlaTicket, closed: boolean, nowMs: number) =>
   !closed && !t.paused && t.status !== 'Pending approval' && t.slaStarted !== false && t.resolutionDue.getTime() >= nowMs && t.resolutionDue.getTime() - nowMs < 86400000;
 export const isBreachedRes = (t: SlaTicket, closed: boolean, nowMs: number) =>
   slaCounts(t) && (closed ? !!t.closedAt && t.closedAt.getTime() > t.resolutionDue.getTime() : isOverdue(t, closed, nowMs));
+
+/**
+ * First response outcome. ResponseMet can be NULL on imported/Salesforce-shaped tickets, so derive
+ * the outcome from the first public reply (or the due time when there was no reply).
+ */
+export const isResponseBreached = (t: SlaTicket, nowMs: number) => {
+  if (!slaCounts(t) || t.slaStarted === false || t.status === 'Pending approval') return false;
+  if (t.responseMet !== null) return !t.responseMet;
+  return (t.firstReply?.getTime() ?? nowMs) > t.responseDue.getTime();
+};
+
+/** A ticket counts as escalated if it moved up the ladder or anyone escalated it manually. */
+export const hasEscalation = (t: SlaTicket) =>
+  t.escalationLevel > 0 || t.status === 'Escalated' || !!t.escLog?.length;
+
+/** How many ladder levels a ticket has crossed, capped at the levels after its cover base. */
+export function escalationReached(usedPct: number, base: number, currentLevel: number, thresholds: number[]): number {
+  const available = Math.max(0, thresholds.length - Math.max(0, base));
+  const crossed = thresholds.slice(Math.max(0, base)).filter((pct) => usedPct >= pct).length;
+  return Math.max(currentLevel, Math.min(available, crossed));
+}
 
 /** UI status (Open, In Progress, Pending Input, Resolved, Rejected, Cancelled) for a helpdesk status. */
 export function uiOf(st: StatusModel, uiMap: Record<string, string>, s: string, closeResponse?: string | null): string {

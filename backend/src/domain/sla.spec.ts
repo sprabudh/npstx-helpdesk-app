@@ -1,8 +1,8 @@
-import { evalCond, isAtRisk, isBreachedRes, isOverdue, slaInfo, uiOf, type SlaTicket } from './sla';
+import { escalationReached, evalCond, isAtRisk, isBreachedRes, isOverdue, isResponseBreached, slaInfo, uiOf, type SlaTicket } from './sla';
 
 const now = Date.UTC(2026, 10, 4, 6, 16);
 const h = 3600000;
-const t = (o: Partial<SlaTicket> = {}): SlaTicket => ({ helpdesk: 'IT', status: 'In Progress', createdAt: new Date(now - 10 * h), closedAt: null, resolutionDue: new Date(now + 48 * h), responseMet: true, paused: false, escalationLevel: 0, closeResponse: null, ...o });
+const t = (o: Partial<SlaTicket> = {}): SlaTicket => ({ helpdesk: 'IT', status: 'In Progress', createdAt: new Date(now - 10 * h), closedAt: null, resolutionDue: new Date(now + 48 * h), responseDue: new Date(now + h), responseMet: true, paused: false, escalationLevel: 0, closeResponse: null, ...o });
 
 describe('slaInfo', () => {
   it('on track, due soon, overdue', () => {
@@ -33,6 +33,32 @@ describe('uiOf', () => {
     expect(uiOf(st, map, 'Closed', 'Rejected')).toBe('Rejected');
     expect(uiOf(st, map, 'Closed', 'Resolved')).toBe('Resolved');
     expect(uiOf(st, map, 'Cancelled')).toBe('Cancelled');
+  });
+});
+
+describe('SLA escalation ladder', () => {
+  const pcts = [50, 75, 100];
+  it('crosses each threshold exactly and never de-escalates', () => {
+    expect(escalationReached(49.9, 0, 0, pcts)).toBe(0);
+    expect(escalationReached(50, 0, 0, pcts)).toBe(1);
+    expect(escalationReached(74.9, 0, 1, pcts)).toBe(1);
+    expect(escalationReached(75, 0, 1, pcts)).toBe(2);
+    expect(escalationReached(99.9, 0, 2, pcts)).toBe(2);
+    expect(escalationReached(100, 0, 2, pcts)).toBe(3);
+    expect(escalationReached(100, 2, 2, pcts)).toBe(2);
+  });
+});
+
+describe('isResponseBreached', () => {
+  it('uses responseMet when present and derives the outcome from the first public reply when NULL', () => {
+    expect(isResponseBreached(t({ responseMet: true }), now)).toBe(false);
+    expect(isResponseBreached(t({ responseMet: false }), now)).toBe(true);
+    expect(isResponseBreached(t({ responseMet: null, firstReply: new Date(now + 0.5 * h) }), now)).toBe(false);
+    expect(isResponseBreached(t({ responseMet: null, firstReply: new Date(now + 2 * h) }), now)).toBe(true);
+    expect(isResponseBreached(t({ responseMet: null, firstReply: null }), now)).toBe(false);
+    expect(isResponseBreached(t({ responseMet: null, firstReply: null, responseDue: new Date(now - h) }), now)).toBe(true);
+    expect(isResponseBreached(t({ responseMet: null, firstReply: null, status: 'Pending approval' }), now)).toBe(false);
+    expect(isResponseBreached(t({ responseMet: null, firstReply: null, status: 'Cancelled' }), now)).toBe(false);
   });
 });
 

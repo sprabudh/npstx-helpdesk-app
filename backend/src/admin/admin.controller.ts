@@ -36,6 +36,12 @@ export class FieldDto {
   @ApiPropertyOptional() @IsOptional() @IsString() placeholder?: string;
   @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @IsString({ each: true }) options?: string[];
   @ApiPropertyOptional() @IsOptional() @IsBoolean() required?: boolean;
+  @ApiPropertyOptional() @IsOptional() @IsString() hint?: string;
+  @ApiPropertyOptional() @IsOptional() @IsNumber() min?: number | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() pattern?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() patternFlags?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() patternMessage?: string | null;
+  @ApiPropertyOptional() @IsOptional() @IsString() defaultValue?: string | null;
 }
 export class FieldPatchDto { @ApiPropertyOptional() @IsOptional() @IsBoolean() required?: boolean; @ApiPropertyOptional() @IsOptional() @IsBoolean() active?: boolean }
 export class SlaDto {
@@ -52,7 +58,11 @@ export class EscalationDto {
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(10) @Max(100) pct?: number;
 }
 export class SfEscalationDto { @ApiProperty() @IsString() who: string }
-export class RolesDto { @ApiProperty({ type: [String] }) @IsArray() @IsString({ each: true }) roles: string[]; @ApiProperty({ type: [String] }) @IsArray() @IsString({ each: true }) hrCategories: string[] }
+export class RolesDto {
+  @ApiProperty({ type: [String] }) @IsArray() @IsString({ each: true }) roles: string[];
+  @ApiProperty({ type: [String] }) @IsArray() @IsString({ each: true }) hrCategories: string[];
+  @ApiPropertyOptional({ description: 'Category keys scoped by helpdesk; stored in user_hr_categories' }) @IsOptional() @IsObject() roleCategories?: Record<string, string[]>;
+}
 
 @ApiTags('admin')
 @ApiBearerAuth()

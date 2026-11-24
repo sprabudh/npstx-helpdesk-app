@@ -62,9 +62,9 @@ export function PerfReport({ p, loading, error, mine, ctl }: {
 
   const exportCsv = () => {
     if (!p) return;
-    const head = [byCat ? 'Assignee · category' : 'Assignee', ...PERF_COLS.map((c) => c[1]), 'Avg first response (h)', 'Avg resolution (h)'];
-    const body = rows.map((r) => [label(r), ...PERF_COLS.map(([k]) => r.counts[k]), r.avgFirstMs == null ? '' : (r.avgFirstMs / 3600000).toFixed(2), r.avgResolutionMs == null ? '' : (r.avgResolutionMs / 3600000).toFixed(2)]);
-    if (p.unassigned) body.push(['Unassigned (queues)', ...PERF_COLS.map(([k]) => p.unassigned!.counts[k]), '', '']);
+    const head = [byCat ? 'Assignee · category' : 'Assignee', 'Helpdesk', ...PERF_COLS.map((c) => c[1]), 'Avg first response (h)', 'Avg resolution (h)'];
+    const body = rows.map((r) => [label(r), r.helpdesk ? HDL[r.helpdesk] : '', ...PERF_COLS.map(([k]) => r.counts[k]), r.avgFirstMs == null ? '' : (r.avgFirstMs / 3600000).toFixed(2), r.avgResolutionMs == null ? '' : (r.avgResolutionMs / 3600000).toFixed(2)]);
+    if (p.unassigned) body.push(['Unassigned (queues)', '', ...PERF_COLS.map(([k]) => p.unassigned!.counts[k]), '', '']);
     const csv = [head, ...body].map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     const el = document.createElement('a');

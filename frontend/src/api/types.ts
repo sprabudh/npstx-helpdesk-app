@@ -14,7 +14,7 @@ export interface ListResponse {
 }
 export interface Me {
   id: string; name: string; dept: string | null; title: string | null; location: string | null; managerId: string | null; managerName: string | null;
-  roles: string[]; hrCategories: string[]; helpdesks: Hd[]; workHelpdesks: Hd[];
+  roles: string[]; hrCategories: string[]; roleCategories: MeRoleCategories; helpdesks: Hd[]; workHelpdesks: Hd[];
   flags: { worker: boolean; headish: boolean; approver: boolean; helpdeskAdmin: boolean; auditor: boolean };
   views: [string, string][]; permissions: { can: string[]; no: string[] };
   counts: { followCount: number; followingCount: number; ccCount: number; waiting: number; assignedOpen: number; unassignedInQueues: number; myOpen: number; myClosed: number; notifications: number };
@@ -73,6 +73,7 @@ export interface Notification {
   id: number; userId: string; text: string; ticketKey: string | null; createdAt: string; readAt: string | null;
   eventType?: string | null; category?: string | null; channel?: string | null; dedupeKey?: string | null;
 }
+export interface MeRoleCategories { [helpdesk: string]: string[] }
 export interface Card { k: string; g: 'live' | 'attention' | 'range'; chip: 'Live' | 'In date range'; l: string; n: number | string; h: string; ic: string; cls?: string; tone?: string; f: string; go?: Record<string, string>; route?: string }
 export interface Analytics {
   scope: string; scopes: [string, string][]; hd: string; range: string; rangeLabel: string; fromDate: string; openCount: number; priorityVisible: boolean; note: string; cards: Card[];

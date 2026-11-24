@@ -163,7 +163,10 @@ function CategoryForm({ m, adm, cfg, onClose }: { m: Extract<Modal, { type: 'cat
   const c = m.key ? adm.categories.find((x: any) => x.helpdesk === m.hd && x.key === m.key) : null;
   const leadHd = cfg.leadHelpdesks.includes(m.hd);
   const priList: string[] = adm.priorities?.[m.hd] ?? cfg.priorities[m.hd] ?? [];
-  const owners = [...adm.people, ...((adm.agents[m.hd] ?? []) as any[]).filter((x) => x.isQueue && m.hd !== 'HR')];
+  const sfOk = (x: any) => ['Sales', 'Presales', 'Solutions'].includes(x.dept) && (x.roles?.includes('SF_ADMIN') || x.roles?.includes('HD_ADMIN'));
+  const owners = m.hd === 'SF'
+    ? [...((adm.agents.SF ?? []) as any[]).filter((x) => x.isQueue), ...adm.people.filter(sfOk)]
+    : [...adm.people, ...((adm.agents[m.hd] ?? []) as any[]).filter((x) => x.isQueue && m.hd !== 'HR')];
   const [v, setV] = useState({
     n: c?.name ?? '', subs: (c?.subs ?? []).join('\n'), pri: c?.defaultPriority ?? 'Medium', owner: (c ? c.leadId || c.ownerId : adm.agents[m.hd]?.[0]?.id) ?? '',
     ctype: c?.requestType === 'course' ? 'course' : 'portal', conf: !!c?.confidential, reopen: c ? c.reopenAllowed !== false : true,
@@ -271,7 +274,10 @@ function FieldModal({ m, onClose }: { m: Extract<Modal, { type: 'field' }>; onCl
   const { data: cfg } = useConfig();
   const x = m.id ? adm?.fields.find((f: any) => f.id === m.id) : null;
   const cn = adm?.categories.find((c: any) => c.helpdesk === m.hd && c.key === m.cat)?.name ?? m.cat;
-  const [v, setV] = useState({ l: x?.label ?? '', ftype: x?.type ?? 'text', ph: x?.placeholder ?? '', opts: (x?.options ?? []).join(', '), req: x?.required === true });
+  const [v, setV] = useState({
+    l: x?.label ?? '', ftype: x?.type ?? 'text', ph: x?.placeholder ?? '', opts: (x?.options ?? []).join(', '), req: x?.required === true,
+    hint: x?.hint ?? '', min: x?.min == null ? '' : String(x.min), pattern: x?.pattern ?? '', patternMessage: x?.patternMessage ?? '', def: x?.defaultValue ?? '',
+  });
   const [err, setErr] = useState<Errs>({});
   const sub = useSubmit(setErr, onClose);
   if (!adm || !cfg) return null;
@@ -281,8 +287,14 @@ function FieldModal({ m, onClose }: { m: Extract<Modal, { type: 'field' }>; onCl
     const e: Errs = {};
     if (!v.l.trim()) e.l = 'Add a label.';
     if (v.ftype === 'select' && !opts.length) e.opts = 'Add at least one option.';
+    if (v.pattern) { try { new RegExp(v.pattern); } catch { e.pattern = 'Check the pattern syntax.'; } }
     if (Object.keys(e).length) return setErr(e);
-    const body = { helpdesk: m.hd, categoryKey: m.cat, label: v.l.trim(), type: v.ftype, placeholder: v.ph || undefined, options: v.ftype === 'select' ? opts : undefined, required: v.req };
+    const body = {
+      helpdesk: x?.helpdesk ?? m.hd, categoryKey: x?.categoryKey ?? m.cat, label: v.l.trim(), type: v.ftype,
+      placeholder: v.ph || undefined, options: v.ftype === 'select' ? opts : undefined, required: v.req,
+      hint: v.hint || undefined, min: v.min === '' ? null : Number(v.min), pattern: v.pattern || undefined,
+      patternMessage: v.patternMessage || undefined, defaultValue: v.def || undefined,
+    };
     sub.go(() => (x ? api(`/admin/fields/${x.id}`, { method: 'PUT', body }) : api('/admin/fields', { body })));
   };
   return (
@@ -293,6 +305,13 @@ function FieldModal({ m, onClose }: { m: Extract<Modal, { type: 'field' }>; onCl
         <MF id="ph" label="Placeholder"><input className="in" id="m-ph" value={v.ph} onChange={(e) => set('ph')(e.target.value)} /></MF>
       </div>
       {v.ftype === 'select' && <MF id="opts" label="Options (comma separated)" req err={err.opts}><input className="in" id="m-opts" value={v.opts} placeholder="e.g. Mumbai, Pune, Bengaluru" onChange={(e) => set('opts')(e.target.value)} /></MF>}
+      <div className="row2">
+        <MF id="hint" label="Hint"><input className="in" id="m-hint" value={v.hint} onChange={(e) => set('hint')(e.target.value)} /></MF>
+        <MF id="def" label="Default value"><input className="in" id="m-def" value={v.def} onChange={(e) => set('def')(e.target.value)} /></MF>
+      </div>
+      {v.ftype === 'number' && <MF id="min" label="Minimum"><input className="in" type="number" id="m-min" value={v.min} onChange={(e) => set('min')(e.target.value)} /></MF>}
+      <MF id="pattern" label="Validation pattern" err={err.pattern}><input className="in" id="m-pattern" value={v.pattern} placeholder="Optional regular expression" onChange={(e) => set('pattern')(e.target.value)} /></MF>
+      {v.pattern && <MF id="patternMessage" label="Validation message"><input className="in" id="m-patternMessage" value={v.patternMessage} onChange={(e) => set('patternMessage')(e.target.value)} /></MF>}
       <label className="check"><input type="checkbox" id="m-freq" checked={v.req} onChange={(e) => set('req')(e.target.checked)} />Required</label>
       <div className="note info"><Icon n="info" s={15} /><p>Shown in the {HDL[m.hd]} form for <b>{cn}</b>, after the core fields.</p></div>
     </Dialog>
@@ -305,22 +324,36 @@ function RoleModal({ m, onClose }: { m: Extract<Modal, { type: 'role' }>; onClos
   if (!adm || !cfg) return null;
   return <RoleForm m={m} adm={adm} cfg={cfg} onClose={onClose} />;
 }
+const CAT_ROLES: Record<string, string[]> = {
+  HR: ['HR_AGENT'], LND: ['LND_COORD', 'LND_HEAD'], IT: ['IT_AGENT', 'IT_HEAD'],
+  ADM: ['ADM_AGENT', 'ADM_HEAD'], SF: ['SF_ADMIN'],
+};
 export function RoleForm({ m, adm, cfg, onClose }: { m: Extract<Modal, { type: 'role' }>; adm: any; cfg: any; onClose: () => void }) {
-  const hrCats = cfg.categories.filter((c: any) => c.helpdesk === 'HR' && c.active !== false);
   const prefill = (id: string) => {
     const p = adm.people.find((x: any) => x.id === id);
-    return { roles: new Set<string>(p?.roles ?? []), hc: new Set<string>(p?.hrCategories ?? []) };
+    const cats: Record<string, Set<string>> = {};
+    for (const hd of Object.keys(CAT_ROLES)) cats[hd] = new Set<string>(p?.roleCategories?.[hd] ?? (hd === 'HR' ? p?.hrCategories ?? [] : []));
+    return { roles: new Set<string>(p?.roles ?? []), cats };
   };
   const [pick, setPick] = useState(m.userId ?? '');
   const [st, setSt] = useState(() => prefill(m.userId ?? ''));
   const [err, setErr] = useState<Errs>({});
   const sub = useSubmit(setErr, onClose);
-  const toggle = (k: 'roles' | 'hc', v: string, on: boolean) => setSt((o) => { const n = new Set(o[k]); if (on) n.add(v); else n.delete(v); return { ...o, [k]: n }; });
+  const toggle = (v: string, on: boolean) => setSt((o) => { const n = new Set(o.roles); if (on) n.add(v); else n.delete(v); return { ...o, roles: n }; });
+  const toggleCat = (hd: string, v: string, on: boolean) => setSt((o) => {
+    const n = new Set(o.cats[hd] ?? []);
+    if (on) n.add(v); else n.delete(v);
+    return { ...o, cats: { ...o.cats, [hd]: n } };
+  });
   const save = () => {
     if (!pick) return setErr({ pick: 'Select an employee.' });
     const keep = [...st.roles].filter((r) => !adm.assignableRoles.includes(r));
     const roles = [...new Set([...keep, ...adm.assignableRoles.filter((r: string) => st.roles.has(r))])];
-    sub.go(() => api(`/admin/people/${pick}/roles`, { method: 'PUT', body: { roles, hrCategories: st.roles.has('HR_AGENT') ? [...st.hc] : [] } }));
+    const roleCategories = Object.fromEntries(Object.entries(st.cats)
+      .filter(([hd]) => CAT_ROLES[hd]?.some((r) => st.roles.has(r)))
+      .map(([hd, keys]) => [hd, [...keys]]));
+    const hrCategories = st.roles.has('HR_AGENT') ? [...(st.cats.HR ?? [])] : [];
+    sub.go(() => api(`/admin/people/${pick}/roles`, { method: 'PUT', body: { roles, hrCategories, roleCategories } }));
   };
   const name = adm.people.find((x: any) => x.id === m.userId)?.name;
   return (
@@ -332,8 +365,12 @@ export function RoleForm({ m, adm, cfg, onClose }: { m: Extract<Modal, { type: '
           </select>
         </MF>
       )}
-      <div className="fld"><label>Helpdesk roles</label><div className="cbgrid">{adm.assignableRoles.map((r: string) => <label key={r} className="check"><input type="checkbox" id={`m-r-${r}`} checked={st.roles.has(r)} onChange={(e) => toggle('roles', r, e.target.checked)} />{cfg.roleLabels[r]}</label>)}</div></div>
-      {st.roles.has('HR_AGENT') && <div className="fld"><label>HR categories worked</label><div className="cbgrid">{hrCats.map((c: any) => <label key={c.key} className="check"><input type="checkbox" id={`m-hc-${c.key}`} checked={st.hc.has(c.key)} onChange={(e) => toggle('hc', c.key, e.target.checked)} />{c.name}</label>)}</div></div>}
+      <div className="fld"><label>Helpdesk roles</label><div className="cbgrid">{adm.assignableRoles.map((r: string) => <label key={r} className="check"><input type="checkbox" id={`m-r-${r}`} checked={st.roles.has(r)} onChange={(e) => toggle(r, e.target.checked)} />{cfg.roleLabels[r] ?? r}</label>)}</div></div>
+      {Object.entries(CAT_ROLES).filter(([, roles]) => roles.some((r) => st.roles.has(r))).map(([hd]) => {
+        const cats = cfg.categories.filter((c: any) => c.helpdesk === hd && c.active !== false);
+        if (!cats.length) return null;
+        return <div className="fld" key={hd}><label>{hd === 'HR' ? 'HR categories worked' : `${HDL[hd] ?? hd} categories worked`}</label><div className="cbgrid">{cats.map((c: any) => <label key={c.key} className="check"><input type="checkbox" id={hd === 'HR' ? `m-hc-${c.key}` : `m-cat-${hd}-${c.key}`} checked={!!st.cats[hd]?.has(c.key)} onChange={(e) => toggleCat(hd, c.key, e.target.checked)} />{c.name}</label>)}</div></div>;
+      })}
       {st.roles.has('HRLND_ADMIN') && <div className="note conf"><Icon n="lock" s={15} /><p>HR / L&amp;D admins approve L&amp;D course requests and can read every HR ticket, including confidential ones. Access is audited.</p></div>}
       {st.roles.has('HD_ADMIN') && <div className="note info"><Icon n="gear" s={15} /><p>Helpdesk admins see the Admin console and can work any ticket.</p></div>}
       <div className="note info"><Icon n="info" s={15} /><p>Manager access comes from reporting lines in NPSTX. Salesforce helpdesk access comes from the department (Sales, Presales, Solutions). Neither is set here.</p></div>

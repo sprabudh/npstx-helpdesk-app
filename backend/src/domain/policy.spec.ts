@@ -1,6 +1,6 @@
 import { principal, ticket } from '../test-support/fixtures';
 import {
-  adminHds, allowedHds, approvalStage, canAddPeople, canApproveStep, canEditFaq, canView, canWork, hdAllowed, isReadOnly, reopenInfo, viewsFor, whyVisible, workHds,
+  adminHds, allowedHds, approvalStage, canAddPeople, canApproveStep, canEditFaq, canView, canWork, hdAllowed, isReadOnly, isWorker, reopenInfo, viewsFor, whyVisible, workHds,
 } from './policy';
 import type { TicketCtx } from './types';
 
@@ -179,6 +179,10 @@ describe('people, reopen, views and FAQ editing', () => {
     expect(viewsFor(principal('u20')).map((v) => v[0])).toEqual(expect.arrayContaining(['mine', 'following', 'assigned', 'all']));
     expect(viewsFor(principal('u6')).map((v) => v[0])).toEqual(['mine', 'following', 'approvals']);
     expect(viewsFor(principal('u26')).map((v) => v[1])).toContain('All tickets (read-only)');
+    for (const id of ['u3', 'u4', 'u8', 'u21', 'u24', 'u5']) {
+      expect(isWorker(principal(id))).toBe(true);
+      expect(viewsFor(principal(id)).map((v) => v[0])).toContain('assigned');
+    }
   });
   it('FAQ editors', () => {
     expect(canEditFaq(principal('u9'), 'HR', 'u9')).toBe(true);

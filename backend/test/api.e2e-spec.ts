@@ -234,6 +234,68 @@ describe('Helpdesk API (e2e)', () => {
     expect(other.body.faqs.find((f: { id: number }) => f.id === faq.id).myVote).toBe(null);
   });
 
+  it('manual SLA runs breach the first response, escalate by ladder and stay idempotent', async () => {
+    const hour = 3600000;
+    const now = Date.now();
+    await ds.query('DELETE FROM ticket_events WHERE ticket_key=?', ['IT-000041']);
+    await ds.query('DELETE FROM ticket_comments WHERE ticket_key=?', ['IT-000041']);
+    await ds.query(
+      `UPDATE tickets SET status='In Progress', paused=0, sla_started=1, assignee_id='u21', escalation_level=0,
+       ladder_base=0, asg_hist=NULL, esc_log=NULL, response_met=NULL, response_due=?, sla_start=?, resolution_due=?
+       WHERE ticket_key='IT-000041'`,
+      [new Date(now - hour), new Date(now - 31 * hour), new Date(now + 30 * hour)],
+    );
+    const first = await http().post('/api/admin/sla/run').set(as('u20')).expect(200);
+    expect(first.body.responseBreaches).toBeGreaterThan(0);
+    expect(first.body.escalated).toBeGreaterThan(0);
+    let [row] = await ds.query("SELECT assignee_id, escalation_level, response_met, JSON_LENGTH(esc_log) escCount FROM tickets WHERE ticket_key='IT-000041'");
+    expect(Number(row.response_met)).toBe(0);
+    expect(Number(row.escalation_level)).toBeGreaterThanOrEqual(1);
+    expect(Number(row.escCount)).toBeGreaterThanOrEqual(1);
+    const escalations = async () => Number((await ds.query("SELECT COUNT(*) n FROM ticket_events WHERE ticket_key='IT-000041' AND text LIKE 'Escalated to Level%'"))[0].n);
+    const breaches = async () => Number((await ds.query("SELECT COUNT(*) n FROM ticket_events WHERE ticket_key='IT-000041' AND text LIKE 'Response SLA breached%'"))[0].n);
+    const [esc1, br1, assignee, level] = [await escalations(), await breaches(), row.assignee_id, row.escalation_level];
+    expect(esc1).toBeGreaterThan(0);
+    expect(br1).toBe(1);
+    await http().post('/api/admin/sla/run').set(as('u20')).expect(200);
+    [row] = await ds.query("SELECT assignee_id, escalation_level, response_met FROM tickets WHERE ticket_key='IT-000041'");
+    expect(row.assignee_id).toBe(assignee);
+    expect(row.escalation_level).toBe(level);
+    expect(await escalations()).toBe(esc1);
+    expect(await breaches()).toBe(br1);
+  });
+
+  it('Salesforce admin governs SF categories, ladders and validated custom fields', async () => {
+    const overview = (await http().get('/api/admin').set(as('u20')).expect(200)).body;
+    expect(overview.escalation.SF.map((l: { pct: number }) => l.pct)).toEqual([50, 75, 100]);
+    const cat = overview.categories.find((c: { helpdesk: string; key: string }) => c.helpdesk === 'SF' && c.key === 'ACCESS');
+    const refused = await http().patch(`/api/admin/categories/${cat.id}/lead`).set(as('u20')).send({ userId: 'u21' }).expect(400);
+    expect(refused.body.code).toBe('VALIDATION');
+    await http().patch(`/api/admin/categories/${cat.id}/lead`).set(as('u20')).send({ userId: 'u5' }).expect(200);
+    await http().post('/api/admin/fields').set(as('u20')).send({
+      helpdesk: 'SF', categoryKey: 'ACCESS', label: 'SF Test Code', type: 'text', required: true,
+      hint: 'Start with ABC', pattern: '^ABC', patternMessage: 'Use a code starting with ABC.',
+    }).expect(201);
+    const fields = (await http().get('/api/admin').set(as('u20')).expect(200)).body.fields;
+    const field = fields.find((f: { label: string }) => f.label === 'SF Test Code');
+    expect(field).toMatchObject({ helpdesk: 'SF', categoryKey: 'ACCESS', hint: 'Start with ABC', pattern: '^ABC' });
+    const payload = (code: string) => JSON.stringify({
+      helpdesk: 'SF', fields: { cat: 'ACCESS', sub: 'New Salesforce user', title: 'Access request', desc: 'Need access', pri: 'Medium', [field.key]: code },
+    });
+    const bad = await http().post('/api/tickets').set(as('u2')).field('payload', payload('XYZ')).expect(400);
+    expect(bad.body.details.fieldErrors[field.key]).toBe('Use a code starting with ABC.');
+    await http().post('/api/tickets').set(as('u2')).field('payload', payload('ABC123')).expect(201);
+  });
+
+  it('role categories are saved per helpdesk and returned on /me', async () => {
+    await http().put('/api/admin/people/u27/roles').set(as('u20')).send({
+      roles: ['SF_ADMIN', 'IT_AGENT'], hrCategories: [], roleCategories: { SF: ['ACCESS'], IT: ['HW'] },
+    }).expect(200);
+    const login = await http().post('/api/auth/demo-login').send({ userId: 'u27' }).expect(200);
+    const me = await http().get('/api/me').set({ Authorization: `Bearer ${login.body.accessToken}` }).expect(200);
+    expect(me.body.roleCategories).toMatchObject({ IT: ['HW'], SF: ['ACCESS'] });
+  });
+
   it('demo reset restores the sample data', async () => {
     await http().post('/api/demo/reset').set(as('u1')).expect(200);
     const d = await http().get('/api/tickets/LND-000048').set(as('u1')).expect(200);

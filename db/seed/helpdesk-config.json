@@ -3473,24 +3473,41 @@
      "pct": 100
     }
    ],
-   "ADM": [
-    {
-     "who": "lead",
-     "role": "Category lead",
-     "pct": 50
-    },
-    {
-     "who": "u25",
-     "role": "Admin Head",
-     "pct": 75
-    },
-    {
-     "who": "u13",
-     "role": "HR head",
-     "pct": 100
-    }
-   ]
-  },
+    "ADM": [
+     {
+      "who": "lead",
+      "role": "Category lead",
+      "pct": 50
+     },
+     {
+      "who": "u25",
+      "role": "Admin Head",
+      "pct": 75
+     },
+     {
+      "who": "u13",
+      "role": "HR head",
+      "pct": 100
+     }
+    ],
+    "SF": [
+     {
+      "who": "q_sf",
+      "role": "Salesforce operations queue",
+      "pct": 50
+     },
+     {
+      "who": "q_sf_sr",
+      "role": "Senior admin queue",
+      "pct": 75
+     },
+     {
+      "who": "u27",
+      "role": "Senior Salesforce case admin",
+      "pct": 100
+     }
+    ]
+   },
   "sfEscalation": {
    "who": "q_sf_sr",
    "role": "Salesforce escalation rule"

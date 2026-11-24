@@ -4,8 +4,8 @@ import { DataSource } from 'typeorm';
 import { clock, fmtH } from '../common/clock';
 import { badRequest, forbidden, notFound } from '../common/errors';
 import { CategoryEntity, FormFieldEntity, SettingEntity, SlaChange, SlaVersionEntity, TicketEntity, UserHrCategoryEntity, UserRoleEntity } from '../database/entities';
-import { adminHds } from '../domain/policy';
-import { Principal, Role } from '../domain/types';
+import { adminHds, hdAllowed } from '../domain/policy';
+import { HD_ORDER, PersonRef, Principal, Role } from '../domain/types';
 import { AuditService } from '../audit/audit.service';
 import { HelpdeskConfigService } from '../helpdesk-config/config.service';
 
@@ -13,6 +13,8 @@ const LEAD_HDS = ['HR', 'IT', 'ADM'];
 const SLA_LABEL: Record<string, string> = { IT: 'IT and Support', ADM: 'Admin Desk', shared: 'HR and L&D' };
 const MERGE_MS = 60000;
 const STEP_LABEL: Record<string, string> = { lnd: 'L&D', ith: 'IT head', adm: 'Admin head' };
+const copy = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
+const fmtOverride = (v: Record<string, [number, number]> | null) => v ? Object.entries(v).map(([p, [r, x]]) => `${p} ${r}/${x}h`).join(' · ') : 'none';
 
 /** Admin console (Helpdesk admin only). Every change is audited and applies to new tickets straight away. */
 @Injectable()
@@ -26,6 +28,24 @@ export class AdminService {
     if (adminHds(u).includes(hd as never)) return;
     void this.audit.record(u.id, 'salesforce.denied', `Denied ${hd} configuration change`, { outcome: 'denied', target: hd });
     throw forbidden('The Salesforce helpdesk is available only to Sales, Presales and Solutions.', 'SALESFORCE_FORBIDDEN');
+  }
+  /** Salesforce owners/ladders may only point at a Sales, Presales or Solutions admin or SF queue. */
+  private sfTargetAllowed(id: string | null | undefined): boolean {
+    const p = this.cfg.person(id);
+    if (!p) return false;
+    if (p.isQueue) return (this.cfg.setting<Record<string, string[]>>('agents').SF ?? []).includes(p.id);
+    if (!hdAllowed(p, 'SF')) return false;
+    return (p.roles as string[]).some((r) => r === 'SF_ADMIN' || r === 'HD_ADMIN');
+  }
+  /** Role-scoped categories stored in user_hr_categories, grouped for the Role mapping UI. */
+  private categoriesByHelpdesk(p: PersonRef): Record<string, string[]> {
+    const roles = p.roles as string[];
+    const allowed = (hd: string) => hd === 'HR' ? roles.includes('HR_AGENT')
+      : hd === 'LND' ? roles.includes('LND_COORD') || roles.includes('LND_HEAD')
+      : hd === 'IT' ? roles.includes('IT_AGENT') || roles.includes('IT_HEAD')
+      : hd === 'ADM' ? roles.includes('ADM_AGENT') || roles.includes('ADM_HEAD')
+      : hd === 'SF' && (roles.includes('SF_ADMIN') || roles.includes('HD_ADMIN'));
+    return Object.fromEntries(HD_ORDER.filter(allowed).map((hd) => [hd, this.cfg.categories(hd).filter((c) => p.hrCats.includes(c.key)).map((c) => c.key)]));
   }
   private async setSetting(key: string, value: unknown) {
     await this.ds.getRepository(SettingEntity).save({ key, value });
@@ -50,13 +70,17 @@ export class AdminService {
    * A same-admin edit of the same cell within 60 s updates the newest version instead, but only while
    * no ticket has been raised under it.
    */
-  private async snapshotVersion(setBy: string, change: SlaChange): Promise<SlaVersionEntity> {
-    const sla = this.cfg.setting<Record<string, Record<string, [number, number]>>>('sla');
+  private async snapshotVersion(setBy: string, change: SlaChange, overrides: Record<string, Record<string, [number, number]> | null> = {}): Promise<SlaVersionEntity> {
+    const sla = copy(this.cfg.setting<Record<string, Record<string, [number, number]>>>('sla'));
     const esc = this.cfg.setting<Record<string, { who: string; role: string; pct: number }[]>>('escalation');
     const ladderPct: Record<string, number[]> = {};
-    for (const h of ['HR', 'LND', 'IT', 'ADM']) if (esc[h]) ladderPct[h] = esc[h].map((l) => l.pct);
+    for (const h of HD_ORDER) if (esc[h]) ladderPct[h] = esc[h].map((l) => l.pct);
     const catOv: Record<string, Record<string, [number, number]>> = {};
     for (const c of this.cfg.categories()) if (c.slaOverride) catOv[`${c.helpdesk}:${c.key}`] = c.slaOverride;
+    for (const [key, value] of Object.entries(overrides)) {
+      if (value) catOv[key] = value;
+      else delete catOv[key];
+    }
     const repo = this.ds.getRepository(SlaVersionEntity);
     // DATETIME keeps whole seconds and MySQL rounds, so truncate: the version must already be effective.
     const now = new Date(Math.floor(clock.nowMs() / 1000) * 1000);
@@ -101,14 +125,11 @@ export class AdminService {
       agents: Object.fromEntries(Object.entries(this.cfg.setting<Record<string, string[]>>('agents')).filter(([h]) => hds.includes(h as never))
         .map(([h, ids]) => [h, ids.map((id) => ({ id, name: this.cfg.name(id), isQueue: !!this.cfg.person(id)?.isQueue, title: this.cfg.person(id)?.title ?? null }))])),
       people: people.filter((p) => !p.isQueue).map((p) => ({
-        id: p.id, name: p.name, dept: p.dept, title: p.title, roles: p.roles.filter((r) => r !== 'SF_ADMIN' || sfOk), hrCategories: p.hrCats,
-        leads: [
-          ...this.cfg.categories('HR').filter((c) => c.leadId === p.id).map((c) => 'HR · ' + c.name),
-          ...this.cfg.categories('LND').filter((c) => c.ownerId === p.id).map((c) => 'L&D · ' + c.name),
-          ...this.cfg.categories('IT').filter((c) => c.leadId === p.id).map((c) => 'IT · ' + c.name),
-          ...this.cfg.categories('ADM').filter((c) => c.leadId === p.id).map((c) => 'Admin · ' + c.name),
-          ...(sfOk ? this.cfg.categories('SF').filter((c) => c.ownerId === p.id).map((c) => 'SF · ' + c.name) : []),
-        ],
+        id: p.id, name: p.name, dept: p.dept, title: p.title, roles: p.roles.filter((r) => r !== 'SF_ADMIN' || sfOk),
+        hrCategories: p.hrCats, categories: this.categoriesByHelpdesk(p),
+        leads: HD_ORDER.filter((h) => hds.includes(h)).flatMap((h) => this.cfg.categories(h)
+          .filter((c) => (LEAD_HDS.includes(h) ? c.leadId : c.ownerId) === p.id)
+          .map((c) => `${this.cfg.helpdeskLabel(h)} · ${c.name}`)),
       })),
       queues: people.filter((p) => p.isQueue).map((p) => ({ id: p.id, name: p.name })),
       audit: (await this.audit.list(6, 'config.change')).map((a) => ({ at: a.at, actorId: a.actorId, actorName: this.cfg.name(a.actorId), text: a.summary })),
@@ -135,6 +156,9 @@ export class AdminService {
     let c = id ? await repo.findOne({ where: { id } }) : null;
     if (id && !c) throw notFound('Category');
     const isNew = !c;
+    if (b.helpdesk === 'SF' && b.ownerId && !this.sfTargetAllowed(b.ownerId)) err.owner = 'Choose an eligible Salesforce admin or SF queue.';
+    if (Object.keys(err).length) throw badRequest('Fix the highlighted fields.', 'VALIDATION', { fieldErrors: err });
+    const overrideBefore = !isNew && b.helpdesk === 'SF' ? copy(c!.slaOverride ?? null) : null;
     if (!c) {
       const list = this.cfg.categories(b.helpdesk);
       let key = b.name.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 12) || 'CAT';
@@ -163,6 +187,12 @@ export class AdminService {
     if (b.helpdesk === 'HR' && b.ownerId) await this.grantHr(b.ownerId, c.key);
     await this.log(u, `${isNew ? 'Added' : 'Edited'} ${this.cfg.helpdeskLabel(b.helpdesk)} category "${c.name}"`, `category:${c.id}`);
     await this.cfg.reload();
+    const overrideAfter = c.slaOverride ? copy(c.slaOverride) : null;
+    if (b.helpdesk === 'SF' && JSON.stringify(overrideBefore) !== JSON.stringify(overrideAfter)) {
+      const what = `SF · ${c.name} SLA targets`;
+      const v = await this.snapshotVersion(u.id, { what, before: fmtOverride(overrideBefore), after: fmtOverride(overrideAfter) }, { [`SF:${c.key}`]: overrideAfter });
+      await this.log(u, `${what}: ${fmtOverride(overrideBefore)} → ${fmtOverride(overrideAfter)} (SLA v${v.id})`, `category:${c.id}`);
+    }
     return { id: c.id, key: c.key, toast: `${c.name} ${isNew ? 'added' : 'saved'}. The Raise ticket form uses it now.` };
   }
 
@@ -196,6 +226,7 @@ export class AdminService {
     if (!c) throw notFound('Category');
     this.guardHd(u, c.helpdesk);
     if (!this.cfg.person(userId)) throw badRequest('Pick a person or queue.', 'VALIDATION');
+    if (c.helpdesk === 'SF' && !this.sfTargetAllowed(userId)) throw badRequest('Choose an eligible Salesforce admin or SF queue.', 'VALIDATION');
     const lead = LEAD_HDS.includes(c.helpdesk);
     await this.ds.getRepository(CategoryEntity).update(id, lead ? { leadId: userId } : { ownerId: userId });
     if (c.helpdesk === 'HR') await this.grantHr(userId, c.key);
@@ -204,29 +235,41 @@ export class AdminService {
     return { toast: `${this.cfg.name(userId)} now ${lead ? 'leads' : 'owns'} ${c.name}. New tickets route there.` };
   }
 
-  async saveField(u: Principal, id: number | null, b: { helpdesk: string; categoryKey: string; label: string; type: string; placeholder?: string; options?: string[]; required?: boolean }) {
-    this.guardHd(u, b.helpdesk);
+  async saveField(u: Principal, id: number | null, b: {
+    helpdesk: string; categoryKey: string; label: string; type: string; placeholder?: string; options?: string[]; required?: boolean;
+    hint?: string; min?: number | null; pattern?: string | null; patternFlags?: string | null; patternMessage?: string | null; defaultValue?: string | null;
+  }) {
+    const repo = this.ds.getRepository(FormFieldEntity);
+    const existing = id ? await repo.findOne({ where: { id } }) : null;
+    if (id && (!existing || !existing.custom)) throw notFound('Custom field');
+    const hd = existing?.helpdesk ?? b.helpdesk;
+    const catKey = existing?.categoryKey ?? b.categoryKey;
+    this.guardHd(u, hd);
     const err: Record<string, string> = {};
     if (!b.label?.trim()) err.l = 'Add a label.';
     const opts = (b.options || []).map((s) => s.trim()).filter(Boolean);
     if (b.type === 'select' && !opts.length) err.opts = 'Add at least one option.';
+    if (b.pattern) {
+      try { new RegExp(b.pattern, b.patternFlags ?? ''); } catch { err.pattern = 'Check the pattern syntax.'; }
+    }
     if (Object.keys(err).length) throw badRequest('Fix the highlighted fields.', 'VALIDATION', { fieldErrors: err });
-    const cat = this.cfg.category(b.helpdesk, b.categoryKey);
+    const cat = this.cfg.category(hd, catKey);
     if (!cat) throw notFound('Category');
-    const repo = this.ds.getRepository(FormFieldEntity);
-    const def = { label: b.label.trim(), type: b.type || 'text', placeholder: b.placeholder || null, options: b.type === 'select' ? opts : null, required: !!b.required };
+    const def = {
+      label: b.label.trim(), type: b.type || 'text', placeholder: b.placeholder || null, options: b.type === 'select' ? opts : null,
+      required: !!b.required, hint: b.hint || null, min: b.min ?? null, pattern: b.pattern || null,
+      patternFlags: b.patternFlags || null, patternMessage: b.patternMessage || null, defaultValue: b.defaultValue || null,
+    };
     let isNew = false;
-    if (id) {
-      const f = await repo.findOne({ where: { id } });
-      if (!f || !f.custom) throw notFound('Custom field');
-      await repo.update(id, def);
+    if (existing) {
+      await repo.update(existing.id, def);
     } else {
       isNew = true;
       let key = b.label.trim().toLowerCase().replace(/[^a-z0-9]+(.)?/g, (_m: string, ch?: string) => (ch ? ch.toUpperCase() : '')).slice(0, 24) || 'field';
       while (this.cfg.allFields().some((x) => x.key === key) || this.cfg.setting<Record<string, string>>('fieldLabels')[key]) key += 'X';
-      await repo.insert({ ...def, helpdesk: b.helpdesk, categoryKey: b.categoryKey, key, custom: true, active: true, sortOrder: 100 + this.cfg.formFields(b.helpdesk, b.categoryKey, true).length, min: null, pattern: null, patternFlags: null, patternMessage: null, defaultValue: null, hint: null, showWhen: null, validation: null });
+      await repo.insert({ ...def, helpdesk: hd, categoryKey: catKey, key, custom: true, active: true, sortOrder: 100 + this.cfg.formFields(hd, catKey, true).length, showWhen: null, validation: null });
     }
-    await this.log(u, `${isNew ? 'Added' : 'Edited'} field "${def.label}" on ${this.cfg.helpdeskLabel(b.helpdesk)} · ${cat.name}`);
+    await this.log(u, `${isNew ? 'Added' : 'Edited'} field "${def.label}" on ${this.cfg.helpdeskLabel(hd)} · ${cat.name}`);
     await this.cfg.reload();
     return { toast: `${def.label} ${isNew ? 'added to' : 'updated in'} the form` };
   }
@@ -256,12 +299,13 @@ export class AdminService {
   }
 
   async setSla(u: Principal, b: { table: 'shared' | 'IT' | 'ADM'; priority: string; index: 0 | 1; hours: number }) {
-    const sla = this.cfg.setting<Record<string, Record<string, [number, number]>>>('sla');
+    const sla = copy(this.cfg.setting<Record<string, Record<string, [number, number]>>>('sla'));
     if (!sla[b.table]?.[b.priority] || ![0, 1].includes(b.index)) throw badRequest('Unknown SLA target.', 'VALIDATION');
     const n = Math.max(0.5, Number(b.hours) || 1);
     const before = sla[b.table][b.priority][b.index];
     sla[b.table][b.priority][b.index] = n;
     await this.setSetting('sla', sla);
+    await this.cfg.reload();
     if (before === n) return { toast: null };
     const what = `${SLA_LABEL[b.table]} · ${b.priority} ${b.index ? 'resolution' : 'first response'}`;
     const v = await this.snapshotVersion(u.id, { what, before, after: n });
@@ -271,7 +315,7 @@ export class AdminService {
   }
 
   async setRule(u: Principal, key: string, value: boolean) {
-    const rules = this.cfg.setting<Record<string, boolean>>('rules');
+    const rules = copy(this.cfg.setting<Record<string, boolean>>('rules'));
     if (!(key in rules)) throw badRequest('Unknown rule.', 'VALIDATION');
     rules[key] = value;
     await this.setSetting('rules', rules);
@@ -281,27 +325,30 @@ export class AdminService {
   }
 
   async setEscalation(u: Principal, b: { helpdesk: string; level: number; who?: string; pct?: number }) {
-    const esc = this.cfg.setting<Record<string, { who: string; role: string; pct: number }[]>>('escalation');
+    this.guardHd(u, b.helpdesk);
+    const esc = copy(this.cfg.setting<Record<string, { who: string; role: string; pct: number }[]>>('escalation'));
     const l = esc[b.helpdesk]?.[b.level];
     if (!l) throw badRequest('Unknown escalation level.', 'VALIDATION');
+    const beforePct = l.pct;
+    let whoChanged = false;
     if (b.who !== undefined) {
-      if (b.who !== 'lead' && !this.cfg.person(b.who)) throw badRequest('Pick a person.', 'VALIDATION');
+      if (b.who !== 'lead' && !this.cfg.person(b.who)) throw badRequest('Pick a person or queue.', 'VALIDATION');
+      if (b.helpdesk === 'SF' && b.who !== 'lead' && !this.sfTargetAllowed(b.who)) throw badRequest('Choose an eligible Salesforce admin or SF queue.', 'VALIDATION');
       l.who = b.who;
       l.role = b.who === 'lead' ? 'Category lead' : this.cfg.person(b.who)!.title ?? 'Escalation contact';
-      await this.log(u, `${this.cfg.helpdeskLabel(b.helpdesk)} escalation L${b.level + 1} now goes to ${b.who === 'lead' ? 'the category lead' : this.cfg.name(b.who)}`);
+      whoChanged = true;
     }
-    if (b.pct !== undefined) {
-      const before = l.pct;
-      l.pct = Math.min(100, Math.max(10, Math.round(Number(b.pct)) || l.pct));
-      if (before === l.pct) return { toast: null };
-      const what = `${this.cfg.helpdeskLabel(b.helpdesk)} escalation L${b.level + 1} trigger`;
-      await this.setSetting('escalation', esc);
-      const v = await this.snapshotVersion(u.id, { what, before: `${before}%`, after: `${l.pct}%` });
-      await this.log(u, `${what}: ${before}% → ${l.pct}% (SLA v${v.id})`);
-      await this.cfg.reload();
-      return { toast: 'Escalation ladder updated' };
-    }
+    if (b.pct !== undefined) l.pct = Math.min(100, Math.max(10, Math.round(Number(b.pct)) || l.pct));
+    const pctChanged = l.pct !== beforePct;
+    if (!whoChanged && !pctChanged) return { toast: null };
     await this.setSetting('escalation', esc);
+    if (whoChanged) await this.log(u, `${this.cfg.helpdeskLabel(b.helpdesk)} escalation L${b.level + 1} now goes to ${l.who === 'lead' ? 'the category lead' : this.cfg.name(l.who)}`);
+    if (pctChanged) {
+      await this.cfg.reload();
+      const what = `${this.cfg.helpdeskLabel(b.helpdesk)} escalation L${b.level + 1} trigger`;
+      const v = await this.snapshotVersion(u.id, { what, before: `${beforePct}%`, after: `${l.pct}%` });
+      await this.log(u, `${what}: ${beforePct}% → ${l.pct}% (SLA v${v.id})`);
+    }
     await this.cfg.reload();
     return { toast: 'Escalation ladder updated' };
   }
@@ -309,8 +356,8 @@ export class AdminService {
   async setSfEscalation(u: Principal, b: { who: string }) {
     if (!adminHds(u).includes('SF')) throw forbidden('The Salesforce helpdesk is available only to Sales, Presales and Solutions.', 'SALESFORCE_FORBIDDEN');
     const target = this.cfg.person(b.who);
-    if (!target) throw notFound('Person or queue');
-    const sf = this.cfg.setting<{ who: string; role: string }>('sfEscalation');
+    if (!target || !this.sfTargetAllowed(b.who)) throw badRequest('Choose an eligible Salesforce admin or SF queue.', 'VALIDATION');
+    const sf = copy(this.cfg.setting<{ who: string; role: string }>('sfEscalation'));
     const before = sf.who;
     sf.who = b.who;
     sf.role = target.title ?? 'Salesforce escalation rule';
@@ -320,7 +367,7 @@ export class AdminService {
     return { toast: before === b.who ? null : `Salesforce escalation now goes to ${this.cfg.name(b.who)}.` };
   }
 
-  async setRoles(u: Principal, userId: string, b: { roles: string[]; hrCategories: string[] }) {
+  async setRoles(u: Principal, userId: string, b: { roles: string[]; hrCategories: string[]; roleCategories?: Record<string, string[]> }) {
     const p = this.cfg.person(userId);
     if (!p || p.isQueue) throw notFound('Person');
     const assignable = this.cfg.setting<string[]>('assignableRoles');
@@ -329,13 +376,25 @@ export class AdminService {
     const sfOk = adminHds(u).includes('SF');
     const keep = p.roles.filter((r) => r === 'EMP' || r === 'MANAGER' || (r === 'SF_ADMIN' && !sfOk));
     const next = [...new Set([...keep, ...b.roles.filter((r) => r !== 'SF_ADMIN' || sfOk)])] as Role[];
+    const scoped = b.roleCategories ?? {};
+    const picks = new Set<string>([...(b.hrCategories ?? [])].filter(() => next.includes('HR_AGENT')));
+    const roleByHd: Record<string, string[]> = {
+      HR: ['HR_AGENT'], LND: ['LND_COORD', 'LND_HEAD'], IT: ['IT_AGENT', 'IT_HEAD'],
+      ADM: ['ADM_AGENT', 'ADM_HEAD'], SF: ['SF_ADMIN'],
+    };
+    for (const [hd, keys] of Object.entries(scoped)) {
+      if (!roleByHd[hd]?.some((r) => next.includes(r as Role))) continue;
+      const valid = new Set(this.cfg.categories(hd).map((c) => c.key));
+      for (const k of keys ?? []) if (valid.has(k)) picks.add(k);
+    }
     await this.ds.transaction(async (em) => {
       await em.getRepository(UserRoleEntity).delete({ userId });
       for (const r of next) await em.getRepository(UserRoleEntity).insert({ userId, role: r });
       await em.getRepository(UserHrCategoryEntity).delete({ userId });
-      if (next.includes('HR_AGENT')) for (const c of b.hrCategories || []) await em.getRepository(UserHrCategoryEntity).insert({ userId, categoryKey: c });
+      for (const categoryKey of picks) await em.getRepository(UserHrCategoryEntity).insert({ userId, categoryKey });
     });
-    const agents = this.cfg.setting<Record<string, string[]>>('agents');
+    const agents = copy(this.cfg.setting<Record<string, string[]>>('agents'));
+    for (const hd of HD_ORDER) agents[hd] = (agents[hd] ?? []).filter((id) => id !== userId);
     const addTo = (hd: string, cond: boolean) => cond && !agents[hd].includes(userId) && agents[hd].push(userId);
     addTo('HR', next.includes('HR_AGENT'));
     addTo('LND', next.includes('LND_COORD') || next.includes('LND_HEAD'));

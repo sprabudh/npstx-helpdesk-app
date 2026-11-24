@@ -127,11 +127,17 @@ export class TicketCreateService {
     if (c) {
       const today = istDate(clock.now());
       for (const x of this.cfg.formFields(hd, c.key)) {
+        if (x.showWhen && !evalCond(x.showWhen, f)) continue;
         if (x.custom) {
-          if (x.required === true) req(x.key);
+          if (evalCond(x.required, f)) req(x.key);
+          const cv = String(f[x.key] ?? '').trim();
+          if (cv) {
+            if (x.pattern && !new RegExp(x.pattern, x.patternFlags ?? '').test(cv)) err[x.key] = x.patternMessage ?? 'Check the format.';
+            else if (x.min !== null && Number(cv) < x.min) err[x.key] = `Enter ${x.min} or more.`;
+            else if (x.type === 'select' && x.options && !x.options.includes(cv)) err[x.key] = 'Pick one of the options.';
+          }
           continue;
         }
-        if (x.showWhen && !evalCond(x.showWhen, f)) continue;
         const v = String(f[x.key] ?? '').trim();
         if (!v) {
           if (evalCond(x.required, f)) err[x.key] = 'This field is required.';

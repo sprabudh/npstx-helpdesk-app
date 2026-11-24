@@ -62,3 +62,22 @@ export function useAction() {
     pending: m.isPending,
   };
 }
+
+/** Admin mutations update the cached overview immediately, then refetch and roll back on error. */
+export function useAdminAction() {
+  const qc = useQueryClient();
+  const act = useAction();
+  const key = () => ['admin', uid()] as const;
+  const patch = (mutate: (a: any) => any) => qc.setQueryData<any>(key(), (old: any) => old ? mutate(JSON.parse(JSON.stringify(old))) : old);
+  const runPatch = async (fn: () => Promise<any>, mutate: (a: any) => any, opts: { silent?: boolean } = {}) => {
+    const before = qc.getQueryData<any>(key());
+    patch(mutate);
+    try {
+      return await act.run(fn, opts);
+    } catch (e) {
+      qc.setQueryData(key(), before);
+      throw e;
+    }
+  };
+  return { run: act.run, pending: act.pending, patch, runPatch };
+}

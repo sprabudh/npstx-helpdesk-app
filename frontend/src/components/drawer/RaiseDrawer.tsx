@@ -58,6 +58,7 @@ function newForm(hd: Hd, cat: string | null | undefined, me: Me, cfg: Config, pr
   const f: Vals = { cat: cat || '', sub: '', title: '', desc: '', location: me.location || 'Mumbai HQ', mgrCc: true, pri: hd === 'HR' ? '' : 'Medium', reqType: cat === 'COURSE' ? 'course' : cat ? 'portal' : '' };
   if (hd === 'HR' && c) { f.pri = c.defaultPriority; f.mgrCc = !c.confidential; }
   if (SCHEMA_HDS.includes(hd)) { f.pri = ''; f.mgrCc = false; if (c) applyDefaults(hd, c, f, me, cfg); }
+  else if (c) applyCustomDefaults(cfg, hd, c, f);
   if (pre) Object.entries(pre).forEach(([k, v]) => v && (f[k] = v));
   return f;
 }
@@ -65,6 +66,12 @@ function applyDefaults(hd: string, c: Category, f: Vals, me: Me, cfg: Config) {
   f.pri = c.defaultPriority;
   cfg.formFields.filter((x) => x.helpdesk === hd && x.categoryKey === c.key && !x.custom).forEach((x) => {
     if (x.defaultValue && !f[x.key]) f[x.key] = x.defaultValue === 'mgr' ? me.managerId || '' : x.defaultValue;
+  });
+  applyCustomDefaults(cfg, hd, c, f);
+}
+function applyCustomDefaults(cfg: Config, hd: string, c: Category, f: Vals) {
+  cfg.formFields.filter((x) => x.helpdesk === hd && x.categoryKey === c.key && x.custom && x.active && x.defaultValue && !f[x.key] && isShown(x, f)).forEach((x) => {
+    f[x.key] = x.defaultValue!;
   });
 }
 
@@ -144,9 +151,11 @@ function DrawerInner({ init, me, cfg }: { init: DrawerState; me: Me; cfg: Config
       delete ai.filled[k];
       if (k === 'cat') {
         f.sub = '';
+        for (const x of cfg.formFields.filter((x) => x.helpdesk === o.hd && x.categoryKey !== val && x.custom)) delete f[x.key];
         const c = catOf(o.hd, val);
         if (o.hd === 'HR' && c) { f.pri = c.defaultPriority; f.mgrCc = !c.confidential; }
         if (o.hd && SCHEMA_HDS.includes(o.hd) && c) applyDefaults(o.hd, c, f, me, cfg);
+        else if (o.hd && c) applyCustomDefaults(cfg, o.hd, c, f);
       }
       if (k === 'urgency') f.pri = URGENCY_PRI[val] || f.pri;
       return { ...o, f, err, ai };
@@ -180,7 +189,7 @@ function DrawerInner({ init, me, cfg }: { init: DrawerState; me: Me; cfg: Config
       : x.type === 'person' ? dsel(x.key, (cfg.managers ?? []).map((m) => [m.id, m.name] as [string, string]), 'Select a manager')
       : x.type === 'textarea' ? area(x.key, 3, x.placeholder ?? '')
       : inp(x.key, x.placeholder ?? '', x.type || 'text', x.min != null ? { min: x.min } : {});
-  const extraFields = (hd: string, cat: string) => extraOf(hd, cat).map((x) => <F d={d} onUndo={undo} key={x.key} id={x.key} label={x.label} req={x.required === true}>{x.type === 'select' ? dsel(x.key, x.options ?? [], 'Select') : inp(x.key, x.placeholder ?? '', x.type || 'text')}</F>);
+  const extraFields = (hd: string, cat: string) => extraOf(hd, cat).filter((x) => isShown(x, d.f)).map((x) => <F d={d} onUndo={undo} key={x.key} id={x.key} label={x.label} req={isRequired(x, d.f)} hint={x.hint ?? undefined}>{ctl(x)}</F>);
 
   // ---------- common tail ----------
   const ccPeople = (people ?? []).filter((p) => !d.cc.includes(p.id) && p.id !== me.managerId);
@@ -548,7 +557,14 @@ function DrawerInner({ init, me, cfg }: { init: DrawerState; me: Me; cfg: Config
     const req = (k: string, m?: string) => { if (!String(f[k] ?? '').trim()) err[k] = m || 'This field is required.'; };
     req('cat', 'Choose a category.'); req('sub', 'Choose a sub-category.'); req('title', 'Add a short title.'); req('desc', 'Describe the issue.');
     if (hd === 'HR') req('location');
-    extraOf(hd, f.cat).filter((x) => x.required === true).forEach((x) => req(x.key));
+    for (const x of extraOf(hd, f.cat)) {
+      if (!isShown(x, f)) continue;
+      const v = String(f[x.key] ?? '').trim();
+      if (!v) { if (isRequired(x, f)) err[x.key] = 'This field is required.'; continue; }
+      if (x.pattern && !new RegExp(x.pattern, x.patternFlags ?? '').test(v)) err[x.key] = x.patternMessage ?? 'Check this value.';
+      else if (x.min != null && Number(v) < x.min) err[x.key] = `Enter ${x.min} or more.`;
+      else if (x.type === 'select' && x.options?.length && !x.options.includes(v)) err[x.key] = 'Pick one of the options.';
+    }
     if (hd === 'LND') {
       if (!f.reqType) err.reqType = 'Choose a request type.';
       if (f.reqType === 'course') { req('learningSource'); req('learningItem'); req('justification', 'Explain why you need this course.'); }

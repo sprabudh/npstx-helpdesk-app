@@ -61,9 +61,10 @@ export class CoverService {
     const away = await this.awayFn(at);
     if (!away(current)) return keep;
     if (hd === 'SF') {
-      const sr = this.cfg.ladder('SF', c.key)[0]?.who;
-      const who = sr ? this.cfg.queueMembers(sr).map((id) => this.cfg.person(id)).find((p) => p && !away(p.id) && this.eligible(p, hd, c, current)) : undefined;
-      if (who) return { asg: who.id, ladderBase: 0, coverFor: current, unattended: false, event: `Assignment rule: owner unavailable → ${this.cfg.name(sr)} (${who.name})` };
+      for (const step of this.cfg.ladder('SF', c.key)) {
+        const who = this.cfg.queueMembers(step.who).map((id) => this.cfg.person(id)).find((p) => p && !away(p.id) && this.eligible(p, hd, c, current));
+        if (who) return { asg: who.id, ladderBase: 0, coverFor: current, unattended: false, event: `Assignment rule: owner unavailable → ${this.cfg.name(step.who)} (${who.name})` };
+      }
     } else {
       const ladder = this.cfg.ladder(hd, c.key, slaVer);
       for (let i = ladder.findIndex((l) => l.who === current) + 1; i < ladder.length; i++) {

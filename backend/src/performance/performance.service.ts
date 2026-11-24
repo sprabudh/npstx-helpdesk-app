@@ -5,7 +5,7 @@ import { clock, istDate } from '../common/clock';
 import { forbidden } from '../common/errors';
 import { CommentEntity, EventEntity, TicketEntity } from '../database/entities';
 import { allowedHds, isWorker } from '../domain/policy';
-import { isOverdue, slaCounts } from '../domain/sla';
+import { isOverdue, isResponseBreached, slaCounts } from '../domain/sla';
 import { Principal } from '../domain/types';
 import { AnalyticsService } from '../analytics/analytics.service';
 import { AuditService } from '../audit/audit.service';
@@ -109,13 +109,16 @@ export class PerformanceService {
         else if (iv.outcome === 'withinSla' || iv.outcome === 'late') this.resolution(r as PerfRow & { res: number[] }, t);
       }
       // First response: credited to whoever held the ticket when it was answered (or when it fell due).
-      if (istDate(t.createdAt) >= fromDate && slaCounts(t) && t.responseMet !== null) {
+      // Null responseMet is derived from the first public reply so Salesforce is not silently skipped.
+      if (istDate(t.createdAt) >= fromDate && slaCounts(t)) {
         const at = firstReply.get(t.key) ?? t.responseDue.getTime();
+        const breached = isResponseBreached({ ...t, firstReply: firstReply.has(t.key) ? new Date(firstReply.get(t.key)!) : null }, now);
         const who = holderAt(t, at);
-        if (this.cfg.person(who)?.isQueue) add(queue, t.responseMet ? 'respWithin' : 'respBreached', t.key);
+        const col = breached ? 'respBreached' : 'respWithin';
+        if (this.cfg.person(who)?.isQueue) add(queue, col, t.key);
         else {
           const r = rowFor(who, t.helpdesk, t.categoryKey);
-          add(r, t.responseMet ? 'respWithin' : 'respBreached', t.key);
+          add(r, col, t.key);
           if (firstReply.has(t.key)) r.fr.push(firstReply.get(t.key)! - (t.slaStart ?? t.createdAt).getTime());
         }
       }
