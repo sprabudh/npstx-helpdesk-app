@@ -9,6 +9,11 @@ describe('format (same output as the artifact)', () => {
     expect(fdt(null)).toBe('—');
     expect(isoDate('2026-11-03T20:00:00Z')).toBe('2026-11-04');
   });
+  it('parses zone-less UTC values without a browser-local shift', () => {
+    expect(fdt('2026-11-04 04:00:00')).toBe('04 Nov, 09:30');
+    expect(fdt('2026-11-04T04:00')).toBe('04 Nov, 09:30');
+    expect(fdt('2026-11-04T04:00:00.000')).toBe('04 Nov, 09:30');
+  });
   it('durations and hours', () => {
     expect(dur(26 * 3600000)).toBe('1d 2h');
     expect(dur(-(2 * 3600000 + 28 * 60000))).toBe('2h 28m');

@@ -1,14 +1,26 @@
-/** Dates shown exactly as in the artifact: "04 Nov" and "04 Nov, 17:05", in the configured time zone (IST). */
-let TZ = 'Asia/Kolkata';
-export const setTimeZone = (tz: string) => (TZ = tz);
+/** Dates shown exactly as in the artifact: "04 Nov" and "04 Nov, 17:05", in IST (Asia/Kolkata). */
+const IST_TZ = 'Asia/Kolkata';
+let TZ = IST_TZ;
+export const setTimeZone = (tz: string) => (TZ = tz || IST_TZ);
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const ZONELESS = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})(?::(\d{2}))?(?:\.(\d+))?$/;
+function asDate(d: string | Date): Date {
+  if (d instanceof Date) return d;
+  const m = ZONELESS.exec(d);
+  if (m) return new Date(`${m[1]}T${m[2]}:${m[3] || '00'}${m[4] ? `.${m[4]}` : ''}Z`);
+  return new Date(d);
+}
 function parts(d: string | Date) {
   const f = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   const o: Record<string, string> = {};
-  for (const p of f.formatToParts(typeof d === 'string' ? new Date(d) : d)) o[p.type] = p.value;
+  for (const p of f.formatToParts(asDate(d))) o[p.type] = p.value;
   return o;
 }
-export const fd = (d?: string | Date | null) => (d ? `${parts(d).day} ${MON[Number(parts(d).month) - 1]}` : '—');
+export const fd = (d?: string | Date | null) => {
+  if (!d) return '—';
+  const p = parts(d);
+  return `${p.day} ${MON[Number(p.month) - 1]}`;
+};
 export const fdt = (d?: string | Date | null) => {
   if (!d) return '—';
   const p = parts(d);

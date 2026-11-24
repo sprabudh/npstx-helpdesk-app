@@ -6,7 +6,7 @@ import type { Detail } from '../../api/types';
 import { Icon } from '../../lib/icons';
 import { HDL } from '../../lib/format';
 import { useUi, type Modal } from '../../store/ui';
-import { Dialog } from '../common/bits';
+import { Dialog, PriFlag } from '../common/bits';
 
 type Errs = Record<string, string>;
 /** Field wrapper with the artifact's modal ids (m-<id>) and error text. */
@@ -162,12 +162,16 @@ function CategoryModal({ m, onClose }: { m: Extract<Modal, { type: 'cat' }>; onC
 function CategoryForm({ m, adm, cfg, onClose }: { m: Extract<Modal, { type: 'cat' }>; adm: any; cfg: any; onClose: () => void }) {
   const c = m.key ? adm.categories.find((x: any) => x.helpdesk === m.hd && x.key === m.key) : null;
   const leadHd = cfg.leadHelpdesks.includes(m.hd);
+  const priList: string[] = adm.priorities?.[m.hd] ?? cfg.priorities[m.hd] ?? [];
   const owners = [...adm.people, ...((adm.agents[m.hd] ?? []) as any[]).filter((x) => x.isQueue && m.hd !== 'HR')];
   const [v, setV] = useState({
     n: c?.name ?? '', subs: (c?.subs ?? []).join('\n'), pri: c?.defaultPriority ?? 'Medium', owner: (c ? c.leadId || c.ownerId : adm.agents[m.hd]?.[0]?.id) ?? '',
     ctype: c?.requestType === 'course' ? 'course' : 'portal', conf: !!c?.confidential, reopen: c ? c.reopenAllowed !== false : true,
     mgr: !!c?.mgrApproval, mgrSubs: new Set<string>(c?.mgrApproval ? c.mgrApprovalSubs ?? c.subs : []),
   });
+  const [ovr, setOvr] = useState<Record<string, { r: string; x: string }>>(() => Object.fromEntries(priList.map((p) => [p, {
+    r: String(c?.slaOverride?.[p]?.[0] ?? ''), x: String(c?.slaOverride?.[p]?.[1] ?? ''),
+  }])));
   const [err, setErr] = useState<Errs>({});
   const sub = useSubmit(setErr, onClose);
   const set = (k: keyof typeof v) => (x: any) => { setV((o) => ({ ...o, [k]: x })); setErr((e) => ({ ...e, [k]: '' })); };
@@ -178,12 +182,22 @@ function CategoryForm({ m, adm, cfg, onClose }: { m: Extract<Modal, { type: 'cat
     const e: Errs = {};
     if (!v.n.trim()) e.n = 'Name the category.';
     if (!subs.length) e.subs = 'Add at least one sub-category.';
+    if (m.hd === 'SF' && !v.owner) e.owner = 'Choose the assignment owner or queue.';
+    const slaOverride: Record<string, [number, number]> = {};
+    if (m.hd === 'SF') for (const p of priList) {
+      const r = ovr[p]?.r ?? '';
+      const x = ovr[p]?.x ?? '';
+      if (!r && !x) continue;
+      const rn = Number(r), xn = Number(x);
+      if (!Number.isFinite(rn) || !Number.isFinite(xn) || rn <= 0 || xn <= 0) e.slaOverride = 'Enter both response and resolution targets in hours.';
+      else slaOverride[p] = [rn, xn];
+    }
     const picked = subs.filter((x) => v.mgrSubs.has(x));
     if (v.mgr && !picked.length) e.mgrSubs = 'Pick at least one sub-category, or turn manager approval off.';
     if (Object.keys(e).length) return setErr(e);
     const body = {
       helpdesk: m.hd, name: v.n.trim(), subs, defaultPriority: v.pri, ownerId: v.owner, confidential: leadHd ? v.conf : undefined, reopenAllowed: leadHd ? v.reopen : undefined, requestType: m.hd === 'LND' ? v.ctype : undefined,
-      mgrApproval: v.mgr, mgrApprovalSubs: v.mgr ? picked : [],
+      mgrApproval: v.mgr, mgrApprovalSubs: v.mgr ? picked : [], slaOverride: m.hd === 'SF' ? slaOverride : undefined,
     };
     sub.go(() => (c ? api(`/admin/categories/${c.id}`, { method: 'PUT', body }) : api('/admin/categories', { body })));
   };
@@ -192,8 +206,8 @@ function CategoryForm({ m, adm, cfg, onClose }: { m: Extract<Modal, { type: 'cat
       <MF id="n" label="Category name" req err={err.n}><input className="in" id="m-n" value={v.n} placeholder="e.g. Relocation" onChange={(e) => set('n')(e.target.value)} /></MF>
       <MF id="subs" label="Sub-categories (one per line)" req err={err.subs}><TA id="subs" rows={4} value={v.subs} onChange={set('subs')} /></MF>
       <div className="row2">
-        <MF id="pri" label="Default priority"><select className="in" id="m-pri" value={v.pri} onChange={(e) => set('pri')(e.target.value)}>{(cfg.priorities[m.hd] ?? []).map((p: string) => <option key={p}>{p}</option>)}</select></MF>
-        <MF id="owner" label={leadHd ? 'Category lead' : 'Owner / queue'}><select className="in" id="m-owner" value={v.owner} onChange={(e) => set('owner')(e.target.value)}>{owners.map((x: any) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></MF>
+        <MF id="pri" label="Default priority"><select className="in" id="m-pri" value={v.pri} onChange={(e) => set('pri')(e.target.value)}>{priList.map((p: string) => <option key={p}>{p}</option>)}</select></MF>
+        <MF id="owner" label={leadHd ? 'Category lead' : m.hd === 'SF' ? 'Assignment owner / queue' : 'Owner / queue'} req={m.hd === 'SF'} err={err.owner}><select className="in" id="m-owner" value={v.owner} onChange={(e) => set('owner')(e.target.value)}>{owners.map((x: any) => <option key={x.id} value={x.id}>{x.name}</option>)}</select></MF>
       </div>
       {m.hd === 'LND' && (
         <MF id="ctype" label="Request type"><select className="in" id="m-ctype" value={v.ctype} onChange={(e) => set('ctype')(e.target.value)}><option value="portal">Portal problem</option><option value="course">Course request (needs approval)</option></select></MF>
@@ -210,6 +224,16 @@ function CategoryForm({ m, adm, cfg, onClose }: { m: Extract<Modal, { type: 'cat
           <div className="cbgrid">{subList.map((x) => <label key={x} className="check"><input type="checkbox" checked={v.mgrSubs.has(x)} onChange={(e) => { toggleSub(x, e.target.checked); setErr((o) => ({ ...o, mgrSubs: '' })); }} />{x}</label>)}</div>
         </MF>
       )}
+      {m.hd === 'SF' && <MF id="slaOverride" label="Response / resolution targets by priority (hours, optional)" err={err.slaOverride}>
+        <div className="tbl-wrap" id="m-slaOverride"><table className="t">
+          <thead><tr><th>Priority</th><th>First response</th><th>Resolution</th></tr></thead>
+          <tbody>{priList.map((p) => <tr key={p} style={{ cursor: 'default' }}>
+            <td><PriFlag p={p} /></td>
+            <td><input className="in" type="number" min={0.5} step={0.5} style={{ width: 90 }} aria-label={`${p} first response hours`} value={ovr[p]?.r ?? ''} onChange={(e) => setOvr((o) => ({ ...o, [p]: { ...o[p], r: e.target.value } }))} /></td>
+            <td><input className="in" type="number" min={1} style={{ width: 90 }} aria-label={`${p} resolution hours`} value={ovr[p]?.x ?? ''} onChange={(e) => setOvr((o) => ({ ...o, [p]: { ...o[p], x: e.target.value } }))} /></td>
+          </tr>)}</tbody>
+        </table></div>
+      </MF>}
       {!!c?.extraSteps?.length && <p className="muted" style={{ margin: 0, fontSize: 12.5 }}>Additional approval: {c.extraSteps.join(' → ')} (set by policy, not by this switch)</p>}
       <div className="note info"><Icon n="info" s={15} /><p>Changes apply to new tickets straight away and show in the Raise ticket form. When manager approval is on, the SLA starts once the last approver approves.</p></div>
     </Dialog>
@@ -281,8 +305,8 @@ function RoleModal({ m, onClose }: { m: Extract<Modal, { type: 'role' }>; onClos
   if (!adm || !cfg) return null;
   return <RoleForm m={m} adm={adm} cfg={cfg} onClose={onClose} />;
 }
-function RoleForm({ m, adm, cfg, onClose }: { m: Extract<Modal, { type: 'role' }>; adm: any; cfg: any; onClose: () => void }) {
-  const hrCats = cfg.categories.filter((c: any) => c.helpdesk === 'HR');
+export function RoleForm({ m, adm, cfg, onClose }: { m: Extract<Modal, { type: 'role' }>; adm: any; cfg: any; onClose: () => void }) {
+  const hrCats = cfg.categories.filter((c: any) => c.helpdesk === 'HR' && c.active !== false);
   const prefill = (id: string) => {
     const p = adm.people.find((x: any) => x.id === id);
     return { roles: new Set<string>(p?.roles ?? []), hc: new Set<string>(p?.hrCategories ?? []) };

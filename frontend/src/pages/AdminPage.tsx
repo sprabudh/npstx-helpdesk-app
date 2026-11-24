@@ -127,7 +127,7 @@ function Fields({ adm, cfg }: { adm: Adm; cfg: any }) {
           </div>
           <div>
             <b style={{ fontSize: 13 }}>Core fields</b>
-            <div className="subs" style={{ maxWidth: 'none', marginTop: 6 }}>{[...(cfg.coreFields[a.hd] ?? []), ...schema.map((x: any) => `${x.label} (category field)`)].map((n: string) => <span key={n} className="chip"><Icon n="lock" s={11} />{n}</span>)}</div>
+            <div className="subs" style={{ maxWidth: 'none', marginTop: 6 }}>{[...(adm.coreFields?.[a.hd] ?? cfg.coreFields[a.hd] ?? []), ...schema.map((x: any) => `${x.label} (category field)`)].map((n: string) => <span key={n} className="chip"><Icon n="lock" s={11} />{n}</span>)}</div>
           </div>
         </div>
         <aside className="panel preview" aria-label="Form preview">
@@ -176,20 +176,40 @@ function Sla({ adm, cfg }: { adm: Adm; cfg: any }) {
   return (
     <>
       <div className="note info" style={{ margin: '0 0 16px' }}><Icon n="info" s={15} /><p>Changes apply to tickets raised after you save. Open tickets keep the SLA they were raised under. Each save creates a new version below; older versions stay readable.</p></div>
-      {tbl('SLA targets · HR and L&D (shared)', adm.sla.shared, 'shared', (p) => <>{['HR', 'LND'].filter((h) => (cfg.priorities[h] ?? []).includes(p)).map((h) => <span key={h}><HdBadge hd={h} /> </span>)}</>)}
+      {tbl('SLA targets · HR and L&D (shared)', adm.sla.shared, 'shared', (p) => <>{['HR', 'LND'].filter((h) => ((adm.priorities?.[h] ?? cfg.priorities[h]) ?? []).includes(p)).map((h) => <span key={h}><HdBadge hd={h} /> </span>)}</>)}
       {tbl('SLA targets · IT and Support', adm.sla.IT, 'IT', () => <HdBadge hd="IT" />)}
       <div className="note info" style={{ margin: '-6px 0 16px' }}><Icon n="info" s={15} /><p>Category overrides: {ov('IT')}. Security and incident tickets always start at Critical.</p></div>
       {tbl('SLA targets · Admin Desk', adm.sla.ADM, 'ADM', () => <HdBadge hd="ADM" />)}
-      <div className="note info" style={{ margin: '-6px 0 16px' }}><Icon n="info" s={15} /><p>Category overrides: {ov('ADM')}.</p></div>
+      <div className="note info" style={{ margin: '-6px 0 16px' }}><Icon n="info" s={15} /><p>Category overrides: {ov('ADM')}.{hds.includes('SF') ? <> Salesforce category overrides: {ov('SF')}.</> : null}</p></div>
       <section className="panel adm-sec">
-        <div className="adm-head"><h3>SLA rules</h3><p>Apply to {hds.includes('SF') ? 'every helpdesk except Salesforce' : 'every helpdesk'}.</p></div>
+        <div className="adm-head"><h3>SLA rules</h3><p>Apply to every helpdesk. Salesforce dates are still driven by its entitlement milestones.</p></div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18, padding: '12px 16px' }}>
           {Object.keys(adm.rules).map((k) => (
             <label key={k} className="sw"><input type="checkbox" id={`r-${k}`} checked={!!adm.rules[k]} onChange={(e) => act.run(() => api('/admin/rules', { method: 'PUT', body: { key: k, value: e.target.checked } }))} />{adm.ruleLabels[k]}{k === 'businessHours' && <> (Mon–Fri, 09:30–18:30 IST) <mark className="tc">TC</mark></>}</label>
           ))}
         </div>
-        {hds.includes('SF') && <div className="note sf" style={{ margin: '0 16px 16px' }}><Icon n="cloud" s={15} /><p>Salesforce cases use entitlement milestones and escalation rules set in Salesforce. They are mirrored here read-only.</p></div>}
+        {hds.includes('SF') && <div className="note sf" style={{ margin: '0 16px 16px' }}><Icon n="cloud" s={15} /><p>Salesforce case dates use entitlement milestones mirrored from Salesforce. Categories, priority response/resolution targets and the escalation rule are editable here.</p></div>}
       </section>
+      {hds.includes('SF') && <section className="panel adm-sec">
+        <div className="adm-head"><HdBadge hd="SF" /><h3>Salesforce escalation rule</h3><p>When a case reaches its resolution milestone, notify this queue or person. Salesforce still owns the underlying entitlement.</p></div>
+        <div className="tbl-wrap">
+          <table className="t">
+            <thead><tr><th>Level</th><th>Escalate to</th><th>Role shown on ticket</th><th>Trigger at</th></tr></thead>
+            <tbody>
+              <tr key="sf" style={{ cursor: 'default' }}>
+                <td className="mono">L1</td>
+                <td>
+                  <select className="in" id="esc-sf-0" aria-label="Salesforce escalation target" value={adm.sfEscalation?.who ?? ''} onChange={(e) => act.run(() => api('/admin/sf-escalation', { method: 'PUT', body: { who: e.target.value } }))}>
+                    {[...adm.queues, ...people].map((x: any) => <option key={x.id} value={x.id}>{x.name}</option>)}
+                  </select>
+                </td>
+                <td>{adm.sfEscalation?.role ?? 'Salesforce escalation rule'}</td>
+                <td>Resolution milestone at risk</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>}
       {['HR', 'LND', 'IT', 'ADM'].map((h) => (
         <section key={h} className="panel adm-sec">
           <div className="adm-head"><HdBadge hd={h} /><h3>{HDL[h]} escalation ladder</h3><p>Tickets escalate automatically when this share of the resolution time is used. Agents can also escalate manually from the ticket.</p></div>

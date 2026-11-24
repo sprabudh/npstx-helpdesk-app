@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseIntPipe, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Length, Max, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsObject, IsOptional, IsString, Length, Max, Min } from 'class-validator';
 import { CurrentUser, RequireAnyRole } from '../common/decorators';
 import type { Principal } from '../domain/types';
 import { SlaScheduler } from '../sla/sla.scheduler';
@@ -19,6 +19,7 @@ export class CategoryDto {
   @ApiPropertyOptional({ enum: ['portal', 'course'] }) @IsOptional() @IsIn(['portal', 'course']) requestType?: string;
   @ApiPropertyOptional({ description: 'Manager approval needed' }) @IsOptional() @IsBoolean() mgrApproval?: boolean;
   @ApiPropertyOptional({ type: [String], description: 'Sub-categories the manager step applies to; empty or missing means all' }) @IsOptional() @IsArray() @IsString({ each: true }) mgrApprovalSubs?: string[] | null;
+  @ApiPropertyOptional({ description: 'Salesforce response / resolution hour overrides by priority' }) @IsOptional() @IsObject() slaOverride?: Record<string, [number, number]>;
 }
 export class MgrApprovalDto {
   @ApiProperty() @IsBoolean() on: boolean;
@@ -50,6 +51,7 @@ export class EscalationDto {
   @ApiPropertyOptional() @IsOptional() @IsString() who?: string;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(10) @Max(100) pct?: number;
 }
+export class SfEscalationDto { @ApiProperty() @IsString() who: string }
 export class RolesDto { @ApiProperty({ type: [String] }) @IsArray() @IsString({ each: true }) roles: string[]; @ApiProperty({ type: [String] }) @IsArray() @IsString({ each: true }) hrCategories: string[] }
 
 @ApiTags('admin')
@@ -97,6 +99,9 @@ export class AdminController {
   }
   @Put('escalation') setEscalation(@CurrentUser() u: Principal, @Body() b: EscalationDto) {
     return this.svc.setEscalation(u, b);
+  }
+  @Put('sf-escalation') setSfEscalation(@CurrentUser() u: Principal, @Body() b: SfEscalationDto) {
+    return this.svc.setSfEscalation(u, b);
   }
   @Put('people/:id/roles') setRoles(@CurrentUser() u: Principal, @Param('id') id: string, @Body() b: RolesDto) {
     return this.svc.setRoles(u, id, b);

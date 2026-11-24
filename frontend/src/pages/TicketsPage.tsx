@@ -26,7 +26,7 @@ export default function TicketsPage({ mode }: { mode: 'mine' | 'assigned' }) {
   const { set, demo, hl } = useUi();
   const nav = useNavigate();
   const views = asg ? ASSIGNED_VIEWS : me?.views ?? [['mine', 'Raised by me']];
-  const hdTabs = ['ALL', ...(me?.helpdesks ?? [])];
+  const hdTabs = ['ALL', ...(asg ? (me?.workHelpdesks ?? []) : (me?.helpdesks ?? []))];
   const upd = (p: Partial<TicketFilters>) => set((s) => ({ [key]: { ...s[key], page: 1, ...p } }) as never);
   useEffect(() => {
     if (!me) return;

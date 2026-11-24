@@ -14,10 +14,10 @@ export interface ListResponse {
 }
 export interface Me {
   id: string; name: string; dept: string | null; title: string | null; location: string | null; managerId: string | null; managerName: string | null;
-  roles: string[]; hrCategories: string[]; helpdesks: Hd[];
+  roles: string[]; hrCategories: string[]; helpdesks: Hd[]; workHelpdesks: Hd[];
   flags: { worker: boolean; headish: boolean; approver: boolean; helpdeskAdmin: boolean; auditor: boolean };
   views: [string, string][]; permissions: { can: string[]; no: string[] };
-  counts: { followCount: number; waiting: number; assignedOpen: number; unassignedInQueues: number; myOpen: number; myClosed: number; notifications: number };
+  counts: { followCount: number; followingCount: number; ccCount: number; waiting: number; assignedOpen: number; unassignedInQueues: number; myOpen: number; myClosed: number; notifications: number };
   now: string; demo: { enabled: boolean; clockStart: string | null }; outOfOffice: boolean;
 }
 export type Condition = { field: string; op: 'eq' | 'neq' | 'in' | 'notIn' | 'set'; value: any } | { all: Condition[] } | { any: Condition[] };

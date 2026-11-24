@@ -130,7 +130,7 @@ export function ModuleHeader({ from }: { from: string }) {
   const hl = me.helpdesks.map((h) => HDL[h]);
   const tabs: [string, string, number?, string?][] = [
     ['dashboard', 'Dashboard', 0, 'chart'], ['tickets', 'My tickets'], ...(me.flags.worker ? [['assigned', 'Assigned to me', me.counts.assignedOpen] as [string, string, number]] : []),
-    ['history', 'History'], ['faqs', 'FAQs'],
+    ['following', "Following / CC'd", me.counts.followCount], ['history', 'History'], ['faqs', 'FAQs'],
     ...(me.flags.worker ? [['performance', 'My performance', 0, 'target'] as [string, string, number, string]] : []), ...(me.flags.helpdeskAdmin ? [['admin', 'Admin console', 0, 'gear'] as [string, string, number, string]] : []),
   ];
   return (

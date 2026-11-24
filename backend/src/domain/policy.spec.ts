@@ -1,6 +1,6 @@
 import { principal, ticket } from '../test-support/fixtures';
 import {
-  allowedHds, approvalStage, canAddPeople, canApproveStep, canEditFaq, canView, canWork, hdAllowed, isReadOnly, reopenInfo, viewsFor, whyVisible,
+  adminHds, allowedHds, approvalStage, canAddPeople, canApproveStep, canEditFaq, canView, canWork, hdAllowed, isReadOnly, reopenInfo, viewsFor, whyVisible, workHds,
 } from './policy';
 import type { TicketCtx } from './types';
 
@@ -103,6 +103,22 @@ describe('Salesforce scope comes from the department, never from a role alone', 
   });
 });
 
+describe('work and admin helpdesk scope', () => {
+  it('lists the helpdesks a person actually works, including assigned-ticket evidence', () => {
+    expect(workHds(principal('u3'))).toEqual(['HR']);
+    expect(workHds(principal('u5'))).toEqual(['SF']);
+    expect(workHds(principal('u1', { dept: 'Sales' }), ['SF'])).toEqual(['SF']);
+    expect(workHds(principal('u1'), ['SF'])).toEqual([]);
+    expect(workHds(principal('u20'))).not.toContain('SF');
+  });
+  it('lets a Helpdesk admin govern SF without ticket access', () => {
+    expect(adminHds(principal('u20'))).toEqual(['HR', 'LND', 'IT', 'ADM', 'SF']);
+    expect(canView(principal('u20'), SF)).toBe(false);
+    expect(canWork(principal('u20'), SF)).toBe(false);
+    expect(adminHds(principal('u1'))).toEqual(allowedHds(principal('u1')));
+  });
+});
+
 describe('approvals', () => {
   const course = ticket({
     key: 'LND-000902', helpdesk: 'LND', categoryKey: 'COURSE', status: 'Pending approval', requesterId: 'u1', assigneeId: 'u8', requesterManagerId: 'u6',
@@ -159,9 +175,9 @@ describe('people, reopen, views and FAQ editing', () => {
     expect(reopenInfo({ ...SF, status: 'Closed', closedAt: new Date(now), closed: true, categoryName: 'Data' }, now).short).toBe('Raise a new case');
   });
   it('scope views per role', () => {
-    expect(viewsFor(principal('u1')).map((v) => v[0])).toEqual(['mine']);
-    expect(viewsFor(principal('u20')).map((v) => v[0])).toEqual(expect.arrayContaining(['mine', 'assigned', 'all']));
-    expect(viewsFor(principal('u6')).map((v) => v[0])).toEqual(['mine', 'approvals']);
+    expect(viewsFor(principal('u1')).map((v) => v[0])).toEqual(['mine', 'following']);
+    expect(viewsFor(principal('u20')).map((v) => v[0])).toEqual(expect.arrayContaining(['mine', 'following', 'assigned', 'all']));
+    expect(viewsFor(principal('u6')).map((v) => v[0])).toEqual(['mine', 'following', 'approvals']);
     expect(viewsFor(principal('u26')).map((v) => v[1])).toContain('All tickets (read-only)');
   });
   it('FAQ editors', () => {

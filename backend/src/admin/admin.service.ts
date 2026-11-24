@@ -4,7 +4,7 @@ import { DataSource } from 'typeorm';
 import { clock, fmtH } from '../common/clock';
 import { badRequest, forbidden, notFound } from '../common/errors';
 import { CategoryEntity, FormFieldEntity, SettingEntity, SlaChange, SlaVersionEntity, TicketEntity, UserHrCategoryEntity, UserRoleEntity } from '../database/entities';
-import { allowedHds, hdAllowed } from '../domain/policy';
+import { adminHds } from '../domain/policy';
 import { Principal, Role } from '../domain/types';
 import { AuditService } from '../audit/audit.service';
 import { HelpdeskConfigService } from '../helpdesk-config/config.service';
@@ -23,7 +23,7 @@ export class AdminService {
     return this.audit.record(u.id, 'config.change', text, { target });
   }
   private guardHd(u: Principal, hd: string) {
-    if (allowedHds(u).includes(hd as never)) return;
+    if (adminHds(u).includes(hd as never)) return;
     void this.audit.record(u.id, 'salesforce.denied', `Denied ${hd} configuration change`, { outcome: 'denied', target: hd });
     throw forbidden('The Salesforce helpdesk is available only to Sales, Presales and Solutions.', 'SALESFORCE_FORBIDDEN');
   }
@@ -81,8 +81,8 @@ export class AdminService {
 
   async overview(u: Principal) {
     const counts = await this.openCounts();
-    const hds = allowedHds(u);
-    const sfOk = hdAllowed(u, 'SF');
+    const hds = adminHds(u);
+    const sfOk = hds.includes('SF');
     const people = this.cfg.peopleList();
     const openVer = await this.openPerVersion();
     return {
@@ -93,6 +93,7 @@ export class AdminService {
       })),
       fields: this.cfg.allFields().filter((f) => hds.includes(f.helpdesk as never)),
       sla: this.cfg.setting('sla'), escalation: this.cfg.setting('escalation'), rules: this.cfg.setting('rules'), ruleLabels: this.cfg.setting('ruleLabels'),
+      priorities: this.cfg.setting('priorities'), coreFields: this.cfg.setting('coreFields'), sfEscalation: this.cfg.setting('sfEscalation'),
       slaVersions: this.cfg.slaVersions().map((v) => ({
         id: v.id, effectiveFrom: v.effectiveFrom, setBy: v.setBy, setByName: this.cfg.name(v.setBy), note: v.note, changes: v.changes ?? [],
         tables: v.tables, ladderPct: v.ladderPct, openOnVersion: openVer.get(v.id) || 0,
@@ -117,13 +118,18 @@ export class AdminService {
 
   async saveCategory(u: Principal, id: number | null, b: {
     helpdesk: string; name: string; subs: string[]; defaultPriority?: string; ownerId?: string; confidential?: boolean; reopenAllowed?: boolean; requestType?: string;
-    mgrApproval?: boolean; mgrApprovalSubs?: string[] | null;
+    mgrApproval?: boolean; mgrApprovalSubs?: string[] | null; slaOverride?: Record<string, [number, number]>;
   }) {
     this.guardHd(u, b.helpdesk);
     const subs = (b.subs || []).map((s) => s.trim()).filter(Boolean);
     const err: Record<string, string> = {};
     if (!b.name?.trim()) err.n = 'Name the category.';
     if (!subs.length) err.subs = 'Add at least one sub-category.';
+    if (b.helpdesk === 'SF' && !b.ownerId) err.owner = 'Choose the Salesforce assignment owner or queue.';
+    if (b.helpdesk === 'SF' && b.slaOverride) {
+      const bad = Object.values(b.slaOverride).some((v) => !Array.isArray(v) || v.length !== 2 || v.some((n) => !Number.isFinite(Number(n)) || Number(n) <= 0));
+      if (bad) err.slaOverride = 'Enter both targets as positive hours.';
+    }
     if (Object.keys(err).length) throw badRequest('Fix the highlighted fields.', 'VALIDATION', { fieldErrors: err });
     const repo = this.ds.getRepository(CategoryEntity);
     let c = id ? await repo.findOne({ where: { id } }) : null;
@@ -141,6 +147,7 @@ export class AdminService {
     if (LEAD_HDS.includes(b.helpdesk)) Object.assign(c, { leadId: b.ownerId || null, confidential: !!b.confidential, reopenAllowed: !!b.reopenAllowed });
     else c.ownerId = b.ownerId || null;
     if (b.helpdesk === 'LND') c.requestType = b.requestType || 'portal';
+    if (b.helpdesk === 'SF' && b.slaOverride !== undefined) c.slaOverride = Object.keys(b.slaOverride).length ? b.slaOverride : null;
     const mgrBefore = isNew ? null : mgrText(c);
     if (b.mgrApproval !== undefined) {
       c.mgrApproval = b.mgrApproval;
@@ -299,14 +306,27 @@ export class AdminService {
     return { toast: 'Escalation ladder updated' };
   }
 
+  async setSfEscalation(u: Principal, b: { who: string }) {
+    if (!adminHds(u).includes('SF')) throw forbidden('The Salesforce helpdesk is available only to Sales, Presales and Solutions.', 'SALESFORCE_FORBIDDEN');
+    const target = this.cfg.person(b.who);
+    if (!target) throw notFound('Person or queue');
+    const sf = this.cfg.setting<{ who: string; role: string }>('sfEscalation');
+    const before = sf.who;
+    sf.who = b.who;
+    sf.role = target.title ?? 'Salesforce escalation rule';
+    await this.setSetting('sfEscalation', sf);
+    await this.log(u, `Salesforce escalation rule now goes to ${this.cfg.name(b.who)}`, 'sfEscalation');
+    await this.cfg.reload();
+    return { toast: before === b.who ? null : `Salesforce escalation now goes to ${this.cfg.name(b.who)}.` };
+  }
+
   async setRoles(u: Principal, userId: string, b: { roles: string[]; hrCategories: string[] }) {
     const p = this.cfg.person(userId);
     if (!p || p.isQueue) throw notFound('Person');
     const assignable = this.cfg.setting<string[]>('assignableRoles');
     if (userId === u.id && p.roles.includes('HD_ADMIN') && !b.roles.includes('HD_ADMIN')) throw badRequest('You cannot remove your own Helpdesk admin role', 'SELF_DEMOTION');
     if (b.roles.some((r) => !assignable.includes(r))) throw badRequest('Unknown role.', 'VALIDATION');
-    const sfOk = hdAllowed(u, 'SF');
-    // keep roles this admin cannot see or set (managers come from reporting lines; SF_ADMIN only for Salesforce-eligible admins)
+    const sfOk = adminHds(u).includes('SF');
     const keep = p.roles.filter((r) => r === 'EMP' || r === 'MANAGER' || (r === 'SF_ADMIN' && !sfOk));
     const next = [...new Set([...keep, ...b.roles.filter((r) => r !== 'SF_ADMIN' || sfOk)])] as Role[];
     await this.ds.transaction(async (em) => {

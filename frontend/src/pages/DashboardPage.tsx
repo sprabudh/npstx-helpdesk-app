@@ -173,11 +173,8 @@ function BigButtons({ me }: { me: Me }) {
     <div className="bigbtns">
       <button className="bigbtn primary" onClick={() => set({ drawer: {} })}><span className="bi"><Icon n="plus" s={22} /></span><span className="bt"><b>Raise ticket</b><small>{me.helpdesks.map((h) => HDL[h]).join(' · ')}</small></span></button>
       <button className="bigbtn" onClick={() => nav('/tickets')}><span className="bi"><Icon n="file" s={22} /></span><span className="bt"><b>My tickets</b><small>Tickets you raised</small></span></button>
-      {me.flags.worker ? (
-        <button className="bigbtn" onClick={() => nav('/assigned')}><span className="bi"><Icon n="users" s={22} /></span><span className="bt"><b>Assigned to me</b><small>Your tickets and the queues you work</small></span></button>
-      ) : (
-        <button className="bigbtn" onClick={() => nav('/following')}><span className="bi"><Icon n="eye" s={22} /></span><span className="bt"><b>Following / CC'd</b><small>Tickets you watch</small></span></button>
-      )}
+      {me.flags.worker && <button className="bigbtn" onClick={() => nav('/assigned')}><span className="bi"><Icon n="users" s={22} /></span><span className="bt"><b>Assigned to me</b><small>Your tickets and the queues you work</small></span></button>}
+      <button className="bigbtn" onClick={() => nav('/following')}><span className="bi"><Icon n="eye" s={22} /></span><span className="bt"><b>Following / CC'd</b><small>Tickets you watch</small></span></button>
     </div>
   );
 }

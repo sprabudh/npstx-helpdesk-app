@@ -8,7 +8,8 @@ import { dur, fd, fdt, HDL, isoDate, p2 } from '../lib/format';
 import { Icon } from '../lib/icons';
 import { useUi } from '../store/ui';
 
-const RL: Record<string, string> = { FOLLOWER: 'Following', CC: "CC'd", TAGGED: 'Tagged', CASE_TEAM: 'Case team' };
+const RL: Record<string, string> = { FOLLOWER: 'Following', CC: "CC'd" };
+const relLabel = (rel?: string) => (rel === 'FOLLOWER' ? RL.FOLLOWER : rel ? RL.CC : '—');
 const rowNav = (nav: (p: string) => void, t: ListItem) => ({ tabIndex: 0, onClick: () => nav(`/ticket/${t.key}`), onKeyDown: (e: React.KeyboardEvent) => e.key === 'Enter' && nav(`/ticket/${t.key}`) });
 
 export function FollowingPage() {
@@ -19,7 +20,7 @@ export function FollowingPage() {
   const { data } = useFollowing(f);
   if (!me || !data) return <Skeleton />;
   const upd = (p: Partial<typeof f>) => set((s) => ({ fol: { ...s.fol, ...p } }));
-  const tabs = [['ALL', 'All'], ...Object.entries(RL)].filter(([k]) => k === 'ALL' || data.counts[k] || k !== 'CASE_TEAM');
+  const tabs = [['ALL', 'All'], ...Object.entries(RL)];
   return (
     <>
       <div className="toolbar" style={{ marginTop: 0 }}>
@@ -31,7 +32,7 @@ export function FollowingPage() {
         </label>
         <div className="seg">{(['open', 'closed'] as const).map((k) => <button key={k} className={f.grp === k ? 'on' : ''} onClick={() => upd({ grp: k })}>{k === 'open' ? 'Open' : 'Closed'}</button>)}</div>
       </div>
-      <p className="muted" style={{ margin: '0 0 10px', fontSize: 13 }}>Tickets you did not raise, where you were added as a follower, CC'd, tagged with @name{me.helpdesks.includes('SF') ? ', or placed on a Salesforce case team' : ''}. You see updates but cannot change status.</p>
+      <p className="muted" style={{ margin: '0 0 10px', fontSize: 13 }}>Tickets you did not raise where you follow updates or were added as a CC, including @mentions. You see updates but cannot change status.</p>
       <div className="panel">
         {data.rows.length ? (
           <div className="tbl-wrap">
@@ -41,7 +42,7 @@ export function FollowingPage() {
                 {data.rows.map((t) => (
                   <tr key={t.key} {...rowNav(nav, t)}>
                     <td className="mono nowrap">{t.key}</td><td><HdBadge hd={t.helpdesk} /></td><td className="title">{t.title}</td>
-                    <td><span className="chip">{RL[t.relation?.relation ?? 'FOLLOWER']}</span><div className="sub">by {t.relation?.addedBy}</div></td>
+                    <td><span className="chip">{relLabel(t.relation?.relation)}</span><div className="sub">by {t.relation?.addedBy}</div></td>
                     <td className="nowrap"><Who p={t.requester} /></td><td><Pill t={t} /></td><td className="nowrap"><Who p={t.assignee} /></td>
                     <td className="nowrap">{fdt(t.updatedAt)}</td><td><SlaCell t={t} /></td>
                     <td onClick={(e) => e.stopPropagation()}>{t.relation?.relation !== 'CASE_TEAM' ? <button className="btn sm" onClick={() => set({ modal: { type: 'unfollow', key: t.key } })}>Unfollow</button> : <span className="sub">Managed in Salesforce</span>}</td>

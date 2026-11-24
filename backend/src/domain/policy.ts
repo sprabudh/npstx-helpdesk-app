@@ -16,6 +16,18 @@ export const STM_HDS: Helpdesk[] = ['LND', 'IT', 'ADM'];
 export const has = (u: Principal, r: Role) => u.roles.has(r);
 export const hdAllowed = (u: Pick<Principal, 'dept'>, hd: string) => hd !== 'SF' || SF_DEPTS.includes(u.dept ?? '');
 export const allowedHds = (u: Principal): Helpdesk[] => HD_ORDER.filter((h) => hdAllowed(u, h));
+export function workHds(u: Principal, extraHds: string[] = []): Helpdesk[] {
+  const set = new Set<Helpdesk>();
+  if (has(u, 'HD_ADMIN')) for (const h of allowedHds(u)) set.add(h);
+  if (has(u, 'HR_AGENT') && u.hrCats.size) set.add('HR');
+  if (has(u, 'LND_HEAD') || has(u, 'LND_COORD')) set.add('LND');
+  if (has(u, 'IT_AGENT') || has(u, 'IT_HEAD')) set.add('IT');
+  if (has(u, 'ADM_AGENT') || has(u, 'ADM_HEAD')) set.add('ADM');
+  if (has(u, 'SF_ADMIN')) set.add('SF');
+  for (const h of extraHds) if (HD_ORDER.includes(h as Helpdesk)) set.add(h as Helpdesk);
+  return HD_ORDER.filter((h) => set.has(h) && hdAllowed(u, h));
+}
+export const adminHds = (u: Principal): Helpdesk[] => (has(u, 'HD_ADMIN') ? [...HD_ORDER] : allowedHds(u));
 export const isWorker = (u: Principal) => WORK_ROLES.some((r) => has(u, r));
 export const isHeadish = (u: Principal) => HEAD_ROLES.some((r) => has(u, r));
 export const isApprover = (u: Principal) => APPROVER_ROLES.some((r) => has(u, r));
@@ -137,7 +149,7 @@ export function reopenInfo(t: TicketCtx & { closed: boolean; categoryName: strin
 
 /** Views offered in the My Tickets scope switch. */
 export function viewsFor(u: Principal): [string, string][] {
-  const v: [string, string][] = [['mine', 'Raised by me']];
+  const v: [string, string][] = [['mine', 'Raised by me'], ['following', "Following / CC'd"]];
   const add = (k: string, l: string) => {
     if (!v.some((x) => x[0] === k)) v.push([k, l]);
   };

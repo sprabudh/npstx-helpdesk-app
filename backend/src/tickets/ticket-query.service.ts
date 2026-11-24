@@ -26,6 +26,8 @@ export const FLAG_LABELS: Record<string, string> = {
   unassigned: 'Unassigned (in a queue)', month: 'Closed this month', waitingme: 'Waiting for me',
   respbreached: 'Response SLA breached', resbreached: 'Resolution SLA breached', waitreq: 'Waiting for the requester', waitappr: 'Waiting for approval',
 };
+const relationGroup = (rel?: string) => (!rel ? null : rel === 'FOLLOWER' ? 'FOLLOWER' : 'CC');
+const legacyRel = (rel?: string) => (rel === 'TAGGED' || rel === 'CASE_TEAM' ? 'CC' : rel);
 
 @Injectable()
 export class TicketQueryService {
@@ -107,6 +109,7 @@ export class TicketQueryService {
     const view = q.view && valid.includes(q.view) ? q.view : 'mine';
     let rows = await this.loader.visible(u);
     if (view === 'mine') rows = rows.filter((r) => r.t.requesterId === u.id);
+    else if (view === 'following') rows = rows.filter((r) => r.t.requesterId !== u.id && !!relOf(r.ctx, u.id));
     else if (view === 'assigned') rows = rows.filter((r) => r.t.assigneeId === u.id);
     else if (view === 'queue' || view === 'queues') rows = rows.filter((r) => canWork(u, r.ctx));
     else if (view === 'unassigned') rows = rows.filter((r) => canWork(u, r.ctx) && !!this.cfg.person(r.t.assigneeId)?.isQueue);
@@ -165,10 +168,11 @@ export class TicketQueryService {
   // ---------- Following / CC'd ----------
   async following(u: Principal, q: { rel?: string; src?: string; grp?: string }) {
     const rows = (await this.loader.visible(u)).filter((r) => r.t.requesterId !== u.id && relOf(r.ctx, u.id));
-    const counts: Record<string, number> = { ALL: rows.length, FOLLOWER: 0, CC: 0, TAGGED: 0, CASE_TEAM: 0 };
-    rows.forEach((r) => (counts[relOf(r.ctx, u.id)!] = (counts[relOf(r.ctx, u.id)!] || 0) + 1));
+    const counts: Record<string, number> = { ALL: rows.length, FOLLOWER: 0, CC: 0 };
+    rows.forEach((r) => (counts[relationGroup(relOf(r.ctx, u.id))!] += 1));
     let list = rows;
-    if (q.rel && q.rel !== 'ALL') list = list.filter((r) => relOf(r.ctx, u.id) === q.rel);
+    const rel = legacyRel(q.rel);
+    if (rel && rel !== 'ALL') list = list.filter((r) => relationGroup(relOf(r.ctx, u.id)) === rel);
     if (q.src && q.src !== 'ALL') list = list.filter((r) => r.t.helpdesk === q.src);
     list = list.filter((r) => (q.grp === 'closed' ? r.closed : !r.closed)).sort((a, b) => b.t.updatedAt.getTime() - a.t.updatedAt.getTime());
     return { counts, rows: list.map((r) => this.listItem(u, r)) };
@@ -327,13 +331,20 @@ export class TicketQueryService {
   // ---------- counts for the shell ----------
   async summary(u: Principal) {
     const rows = await this.loader.visible(u);
-    const followCount = rows.filter((r) => r.t.requesterId !== u.id && relOf(r.ctx, u.id) && !r.closed).length;
+    const followed = rows.filter((r) => r.t.requesterId !== u.id && relOf(r.ctx, u.id) && !r.closed);
+    const followCount = followed.length;
     const waiting = rows.filter((r) => !r.closed && ((r.t.requesterId === u.id && this.isWaiting(r)) || approvalStage(u, r.ctx))).length;
     const assignedOpen = rows.filter((r) => r.t.assigneeId === u.id && !r.closed).length;
     const unassignedInQueues = rows.filter((r) => canWork(u, r.ctx) && !r.closed && this.cfg.person(r.t.assigneeId)?.isQueue).length;
     const mine = rows.filter((r) => r.t.requesterId === u.id);
+    const assignedHds = [...new Set(rows.filter((r) => r.t.assigneeId === u.id).map((r) => r.t.helpdesk))];
     const unread = await this.loader.ds.getRepository(NotificationEntity).count({ where: { userId: u.id, readAt: IsNull() } });
-    return { followCount, waiting, assignedOpen, unassignedInQueues, myOpen: mine.filter((r) => !r.closed).length, myClosed: mine.filter((r) => r.closed).length, notifications: unread };
+    return {
+      followCount, followingCount: followed.filter((r) => relationGroup(relOf(r.ctx, u.id)) === 'FOLLOWER').length,
+      ccCount: followed.filter((r) => relationGroup(relOf(r.ctx, u.id)) === 'CC').length,
+      waiting, assignedOpen, unassignedInQueues, assignedHds,
+      myOpen: mine.filter((r) => !r.closed).length, myClosed: mine.filter((r) => r.closed).length, notifications: unread,
+    };
   }
 
   async keysIn(keys: string[]) {

@@ -108,6 +108,79 @@ describe('Helpdesk API (e2e)', () => {
     await http().get('/api/admin').set(as('u20')).expect(200);
   });
 
+  it('API dates are UTC ISO-8601 strings with Z', async () => {
+    const iso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+    const d = await http().get('/api/tickets/IT-000041').set(as('u21')).expect(200);
+    for (const k of ['createdAt', 'updatedAt']) expect(d.body[k]).toMatch(iso);
+    const list = await http().get('/api/tickets?view=queues&size=100').set(as('u21')).expect(200);
+    expect(list.body.rows[0].createdAt).toMatch(iso);
+    const me = await http().get('/api/me').set(as('u21')).expect(200);
+    expect(me.body.now).toMatch(iso);
+  });
+
+  it('following and CC are available to every employee and share one relation list', async () => {
+    const me = await http().get('/api/me').set(as('u6')).expect(200);
+    expect(me.body.views.map((v: [string, string]) => v[0])).toContain('following');
+    expect(me.body.counts).toEqual(expect.objectContaining({ followingCount: expect.any(Number), ccCount: expect.any(Number) }));
+    const list = await http().get('/api/tickets?view=following&size=100').set(as('u6')).expect(200);
+    expect(list.body.rows.some((t: { key: string }) => t.key === 'HR-000127')).toBe(true);
+    const following = await http().get('/api/following?rel=CC&grp=open').set(as('u6')).expect(200);
+    expect(following.body.counts.ALL).toBe(following.body.counts.FOLLOWER + following.body.counts.CC);
+    expect(following.body.rows.some((t: { key: string; relation: { relation: string } }) => t.key === 'HR-000127' && t.relation.relation === 'CC')).toBe(true);
+  });
+
+  it('a Helpdesk admin can govern Salesforce without ticket access', async () => {
+    const admin = await http().get('/api/admin').set(as('u20')).expect(200);
+    expect(admin.body.helpdesks).toContain('SF');
+    expect(admin.body.categories.some((c: { helpdesk: string }) => c.helpdesk === 'SF')).toBe(true);
+    expect(admin.body.priorities.SF).toBeDefined();
+    expect(admin.body.coreFields.SF).toBeDefined();
+    expect(admin.body.assignableRoles).toContain('SF_ADMIN');
+    const sf = await http().put('/api/admin/sf-escalation').set(as('u20')).send({ who: 'q_sf_sr' }).expect(200);
+    expect(sf.body.toast).toBeNull();
+    await http().put('/api/admin/people/u27/roles').set(as('u20')).send({ roles: ['SF_ADMIN'], hrCategories: [] }).expect(200);
+    const after = await http().get('/api/admin').set(as('u20')).expect(200);
+    expect(after.body.sfEscalation.who).toBe('q_sf_sr');
+    const roles = await ds.query("SELECT role FROM user_roles WHERE user_id='u27' ORDER BY role");
+    expect(roles.map((r: { role: string }) => r.role)).toEqual(['EMP', 'SF_ADMIN']);
+    await http().get('/api/tickets/SF-00330').set(as('u20')).expect(403);
+  });
+
+  it('admin toggles and role mapping stay consistent after each save', async () => {
+    const overview = async () => (await http().get('/api/admin').set(as('u20')).expect(200)).body;
+    const clientConfig = async () => (await http().get('/api/config').set(as('u20')).expect(200)).body;
+    const before = await overview();
+    const cat = before.categories.find((c: { helpdesk: string; key: string }) => c.helpdesk === 'HR' && c.key === 'PAY');
+    const custom = before.fields.find((f: { helpdesk: string; custom: boolean; active: boolean }) => f.helpdesk === 'HR' && f.custom && f.active);
+    const u3 = before.people.find((p: { id: string }) => p.id === 'u3');
+    expect(cat).toBeDefined();
+    expect(custom).toBeDefined();
+    await http().patch(`/api/admin/categories/${cat.id}/active`).set(as('u20')).send({ active: false }).expect(200);
+    let admin = await overview();
+    let config = await clientConfig();
+    expect(admin.categories.find((c: { id: number }) => c.id === cat.id).active).toBe(false);
+    expect(config.categories.find((c: { key: string }) => c.key === cat.key).active).toBe(false);
+    await http().patch(`/api/admin/categories/${cat.id}/active`).set(as('u20')).send({ active: true }).expect(200);
+    await http().patch(`/api/admin/categories/${cat.id}/mgr-approval`).set(as('u20')).send({ on: true }).expect(200);
+    admin = await overview();
+    config = await clientConfig();
+    expect(admin.categories.find((c: { id: number }) => c.id === cat.id).mgrApproval).toBe(true);
+    expect(config.categories.find((c: { key: string }) => c.key === cat.key).mgrApproval).toBe(true);
+    await http().patch(`/api/admin/categories/${cat.id}/mgr-approval`).set(as('u20')).send({ on: false }).expect(200);
+    await http().patch(`/api/admin/fields/${custom.id}`).set(as('u20')).send({ required: false, active: false }).expect(200);
+    admin = await overview();
+    config = await clientConfig();
+    expect(admin.fields.find((f: { id: number }) => f.id === custom.id)).toMatchObject({ required: false, active: false });
+    expect(config.formFields.some((f: { id: number }) => f.id === custom.id)).toBe(false);
+    await http().patch(`/api/admin/fields/${custom.id}`).set(as('u20')).send({ required: true, active: true }).expect(200);
+    await http().put('/api/admin/people/u3/roles').set(as('u20')).send({ roles: ['HR_AGENT'], hrCategories: ['PAY'] }).expect(200);
+    admin = await overview();
+    expect(admin.people.find((p: { id: string }) => p.id === 'u3').hrCategories).toEqual(['PAY']);
+    await http().put('/api/admin/people/u3/roles').set(as('u20')).send({
+      roles: before.assignableRoles.filter((r: string) => u3.roles.includes(r)), hrCategories: u3.hrCategories,
+    }).expect(200);
+  });
+
   it('raises an IT ticket with a file, validates fields and rejects bad files', async () => {
     const bad = await http().post('/api/tickets').set(as('u1')).field('payload', JSON.stringify({ helpdesk: 'IT', fields: { cat: 'HW' } })).expect(400);
     expect(bad.body.details.fieldErrors).toMatchObject({ sub: 'Choose a sub-category.', title: 'Add a short title.', desc: 'Describe the issue.' });
