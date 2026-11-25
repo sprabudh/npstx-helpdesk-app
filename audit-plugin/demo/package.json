@@ -1,0 +1,10 @@
+{
+  "name": "auditr-demo",
+  "version": "1.0.0",
+  "description": "Demo showcasing Auditr client integration across multiple JavaScript backends",
+  "main": "demo.js",
+  "dependencies": {
+    "auditr-client": "file:../sdk",
+    "dotenv": "^16.4.7"
+  }
+}

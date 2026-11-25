@@ -1,0 +1,57 @@
+services:
+  auditr-db:
+    image: mysql:8.4
+    container_name: auditr_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-auditr_root_secret}
+      MYSQL_DATABASE: ${DB_NAME:-auditr_db}
+      MYSQL_USER: ${DB_USER:-auditr_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-auditr_secret}
+    ports:
+      - "${DB_PORT:-3308}:3306"
+    volumes:
+      - auditr_mysql_data:/var/lib/mysql
+      - ./service/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "auditr_user", "-pauditr_secret"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 10s
+    networks:
+      - auditr-net
+
+  auditr-service:
+    build:
+      context: ./service
+      dockerfile: Dockerfile
+    container_name: auditr_service
+    restart: unless-stopped
+    ports:
+      - "${PORT:-5050}:5050"
+    environment:
+      PORT: 5050
+      HOST: 0.0.0.0
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      AUDITR_API_KEY: ${AUDITR_API_KEY:-}
+      AUDITR_HASH_SECRET: ${AUDITR_HASH_SECRET:-auditr-production-integrity-secret-salt-2026}
+      DB_HOST: auditr-db
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-auditr_user}
+      DB_PASSWORD: ${DB_PASSWORD:-auditr_secret}
+      DB_NAME: ${DB_NAME:-auditr_db}
+    depends_on:
+      auditr-db:
+        condition: service_healthy
+    networks:
+      - auditr-net
+
+volumes:
+  auditr_mysql_data:
+    name: auditr_mysql_data
+
+networks:
+  auditr-net:
+    name: auditr-net
+    driver: bridge

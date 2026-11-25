@@ -22,6 +22,50 @@ services:
       retries: 30
       start_period: 20s
 
+  auditr-db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${AUDITR_DB_NAME:-auditr_db}
+      MYSQL_USER: ${AUDITR_DB_USER:-auditr_user}
+      MYSQL_PASSWORD: ${AUDITR_DB_PASSWORD:-auditr_secret}
+      MYSQL_ROOT_PASSWORD: ${AUDITR_DB_ROOT_PASSWORD:-auditr_root_secret}
+      TZ: UTC
+    ports: ["${AUDITR_DB_PORT:-3308}:3306"]
+    volumes:
+      - auditrdbdata:/var/lib/mysql
+      - ./audit-plugin/service/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  auditr-service:
+    build: { context: ./audit-plugin, dockerfile: service/Dockerfile }
+    restart: unless-stopped
+    environment:
+      PORT: 5050
+      HOST: 0.0.0.0
+      LOG_LEVEL: ${AUDITR_LOG_LEVEL:-info}
+      AUDITR_API_KEY: ${AUDITR_API_KEY:-}
+      AUDITR_HASH_SECRET: ${AUDITR_HASH_SECRET:-npstx-auditr-local-integrity-secret}
+      DB_HOST: auditr-db
+      DB_PORT: 3306
+      DB_USER: ${AUDITR_DB_USER:-auditr_user}
+      DB_PASSWORD: ${AUDITR_DB_PASSWORD:-auditr_secret}
+      DB_NAME: ${AUDITR_DB_NAME:-auditr_db}
+    depends_on:
+      auditr-db: { condition: service_healthy }
+    ports: ["${AUDITR_PORT:-5050}:5050"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5050/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
   backend:
     build: { context: ., dockerfile: backend/Dockerfile }
     restart: unless-stopped
@@ -32,8 +76,14 @@ services:
       SEED_DIR: /app/db/seed
       UPLOAD_DIR: /app/uploads
       CORS_ORIGIN: http://localhost:8080
+      AUDIT_PLUGIN_ENABLED: ${AUDIT_PLUGIN_ENABLED:-true}
+      AUDIT_PLUGIN_URL: http://auditr-service:5050
+      AUDIT_PLUGIN_API_KEY: ${AUDITR_API_KEY:-}
+      AUDIT_PLUGIN_SERVICE_NAME: ${AUDIT_PLUGIN_SERVICE_NAME:-npstx-helpdesk}
+      AUDIT_PLUGIN_TIMEOUT_MS: ${AUDIT_PLUGIN_TIMEOUT_MS:-2000}
     depends_on:
       db: { condition: service_healthy }
+      auditr-service: { condition: service_healthy }
     ports: ["${BACKEND_PORT:-3000}:3000"]
     volumes: ["uploads:/app/uploads"]
     healthcheck:
@@ -51,4 +101,5 @@ services:
 
 volumes:
   dbdata:
+  auditrdbdata:
   uploads:

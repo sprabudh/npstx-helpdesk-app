@@ -1,0 +1,13 @@
+{
+  "name": "auditr-client",
+  "version": "1.0.0",
+  "description": "Universal JavaScript/TypeScript client SDK and Express middleware for Auditr microservice",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {
+    "test": "node -e \"console.log('Auditr SDK loaded')\""
+  },
+  "keywords": ["audit", "compliance", "logging", "middleware", "express", "security"],
+  "author": "Auditr Team",
+  "license": "MIT"
+}

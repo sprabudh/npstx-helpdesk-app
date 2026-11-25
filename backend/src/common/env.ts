@@ -56,6 +56,13 @@ export const env = {
     clientSecret: str('SALESFORCE_CLIENT_SECRET', ''),
     apiVersion: str('SALESFORCE_API_VERSION', 'v61.0'),
   },
+  auditPlugin: {
+    enabled: bool('AUDIT_PLUGIN_ENABLED', false),
+    url: str('AUDIT_PLUGIN_URL', 'http://localhost:5050'),
+    apiKey: str('AUDIT_PLUGIN_API_KEY', ''),
+    serviceName: str('AUDIT_PLUGIN_SERVICE_NAME', 'npstx-helpdesk'),
+    timeoutMs: num('AUDIT_PLUGIN_TIMEOUT_MS', 2000),
+  },
   logLevel: str('LOG_LEVEL', 'info'),
 };
 
