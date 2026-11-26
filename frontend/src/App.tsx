@@ -1,5 +1,6 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { api, ApiError, getToken, readStored, setToken, setUnauthorizedHandler, writeStored } from './api/client';
 import { useConfig } from './api/hooks';
@@ -27,6 +28,15 @@ async function demoLogin(userId: string) {
   const r = await api<{ accessToken: string }>('/auth/demo-login', { body: { userId } });
   setToken(r.accessToken);
   writeUser(userId);
+}
+
+export async function switchPersona(userId: string, qc: QueryClient) {
+  const previousUserId = useUi.getState().userId;
+  await demoLogin(userId);
+  flushSync(() => useUi.getState().resetForPersona(userId));
+  if (previousUserId && previousUserId !== userId) {
+    qc.removeQueries({ predicate: (query) => query.queryKey[1] === previousUserId });
+  }
 }
 
 function Pages({ onPersona }: { onPersona: (id: string) => void }) {
@@ -111,15 +121,13 @@ export default function App() {
   const onPersona = useCallback(
     async (id: string) => {
       try {
-        await demoLogin(id);
-        qc.clear();
-        resetForPersona(id);
+        await switchPersona(id, qc);
         toast('Switched role. Views, actions and data now follow this person.');
       } catch (e) {
         toast(e instanceof Error ? e.message : 'Could not switch role', 'bad');
       }
     },
-    [qc, resetForPersona, toast],
+    [qc, toast],
   );
 
   if (boot.state === 'loading') return <div className="login" aria-busy="true"><div className="spin" /><span>Opening the helpdesk…</span></div>;
