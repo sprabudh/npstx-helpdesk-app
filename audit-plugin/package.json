@@ -1,0 +1,20 @@
+{
+  "name": "auditr-monorepo",
+  "version": "1.0.0",
+  "description": "Auditr - Decoupled, tamper-evident audit logging microservice & CLI for any JavaScript backend",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && cd service && npm install && cd ../sdk && npm install && cd ../cli && npm install && cd ../demo && npm install",
+    "up": "docker compose up -d --build",
+    "down": "docker compose down",
+    "logs": "docker compose logs -f auditr-service",
+    "cli": "node cli/bin/auditr.js",
+    "cli:tail": "node cli/bin/auditr.js tail",
+    "cli:verify": "node cli/bin/auditr.js verify",
+    "cli:stats": "node cli/bin/auditr.js stats",
+    "demo": "node demo/demo.js"
+  },
+  "keywords": ["audit", "logging", "microservice", "security", "compliance", "tamper-evident"],
+  "author": "Auditr Team",
+  "license": "MIT"
+}

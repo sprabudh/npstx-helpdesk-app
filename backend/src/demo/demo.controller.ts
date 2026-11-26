@@ -79,7 +79,7 @@ export class DemoController {
   @Post('reset') @HttpCode(200) @ApiOperation({ summary: 'Restore the sample data (DEMO_MODE only)' })
   async reset(@CurrentUser() u: Principal) {
     if (!env.demoMode) throw new AppError(403, 'DEMO_DISABLED', 'Reset is only available in demo mode.');
-    const res = await new SeedService(this.ds).run();
+    const res = await new SeedService(this.ds).run({ preserveAudit: true });
     await this.cfg.reload();
     await this.audit.record(u.id, 'demo.reset', `${u.name} reset the demo data`);
     return { ...res, toast: 'Demo data reset to the sample tickets' };

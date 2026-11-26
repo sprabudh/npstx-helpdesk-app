@@ -6,6 +6,7 @@ import { AiController } from './ai/ai.controller';
 import { AiService } from './ai/ai.service';
 import { AnalyticsController } from './analytics/analytics.controller';
 import { AnalyticsService } from './analytics/analytics.service';
+import { AuditPluginService } from './audit/audit-plugin.service';
 import { AuditService } from './audit/audit.service';
 import { AuthController } from './auth/auth.controller';
 import { AuthModule } from './auth/auth.module';
@@ -40,7 +41,7 @@ import { TicketsController, TicketViewsController } from './tickets/tickets.cont
     AdminController, AiController, DemoController, PerformanceController,
   ],
   providers: [
-    AuditService, HelpdeskConfigService, NotificationsService, ProvidersRegistry, TicketLoader, TicketQueryService, TicketCreateService,
+    AuditPluginService, AuditService, HelpdeskConfigService, NotificationsService, ProvidersRegistry, TicketLoader, TicketQueryService, TicketCreateService,
     TicketActionsService, AnalyticsService, FaqService, AdminService, SlaScheduler, AiService, CoverService, PerformanceService,
     LocalNotificationGateway, { provide: NOTIFICATION_GATEWAY, useExisting: LocalNotificationGateway }, TicketEventEmitter,
   ],

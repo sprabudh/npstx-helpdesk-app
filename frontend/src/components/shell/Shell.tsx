@@ -103,7 +103,8 @@ export function Topbar({ onPersona }: { onPersona: (id: string) => void }) {
 function GlobalSearch() {
   const [q, setQ] = useState('');
   const nav = useNavigate();
-  const { data } = useQuery({ queryKey: ['gsearch', useUi.getState().userId, q], queryFn: () => api<ListItem[]>(`/tickets/search?q=${encodeURIComponent(q.trim())}`), enabled: q.trim().length > 0 });
+  const userId = useUi((s) => s.userId);
+  const { data } = useQuery({ queryKey: ['gsearch', userId, q], queryFn: () => api<ListItem[]>(`/tickets/search?q=${encodeURIComponent(q.trim())}`), enabled: q.trim().length > 0 });
   return (
     <div className="gsearch">
       <Icon n="search" s={15} />
