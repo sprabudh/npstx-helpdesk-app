@@ -262,6 +262,18 @@ export class TicketCreateService {
       const [row] = await this.loader.withCtx([(await this.loader.ds.getRepository(TicketEntity).findOne({ where: { key } }))!]);
       await this.events.emitTicketEvent('APPROVAL_NEEDED', ticketRef, actor, { approverIds: this.query.approverIds(row, chain[0]) });
     }
+    await this.audit.record(u.id, 'ticket.create', `Created ${key} in ${hd} (${c.key})`, {
+      target: key,
+      detail: {
+        ticket: key,
+        helpdesk: hd,
+        category: c.key,
+        priority: pri,
+        status: ticketRef.status,
+        assigneeId: asg,
+        attachments: files.length,
+      },
+    });
     const t = (await this.loader.ds.getRepository(TicketEntity).findOne({ where: { key } }))!;
     return {
       key,

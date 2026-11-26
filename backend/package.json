@@ -18,7 +18,9 @@
     "db:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
     "db:seed": "ts-node -r tsconfig-paths/register src/seed/seed.cli.ts",
     "db:migrate:prod": "typeorm migration:run -d dist/database/data-source.js",
-    "db:seed:prod": "node dist/seed/seed.cli.js"
+    "db:seed:prod": "node dist/seed/seed.cli.js",
+    "audit:backfill": "ts-node -r tsconfig-paths/register src/audit/audit-backfill.cli.ts",
+    "audit:backfill:prod": "node dist/audit/audit-backfill.cli.js"
   },
   "dependencies": {
     "@nestjs/common": "10.4.22",

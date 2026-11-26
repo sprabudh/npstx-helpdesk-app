@@ -74,6 +74,13 @@ export class TicketActionsService {
     Object.assign(r.t, patch, { updatedAt: clock.now() });
     await this.repo.update(r.t.key, { ...patch, updatedAt: r.t.updatedAt });
   }
+  private async auditTicket(u: Principal, r: Row, action: string, summary: string, detail: Record<string, any> = {}, outcome: 'ok' | 'denied' = 'ok') {
+    await this.audit.record(u.id, action, summary, {
+      target: r.t.key,
+      outcome,
+      detail: { ticket: r.t.key, helpdesk: r.t.helpdesk, category: r.t.categoryKey, ...detail },
+    });
+  }
 
   /** How long the resolution clock has been paused, from the latest pause event. */
   private async pausedFor(r: Row): Promise<number> {
@@ -92,6 +99,7 @@ export class TicketActionsService {
     const patch: Partial<TicketEntity> = { status: to };
     await this.save(r, patch);
     await this.loader.event(r.t.key, `Status: ${from} → ${to}${note ? ' · ' + note : ''}`, closed ? 'close' : 'status');
+    await this.auditTicket(u, r, 'ticket.status', `Status: ${from} → ${to}${note ? ' · ' + note : ''}`, { from, to, reason: note ?? null });
     const rules = this.cfg.setting<Record<string, boolean>>('rules');
     if (to === st.wait && rules.pauseOnWait) {
       if (!r.t.paused) {
@@ -129,6 +137,7 @@ export class TicketActionsService {
     if (!r.t.slaStarted) {
       await this.save(r, { priority: pri });
       await this.loader.event(key, `Priority: ${from} → ${pri} by ${u.name} · SLA starts after approval`, 'status');
+      await this.auditTicket(u, r, 'ticket.priority', `Priority: ${from} → ${pri}`, { from, to: pri });
       await this.events.emitTicketEvent('TICKET_PRIORITY_CHANGED', this.ref(r), this.actor(u));
       return { toast: `Priority set to ${pri}` };
     }
@@ -140,6 +149,7 @@ export class TicketActionsService {
       ...(r.t.responseMet === null ? { responseDue: new Date(r.t.responseDue.getTime() + (rh - oldRh) * 3600000) } : {}),
     });
     await this.loader.event(key, `Priority: ${from} → ${pri} by ${u.name} · SLA targets recalculated (TC)`, 'status');
+    await this.auditTicket(u, r, 'ticket.priority', `Priority: ${from} → ${pri}`, { from, to: pri });
     await this.events.emitTicketEvent('TICKET_PRIORITY_CHANGED', this.ref(r), this.actor(u));
     return { toast: `Priority set to ${pri}` };
   }
@@ -153,6 +163,7 @@ export class TicketActionsService {
     const old = r.t.assigneeId;
     await this.save(r, { assigneeId: to, asgHist: this.asg(r, to, this.cfg.person(old)?.isQueue ? 'queue-claim' : 'manual') });
     await this.loader.event(key, `Reassigned from ${this.cfg.name(old)} to ${this.cfg.name(to)} by ${u.name}`, 'assign');
+    await this.auditTicket(u, r, 'ticket.reassign', `Reassigned ${key} from ${this.cfg.name(old)} to ${this.cfg.name(to)}`, { from: old, to });
     if (note?.trim()) await this.addComment(key, u.id, 'Handover: ' + note.trim(), true);
     const claim = !!this.cfg.person(old)?.isQueue;
     if (claim) {
@@ -186,12 +197,13 @@ export class TicketActionsService {
       const from = r.t.status;
       await this.save(r, { status: 'Escalated', assigneeId: l.who });
       await this.loader.event(key, `Status: ${from} → Escalated · owner set by escalation rule`, 'status');
+      await this.auditTicket(u, r, 'ticket.status', `Status: ${from} → Escalated · owner set by escalation rule`, { from, to: 'Escalated', reason: 'escalation rule' });
     }
     const lvlAbs = base + lvl;
     const agentTargets = [l.who, from, ...this.followerIds(r), ...(lvlAbs >= 2 ? this.cover.hdAdmins() : [])];
     await this.events.emitTicketEvent('TICKET_ESCALATED', this.ref(r), this.actor(u), { recipients: agentTargets, variant: 'agent', level: lvlAbs });
     await this.events.emitTicketEvent('TICKET_ESCALATED', this.ref(r), this.actor(u), { recipients: [r.t.requesterId], variant: 'requester', level: lvlAbs });
-    await this.audit.record(u.id, 'ticket.escalate', `Escalated ${key} to Level ${base + lvl}`, { target: key });
+    await this.auditTicket(u, r, 'ticket.escalate', `Escalated ${key} to Level ${base + lvl}`, { level: base + lvl, to: l.who });
     return { toast: `Escalated to ${this.cfg.name(l.who)}. They have been notified.` };
   }
 
@@ -212,6 +224,7 @@ export class TicketActionsService {
     const now = clock.now();
     await this.save(r, { status: to, closeResponse: isStm ? null : resp, closeMessage: body.message.trim(), closedById: u.id, closedAt: now, paused: false });
     await this.loader.event(key, `${isStm ? to : 'Closed · ' + resp} by ${u.name} (was ${from})`, 'close', now);
+    await this.auditTicket(u, r, 'ticket.close', `Closed ${key} (was ${from})`, { from, to, closeResponse: isStm ? to : resp, at: now.toISOString() });
     await this.addComment(key, u.id, body.message.trim(), false);
     await this.events.emitTicketEvent('TICKET_CLOSED', this.ref(r), this.actor(u), { closeResp: isStm ? to.toLowerCase() : 'closed · ' + resp });
     await this.providers.for(r.t.helpdesk).onStatusChanged(r.t, from, to);
@@ -229,6 +242,7 @@ export class TicketActionsService {
     const [, res] = this.cfg.slaFor(r.t.helpdesk, r.t.categoryKey, r.t.priority, r.t.slaVer);
     await this.save(r, { status: stm(r.ctx) ? 'Reopened' : 'Open', closeResponse: null, closedAt: null, closedById: null, resolutionDue: new Date(now.getTime() + res * 3600000) });
     await this.loader.event(key, `Reopened by ${u.name} (was ${from}) · SLA clocks restarted`, 'status', now);
+    await this.auditTicket(u, r, 'ticket.reopen', `Reopened ${key} (was ${from})`, { from, to: r.t.status });
     await this.addComment(key, u.id, 'Reopen note: ' + note.trim(), false);
     const cat = this.cfg.category(r.t.helpdesk, r.t.categoryKey);
     const cov = cat ? await this.cover.cover(r.t.helpdesk as Helpdesk, cat, r.t.assigneeId, now, r.t.slaVer) : null;
@@ -244,6 +258,7 @@ export class TicketActionsService {
     const from = r.t.status;
     await this.save(r, { status: 'Cancelled', closedById: u.id, closedAt: now, closeMessage: note?.trim() || 'Cancelled by requester.' });
     await this.loader.event(key, `Cancelled by ${u.name} (was ${from})`, 'close', now);
+    await this.auditTicket(u, r, 'ticket.cancel', `Cancelled ${key} (was ${from})`, { from, to: 'Cancelled' });
     const pending = chainOf(r.ctx).find((a) => a.status === 'Pending');
     const approverIds = pending ? this.query.approverIds(r, pending.step) : [];
     await this.events.emitTicketEvent('TICKET_CANCELLED', this.ref(r), this.actor(u), { approverIds });
@@ -255,6 +270,7 @@ export class TicketActionsService {
     if (r.t.requesterId !== u.id || !stm(r.ctx) || r.t.status !== 'Resolved') throw conflict('Only a resolved ticket can be confirmed by its requester.', 'CANNOT_CONFIRM');
     await this.applyStatus(u, r, 'Closed', 'confirmed by requester');
     if (!r.t.closedAt) await this.save(r, { closedAt: clock.now() });
+    await this.auditTicket(u, r, 'ticket.confirm', `Confirmed resolution of ${key}`, { status: 'Closed' });
     return { toast: `${key} closed. Thanks for confirming.` };
   }
 
@@ -264,6 +280,7 @@ export class TicketActionsService {
     if (relOf(r.ctx, u.id) || r.t.requesterId === u.id || r.t.assigneeId === u.id) throw conflict('You already see updates on this ticket.', 'ALREADY_FOLLOWING');
     await this.loader.ds.getRepository(FollowerEntity).insert({ ticketKey: key, userId: u.id, relation: 'FOLLOWER', addedById: u.id });
     await this.loader.event(key, `${u.name} started following`, 'assign');
+    await this.auditTicket(u, r, 'ticket.follow', `${u.name} started following ${key}`, { relation: 'FOLLOWER' });
     return { toast: `Following ${key}. It now appears on your Following page.` };
   }
 
@@ -277,7 +294,8 @@ export class TicketActionsService {
     if (!hdAllowed(p, r.t.helpdesk)) throw forbidden(`${p.name} has no access to this helpdesk.`, 'SALESFORCE_FORBIDDEN');
     await this.loader.ds.getRepository(FollowerEntity).insert({ ticketKey: key, userId, relation, addedById: u.id });
     await this.loader.event(key, `${u.name} added ${p.name} as ${REL_LABEL[relation]}${r.t.confidential ? ' · confidential access granted (audited)' : ''}`, 'assign');
-    if (r.t.confidential) await this.audit.record(u.id, 'ticket.grant', `Granted ${p.name} access to confidential ${key}`, { target: key });
+    await this.auditTicket(u, r, relation === 'CC' ? 'ticket.cc_add' : 'ticket.follower_add', `${u.name} added ${p.name} as ${REL_LABEL[relation]} on ${key}`, { targetUserId: userId, relation });
+    if (r.t.confidential) await this.auditTicket(u, r, 'ticket.grant', `Granted ${p.name} access to confidential ${key}`, { targetUserId: userId, relation });
     await this.events.emitTicketEvent(relation === 'CC' ? 'TICKET_CC_ADDED' : 'FOLLOWER_ADDED', this.ref(r), this.actor(u), { targetUserId: userId, targetName: p.name });
     return { toast: `${p.name} added. It now appears on their Following page.` };
   }
@@ -290,6 +308,7 @@ export class TicketActionsService {
     if (f.relation === 'CASE_TEAM') throw forbidden('Case team members are managed in Salesforce.', 'CASE_TEAM');
     if (!self && r.t.requesterId !== u.id && r.t.assigneeId !== u.id) throw forbidden('Only the requester or assignee can remove people.', 'CANNOT_REMOVE');
     await this.loader.ds.getRepository(FollowerEntity).delete({ ticketKey: key, userId });
+    await this.auditTicket(u, r, self ? 'ticket.unfollow' : 'ticket.follower_remove', `${u.name} removed ${self ? 'their own access to' : this.cfg.name(userId) + ' from'} ${key}`, { targetUserId: userId, self });
     if (self) {
       await this.loader.event(key, `${u.name} unfollowed (kept in audit log)`, 'assign');
       return { toast: `Unfollowed ${key}` };
@@ -324,10 +343,12 @@ export class TicketActionsService {
       await this.loader.ds.getRepository(FollowerEntity).insert({ ticketKey: key, userId: p.id, relation: 'TAGGED', addedById: u.id });
       r.ctx.followers.push({ userId: p.id, relation: 'TAGGED', addedById: u.id });
       await this.loader.event(key, `${u.name} tagged ${p.name}`, 'assign', now);
+      await this.auditTicket(u, r, 'ticket.tag', `${u.name} tagged ${p.name} on ${key}`, { targetUserId: p.id, internal });
       await this.events.emitTicketEvent('TICKET_TAGGED', this.ref(r), this.actor(u), { targetUserId: p.id, targetName: p.name });
     }
     await this.addComment(key, u.id, text, internal);
     await this.save(r, {});
+    await this.auditTicket(u, r, 'ticket.comment', `${u.name} added ${internal ? 'an internal note' : 'a reply'} to ${key}`, { internal });
     if (!internal && work && r.t.responseMet === null && r.t.slaStarted) {
       const met = now.getTime() <= r.t.responseDue.getTime();
       await this.save(r, { responseMet: met });
@@ -373,7 +394,7 @@ export class TicketActionsService {
     }
     if (n) await this.addComment(key, u.id, n, false);
     await this.save(r, {});
-    await this.audit.record(u.id, 'ticket.approval', `${label} ${decision.toLowerCase()} ${key}`, { target: key });
+    await this.auditTicket(u, r, 'ticket.approval', `${label} ${decision.toLowerCase()} ${key}`, { decision, label });
     return { toast: `${decision}. ${this.cfg.name(r.t.requesterId)} has been notified.` };
   }
 
@@ -387,7 +408,8 @@ export class TicketActionsService {
     const [rh, sh] = this.cfg.slaFor(r.t.helpdesk, r.t.categoryKey, r.t.priority, r.t.slaVer);
     const c = this.cfg.category(r.t.helpdesk, r.t.categoryKey);
     const cov = c ? await this.cover.cover(r.t.helpdesk as Helpdesk, c, r.t.assigneeId, now, r.t.slaVer) : null;
-    const asg = cov?.asg ?? r.t.assigneeId;
+    const previousAssignee = r.t.assigneeId;
+    const asg = cov?.asg ?? previousAssignee;
     await this.save(r, {
       status: work, slaStarted: true, slaStart: now, assigneeId: asg,
       responseDue: new Date(now.getTime() + rh * 3600000), resolutionDue: new Date(now.getTime() + sh * 3600000),
@@ -396,6 +418,8 @@ export class TicketActionsService {
     await this.loader.event(key, `SLA started on approval · response due ${fdt(r.t.responseDue)}, resolution due ${fdt(r.t.resolutionDue)}`, 'sla', now);
     if (cov?.event) await this.loader.event(key, cov.event, 'assign', now);
     await this.loader.event(key, `Status: Pending approval → ${work} · routed to ${this.cfg.name(asg)}`, 'status', now);
+    await this.auditTicket(u, r, 'ticket.status', `Status: Pending approval → ${work} after approval`, { from: 'Pending approval', to: work, reason: 'approval complete' });
+    if (previousAssignee !== asg) await this.auditTicket(u, r, 'ticket.assign', `Assigned ${key} to ${this.cfg.name(asg)} after approval`, { from: previousAssignee, to: asg, how: 'approval' });
     await this.events.emitTicketEvent('APPROVAL_APPROVED', this.ref(r), this.actor(u), { recipients: [r.t.requesterId] });
     const coverTxt = cov?.coverFor ? ` (covering for ${this.cfg.name(cov.coverFor)})` : '';
     await this.events.emitTicketEvent('APPROVAL_APPROVED', this.ref(r), this.actor(u), { recipients: [asg], cover: coverTxt || undefined });
@@ -413,6 +437,7 @@ export class TicketActionsService {
       await this.loader.event(key, `${u.name} attached ${f.originalname} · virus scan passed`, 'assign');
     }
     await this.save(r, {});
+    await this.auditTicket(u, r, 'ticket.attach', `Attached ${files.length} file${files.length === 1 ? '' : 's'} to ${key}`, { count: files.length });
     await this.events.emitTicketEvent('ATTACHMENT_ADDED', this.ref(r), this.actor(u));
     return { toast: `${files.map((f) => f.originalname).join(', ')} attached` };
   }

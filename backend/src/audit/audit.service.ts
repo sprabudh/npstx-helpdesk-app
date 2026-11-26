@@ -16,8 +16,8 @@ export class AuditService {
     private readonly plugin: AuditPluginService,
   ) {}
 
-  async record(actorId: string | null, action: string, summary: string, opts: { target?: string; outcome?: 'ok' | 'denied'; detail?: Record<string, any> } = {}) {
-    const at = clock.now();
+  async record(actorId: string | null, action: string, summary: string, opts: { target?: string; outcome?: 'ok' | 'denied'; detail?: Record<string, any>; at?: Date } = {}) {
+    const at = opts.at ?? clock.now();
     const text = summary.slice(0, 400);
     const result = await this.repo.insert({ at, actorId, action, summary: text, target: opts.target ?? null, outcome: opts.outcome ?? 'ok', detail: opts.detail ?? null });
     const localId = Number(result.identifiers?.[0]?.id ?? result.raw?.[0]?.id ?? 0) || null;
@@ -46,16 +46,16 @@ export class AuditService {
 
   private targetType(target?: string): string | null {
     if (!target) return null;
+    if (/^(?:HR|HRD|LND|IT|ADM|SF|SE)-\d+/i.test(target)) return 'ticket';
     const separator = target.indexOf(':');
     if (separator > 0) return target.slice(0, separator);
-    if (/^(SE|SF)-\d+/i.test(target)) return 'ticket';
     if (/^u\d+$/i.test(target)) return 'user';
     return null;
   }
 
   private severity(action: string, outcome?: 'ok' | 'denied'): AuditPluginSeverity {
     if (outcome === 'denied') return 'WARNING';
-    if (action.startsWith('auth.') || action.includes('.approval') || action === 'config.change') return 'AUDIT';
+    if (action.startsWith('ticket.') || action.startsWith('auth.') || action.includes('.approval') || action === 'config.change') return 'AUDIT';
     return 'INFO';
   }
 }

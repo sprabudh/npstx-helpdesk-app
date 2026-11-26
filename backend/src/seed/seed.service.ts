@@ -18,6 +18,9 @@ interface ConfigData {
   formFields: any[];
   config: Record<string, unknown>;
 }
+export interface SeedOptions {
+  preserveAudit?: boolean;
+}
 
 const TABLES = [
   'audit_log', 'faq_votes', 'faqs', 'notification_outbox', 'notifications', 'notification_reminders', 'sf_child_cases', 'sf_case_team', 'sf_cases',
@@ -43,7 +46,7 @@ export class SeedService {
     };
   }
 
-  async run(): Promise<{ users: number; tickets: number; faqs: number; notifications: number }> {
+  async run(opts: SeedOptions = {}): Promise<{ users: number; tickets: number; faqs: number; notifications: number }> {
     const { data, cfg } = SeedService.loadFiles();
     // The sample data is authored relative to the mock's "now". Shift every timestamp forward so the
     // newest sample activity lands at the real current time; relative SLA/age states are preserved,
@@ -59,8 +62,9 @@ export class SeedService {
     await qr.startTransaction();
     try {
       await qr.query('SET FOREIGN_KEY_CHECKS=0');
-      for (const t of TABLES) await qr.query(`DELETE FROM ${t}`);
-      for (const t of ['categories', 'form_fields', 'ticket_comments', 'ticket_events', 'attachments', 'notifications', 'faqs', 'audit_log', 'sf_child_cases', 'faq_votes', 'notification_outbox', 'sla_versions', 'absences', 'attendance'])
+      for (const t of opts.preserveAudit ? TABLES.filter((t) => t !== 'audit_log') : TABLES) await qr.query(`DELETE FROM ${t}`);
+      const autoIncrementTables = ['categories', 'form_fields', 'ticket_comments', 'ticket_events', 'attachments', 'notifications', 'faqs', 'audit_log', 'sf_child_cases', 'faq_votes', 'notification_outbox', 'sla_versions', 'absences', 'attendance'];
+      for (const t of opts.preserveAudit ? autoIncrementTables.filter((t) => t !== 'audit_log') : autoIncrementTables)
         await qr.query(`ALTER TABLE ${t} AUTO_INCREMENT = 1`);
 
       for (const u of data.users) {
@@ -164,8 +168,10 @@ export class SeedService {
         await qr.query('INSERT INTO notifications (user_id,text,ticket_key,created_at,read_at) VALUES (?,?,?,?,?)', [n.userId, n.text, n.ticketKey, at(n.createdAt), n.read ? at(n.createdAt) : null]);
       for (const f of data.faqs)
         await qr.query('INSERT INTO faqs (helpdesk,sort_order,question,answer,category_key) VALUES (?,?,?,?,?)', [f.helpdesk, f.sortOrder, f.question, f.answer, f.categoryKey]);
-      for (const l of [...data.adminLog].reverse())
-        await qr.query('INSERT INTO audit_log (at,actor_id,action,target,outcome,summary,detail) VALUES (?,?,?,?,?,?,NULL)', [at(l.at), l.who, 'config.change', null, 'ok', l.text]);
+      if (!opts.preserveAudit) {
+        for (const l of [...data.adminLog].reverse())
+          await qr.query('INSERT INTO audit_log (at,actor_id,action,target,outcome,summary,detail) VALUES (?,?,?,?,?,?,NULL)', [at(l.at), l.who, 'config.change', null, 'ok', l.text]);
+      }
       for (const [hd, next] of Object.entries(data.sequences)) await qr.query('INSERT INTO ticket_sequences (helpdesk,next_value) VALUES (?,?)', [hd, next]);
       await qr.query('SET FOREIGN_KEY_CHECKS=1');
       await qr.commitTransaction();
