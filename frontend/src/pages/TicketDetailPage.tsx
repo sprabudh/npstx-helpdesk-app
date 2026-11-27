@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { api, ApiError, getToken } from '../api/client';
+import { api, ApiError, apiUrl, authHeaders } from '../api/client';
 import { useAction, useConfig, useDetail, useMe, usePeople } from '../api/hooks';
 import type { Detail } from '../api/types';
 import { Addition, Avatar, Denied, EscBadge, HdBadge, Lock, MentionText, Pill, PriFlag, Skeleton, Who } from '../components/common/bits';
@@ -13,7 +13,7 @@ const REL_LABEL: Record<string, string> = { FOLLOWER: 'Follower', CC: 'CC', TAGG
 
 async function download(id: number, name: string, toast: (m: string, k?: 'ok' | 'bad') => void) {
   try {
-    const res = await fetch(`/api/attachments/${id}/download`, { headers: { Authorization: `Bearer ${getToken() ?? ''}` } });
+    const res = await fetch(apiUrl(`/attachments/${id}/download`), { headers: await authHeaders() });
     if (!res.ok) throw new Error((await res.json().catch(() => null))?.message ?? `Download failed (HTTP ${res.status})`);
     const url = URL.createObjectURL(await res.blob());
     const a = document.createElement('a');

@@ -1,0 +1,79 @@
+# The Helpdesk as a service of the NPST portal: http://helpdesk.npst.localhost:8080 (portal gateway).
+#   docker compose -f docker-compose.portal.yml up -d --build
+# Needs the portal stack running (it creates the external network iam-platform) and
+# ../../helpdesk-portal.env (service secret and portal settings; see helpdesk-portal.env.example).
+# No public ports: the portal gateway is the way in. Container names are fixed by the gateway
+# (auth_gateway: infra/gateway/conf.d/upstreams/helpdesk.conf).
+name: npstx-helpdesk-portal
+services:
+  helpdesk-db:
+    image: mysql:8.4.3
+    container_name: helpdesk-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-helpdesk}
+      MYSQL_USER: ${DB_USER:-helpdesk}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      TZ: UTC
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_0900_ai_ci", "--default-time-zone=+00:00"]
+    volumes:
+      - portal_dbdata:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    networks: [helpdesk]
+
+  helpdesk-api:
+    build: { context: ., dockerfile: backend/Dockerfile }
+    container_name: helpdesk-api
+    restart: unless-stopped
+    env_file:
+      - .env
+      - ${HELPDESK_PORTAL_ENV:-../../helpdesk-portal.env}
+    environment:
+      AUTH_MODE: portal
+      DEMO_MODE: "false"
+      DB_HOST: helpdesk-db
+      DB_PORT: 3306
+      SEED_DIR: /app/db/seed
+      UPLOAD_DIR: /app/uploads
+    depends_on:
+      helpdesk-db: { condition: service_healthy }
+    ports: ["127.0.0.1:3010:3000"]   # debugging only (Swagger at /api/docs)
+    volumes: ["portal_uploads:/app/uploads"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      helpdesk:
+        aliases: [backend]   # the web image's nginx.conf proxies /api to backend:3000
+      iam-platform: {}
+
+  helpdesk-web:
+    build:
+      context: frontend
+      args:
+        VITE_PORTAL_MODE: "true"
+        VITE_API_BASE: /api/helpdesk
+        VITE_PORTAL_URL: ${PORTAL_URL:-http://portal.npst.localhost:8080/}
+    container_name: helpdesk-web
+    restart: unless-stopped
+    depends_on:
+      helpdesk-api: { condition: service_healthy }
+    networks: [helpdesk, iam-platform]
+
+volumes:
+  portal_dbdata:
+  portal_uploads:
+
+networks:
+  helpdesk: {}
+  iam-platform:
+    external: true

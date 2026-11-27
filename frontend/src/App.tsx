@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { api, ApiError, getToken, readStored, setToken, setUnauthorizedHandler, writeStored } from './api/client';
 import { useConfig } from './api/hooks';
@@ -8,6 +8,7 @@ import RaiseDrawer from './components/drawer/RaiseDrawer';
 import { ModalHost } from './components/modals/Modals';
 import { Layout } from './components/shell/Shell';
 import { setTimeZone } from './lib/format';
+import { PORTAL_MODE, portalSignIn } from './lib/portal';
 import AdminPage from './pages/AdminPage';
 import DashboardPage from './pages/DashboardPage';
 import { FaqPage, FollowingPage, HistoryPage } from './pages/ListPages';
@@ -72,7 +73,34 @@ export default function App() {
   const toast = useUi((s) => s.toast);
   const [boot, setBoot] = useState<Boot>({ state: 'loading' });
 
+  /** Portal mode: the portal session becomes a helpdesk token (bridge); no session → portal sign-in. */
+  const bridging = useRef<Promise<void> | null>(null);
+  const startFromPortal = useCallback(() => {
+    // Single flight: several polls may hit 401 at once (session ended or another person signed in).
+    bridging.current ??= bridge().finally(() => (bridging.current = null));
+    return bridging.current;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function bridge() {
+    try {
+      setToken(null);
+      const r = await api<{ accessToken: string }>('/auth/platform-sso');
+      setToken(r.accessToken);
+      const me = await api<{ id: string }>('/me');
+      resetForPersona(me.id);
+      setBoot({ state: 'ready' });
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 401) {
+        if (portalSignIn()) return;
+        return setBoot({ state: 'signin', message: 'The portal signed you in, but the Helpdesk could not use that sign-in. Try again, or contact the Helpdesk admin.' });
+      }
+      // 403: account inactive or another organisation; 503: portal unreachable. No redirect (it would loop).
+      setBoot({ state: 'signin', message: e instanceof Error ? e.message : 'The helpdesk service could not be reached.' });
+    }
+  }
+
   const start = useCallback(async () => {
+    if (PORTAL_MODE) return startFromPortal();
     try {
       const params = new URLSearchParams(window.location.search);
       const wanted = params.get('as');
@@ -97,7 +125,7 @@ export default function App() {
     } catch (e) {
       setBoot({ state: 'signin', message: e instanceof Error ? e.message : 'The helpdesk service could not be reached.' });
     }
-  }, [resetForPersona]);
+  }, [resetForPersona, startFromPortal]);
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
