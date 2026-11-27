@@ -10,15 +10,23 @@ import { Principal, Role } from '../domain/types';
 export class AuthService {
   constructor(@InjectDataSource() private readonly ds: DataSource, private readonly jwt: JwtService) {}
 
-  /** Short-lived token that carries only the user id. */
-  issueToken(userId: string): { accessToken: string; expiresIn: number } {
-    return { accessToken: this.jwt.sign({ sub: userId }, { expiresIn: env.jwtTtlSeconds }), expiresIn: env.jwtTtlSeconds };
+  /**
+   * Short-lived token that carries only the user id, plus `psh` (hash of the portal session) when it was
+   * issued by the portal bridge.
+   */
+  issueToken(userId: string, extra: { psh?: string } = {}): { accessToken: string; expiresIn: number } {
+    return { accessToken: this.jwt.sign({ sub: userId, ...extra }, { expiresIn: env.jwtTtlSeconds }), expiresIn: env.jwtTtlSeconds };
   }
 
   verify(token: string): string | null {
+    return this.verifyClaims(token)?.sub ?? null;
+  }
+
+  verifyClaims(token: string): { sub: string; psh?: string } | null {
     try {
-      const p = this.jwt.verify<{ sub: string }>(token);
-      return typeof p.sub === 'string' ? p.sub : null;
+      const p = this.jwt.verify<{ sub: string; psh?: unknown }>(token);
+      if (typeof p.sub !== 'string') return null;
+      return { sub: p.sub, ...(typeof p.psh === 'string' ? { psh: p.psh } : {}) };
     } catch {
       return null;
     }

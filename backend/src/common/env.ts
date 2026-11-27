@@ -15,6 +15,8 @@ const bool = (k: string, d: boolean) => {
   return v === '' ? d : ['1', 'true', 'yes', 'on'].includes(v);
 };
 
+const authMode = str('AUTH_MODE', 'demo') as 'demo' | 'oidc' | 'portal';
+
 export const env = {
   nodeEnv: str('NODE_ENV', 'development'),
   port: num('BACKEND_PORT', 3000),
@@ -26,7 +28,8 @@ export const env = {
     password: str('DB_PASSWORD', 'helpdesk_dev_pw'),
     name: str('DB_NAME', 'helpdesk'),
   },
-  authMode: str('AUTH_MODE', 'demo') as 'demo' | 'oidc',
+  /** demo = persona switcher; oidc = RS256 tokens from an IdP; portal = signed in through the NPST portal session. */
+  authMode,
   jwtSecret: str('JWT_SECRET', 'change-me-in-.env'),
   jwtTtlSeconds: num('JWT_TTL_SECONDS', 1800),
   oidc: {
@@ -35,7 +38,24 @@ export const env = {
     audience: str('OIDC_AUDIENCE', ''),
     userClaim: str('OIDC_USER_CLAIM', 'email'),
   },
-  demoMode: bool('DEMO_MODE', true),
+  /** Never in portal mode: no persona switcher, demo states or reset next to real people. */
+  demoMode: authMode === 'portal' ? false : bool('DEMO_MODE', true),
+  /** AUTH_MODE=portal: the NPST portal (iam-api) signs people in; see docs/Portal_Integration.md. */
+  portal: {
+    iamUrl: str('PLATFORM_IAM_URL', 'http://iam-api:3000').replace(/\/$/, ''),
+    serviceSecret: str('PLATFORM_SERVICE_SECRET', ''),
+    /** Only sessions of this portal tenant get in (empty = any tenant). */
+    tenantId: str('PLATFORM_TENANT_ID', ''),
+    /** The portal's sign-in page, for the browser. */
+    url: str('PORTAL_URL', 'http://portal.npst.localhost:8080/'),
+    /** Where people open the Helpdesk; ticket links in portal notifications point here. */
+    publicUrl: str('HELPDESK_PUBLIC_URL', 'http://helpdesk.npst.localhost:8080').replace(/\/$/, ''),
+    sessionCookie: str('PORTAL_SESSION_COOKIE', 'session_id'),
+    timeoutMs: num('PLATFORM_TIMEOUT_MS', 5000),
+    /** redis://helpdesk:<password>@notification-bus:6379 (empty = portal bell off). */
+    busUrl: str('NOTIFICATION_BUS_URL', ''),
+    busStream: str('NOTIFICATION_BUS_STREAM', 'notifications:events:helpdesk'),
+  },
   displayTimeZone: str('DISPLAY_TIME_ZONE', 'Asia/Kolkata'),
   uploadDir: resolve(str('UPLOAD_DIR', resolve(__dirname, '..', '..', 'uploads'))),
   seedDir: resolve(str('SEED_DIR', resolve(__dirname, '..', '..', '..', 'db', 'seed'))),
@@ -59,6 +79,9 @@ export const env = {
   logLevel: str('LOG_LEVEL', 'info'),
 };
 
+if (env.authMode === 'portal' && !env.portal.serviceSecret) {
+  throw new Error('AUTH_MODE=portal needs PLATFORM_SERVICE_SECRET');
+}
 if (env.nodeEnv === 'production' && env.jwtSecret === 'change-me-in-.env') {
   throw new Error('JWT_SECRET must be set in production');
 }

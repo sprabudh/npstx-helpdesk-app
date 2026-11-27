@@ -21,6 +21,11 @@ import { HelpdeskConfigService } from './helpdesk-config/config.service';
 import { MeController } from './me/me.controller';
 import { TicketEventEmitter } from './notifications/event-emitter.service';
 import { LocalNotificationGateway, NOTIFICATION_GATEWAY } from './notifications/gateway';
+import { PortalBusNotificationGateway } from './notifications/portal-bus.gateway';
+import { PortalClient } from './auth/portal/portal.client';
+import { PortalSsoController } from './auth/portal/portal-sso.controller';
+import { PortalSsoService } from './auth/portal/portal-sso.service';
+import { env } from './common/env';
 import { NotificationsService } from './notifications/notifications.service';
 import { PerformanceController } from './performance/performance.controller';
 import { PerformanceService } from './performance/performance.service';
@@ -37,12 +42,14 @@ import { TicketsController, TicketViewsController } from './tickets/tickets.cont
   imports: [TypeOrmModule.forRoot({ ...dataSourceOptions, migrationsRun: false }), TypeOrmModule.forFeature([...ENTITIES, AuditEntity]), AuthModule],
   controllers: [
     HealthController, AuthController, ConfigController, MeController, TicketsController, TicketViewsController, AnalyticsController, FaqController,
-    AdminController, AiController, DemoController, PerformanceController,
+    AdminController, AiController, DemoController, PerformanceController, PortalSsoController,
   ],
   providers: [
     AuditService, HelpdeskConfigService, NotificationsService, ProvidersRegistry, TicketLoader, TicketQueryService, TicketCreateService,
     TicketActionsService, AnalyticsService, FaqService, AdminService, SlaScheduler, AiService, CoverService, PerformanceService,
-    LocalNotificationGateway, { provide: NOTIFICATION_GATEWAY, useExisting: LocalNotificationGateway }, TicketEventEmitter,
+    LocalNotificationGateway, PortalBusNotificationGateway, TicketEventEmitter, PortalClient, PortalSsoService,
+    // Portal mode also sends each notification to the portal's bell (notification bus).
+    { provide: NOTIFICATION_GATEWAY, useExisting: env.authMode === 'portal' ? PortalBusNotificationGateway : LocalNotificationGateway },
   ],
 })
 export class AppModule implements NestModule {

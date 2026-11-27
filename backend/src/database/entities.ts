@@ -17,6 +17,8 @@ export class UserEntity {
   @Column({ name: 'manager_id', type: 'varchar', length: 32, nullable: true }) managerId: string | null;
   @Column({ name: 'is_queue', type: 'boolean', default: false }) isQueue: boolean;
   @Column({ type: 'boolean', default: true }) active: boolean;
+  /** The NPST portal user (iam-api id) this person signs in as (AUTH_MODE=portal). */
+  @Column({ name: 'portal_user_id', type: 'varchar', length: 36, nullable: true }) portalUserId: string | null;
 }
 
 @Entity('user_roles')

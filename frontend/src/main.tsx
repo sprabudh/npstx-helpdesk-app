@@ -1,3 +1,18 @@
+// Self-hosted fonts: every font the portal's UI Branding page offers, plus the Helpdesk's own defaults.
+import '@fontsource-variable/plus-jakarta-sans';
+import '@fontsource-variable/inter';
+import '@fontsource-variable/dm-sans';
+import '@fontsource-variable/manrope';
+import '@fontsource-variable/space-grotesk';
+import '@fontsource-variable/bricolage-grotesque';
+import '@fontsource/poppins/400.css';
+import '@fontsource/poppins/500.css';
+import '@fontsource/poppins/600.css';
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/600.css';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

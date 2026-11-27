@@ -29,6 +29,20 @@ Everything in containers instead: `docker compose up --build`. The web app is on
 
 The app opens on the **Dashboard as Arjun Kumar** (Software Engineer, Engineering). Switch people with **Demo role** in the top bar, or open `http://localhost:5173/dashboard?as=u20`. Swagger is at http://localhost:3000/api/docs.
 
+## Running inside the NPST portal
+
+`AUTH_MODE=portal` runs the Helpdesk as a service of the NPST portal at `http://helpdesk.npst.localhost:8080`,
+opened from the **Helpdesk** button at the bottom of the portal sidebar. Every signed-in portal user can open it.
+
+- **Sign-in:** the portal session cookie is exchanged for a helpdesk token (`GET /api/auth/platform-sso`). The person is
+  found by portal id, else linked by email, else created with the requester role `EMP`. Agent, head and admin roles stay
+  in this database (Admin console). The token is bound to the portal session, so a portal sign-out or another person
+  signing in on the same browser ends it. Demo sign-in, the persona switcher and demo data reset are off.
+- **Notifications** also go to the portal's bell (notification bus stream `notifications:events:helpdesk`) for people
+  who have opened the Helpdesk from the portal at least once.
+- **Run:** start the portal stack first, put the settings in `~/Desktop/helpdesk-portal.env`
+  (see `helpdesk-portal.env.example`), then `docker compose -f docker-compose.portal.yml up -d --build`.
+
 ## Commands
 
 | Command | What it does |

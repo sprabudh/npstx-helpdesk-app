@@ -6,6 +6,7 @@ import { IS_PUBLIC, ROLES_ANY } from '../common/decorators';
 import { Role } from '../domain/types';
 import { AuthService } from './auth.service';
 import { OidcAdapter } from './oidc.adapter';
+import { portalSessionId, sessionHash } from './portal/portal-session';
 
 /** Global guard: deny by default. Every route needs a valid token unless marked @Public(). */
 @Injectable()
@@ -19,7 +20,15 @@ export class AuthGuard implements CanActivate {
     const header: string = req.headers.authorization || '';
     const token = header.startsWith('Bearer ') ? header.slice(7) : (req.query?.access_token as string) || '';
     if (!token) throw new AppError(401, 'UNAUTHENTICATED', 'Sign in to continue.');
-    let userId = this.auth.verify(token);
+    let userId: string | null;
+    if (env.authMode === 'portal') {
+      // Only bridge tokens, and only with the portal session they were issued for.
+      const claims = this.auth.verifyClaims(token);
+      const session = portalSessionId(req);
+      userId = claims?.psh && session && claims.psh === sessionHash(session) ? claims.sub : null;
+    } else {
+      userId = this.auth.verify(token);
+    }
     if (!userId && env.authMode === 'oidc' && this.oidc.enabled()) {
       const claim = await this.oidc.verify(token);
       userId = claim ? await this.auth.userIdByEmail(claim) : null;

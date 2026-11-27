@@ -5,6 +5,7 @@ import { api, setToken } from '../../api/client';
 import { useAction, useConfig, useMe, useNotifications, usePersonas } from '../../api/hooks';
 import type { ListItem } from '../../api/types';
 import { cardStamp, HDL, notifyChannel } from '../../lib/format';
+import { PORTAL_MODE, PORTAL_URL, portalSignOut } from '../../lib/portal';
 import { Icon } from '../../lib/icons';
 import { useUi } from '../../store/ui';
 import { Avatar, HdBadge, Pill } from '../common/bits';
@@ -12,28 +13,58 @@ import { Avatar, HdBadge, Pill } from '../common/bits';
 const NAV: [string, string][] = [['home', 'Home'], ['user', 'My profile'], ['clock', 'Attendance'], ['cal', 'Leave'], ['wallet', 'Payroll'], ['book', 'Learning'], ['target', 'Performance'], ['help', 'Helpdesk'], ['gear', 'Settings']];
 const CRUMB: Record<string, string> = { dashboard: 'Dashboard', tickets: 'My tickets', assigned: 'Assigned to me', following: "Following / CC'd", history: 'History', faqs: 'FAQs', admin: 'Admin console', performance: 'My performance' };
 
-export function Sidebar() {
+const COLLAPSED_KEY = 'npstx.helpdesk.sidebarCollapsed';
+const readCollapsed = () => {
+  try { return window.localStorage.getItem(COLLAPSED_KEY) === '1'; } catch { return false; }
+};
+const roleLabel = (f: { helpdeskAdmin: boolean; headish: boolean; worker: boolean; auditor: boolean }) =>
+  f.helpdeskAdmin ? 'Admin' : f.headish ? 'Head' : f.worker ? 'Agent' : f.auditor ? 'Auditor' : 'Employee';
+
+export function Sidebar({ collapsed, onToggle, onNavigate }: { collapsed: boolean; onToggle: () => void; onNavigate: () => void }) {
   const { data: me } = useMe();
   const toast = useUi((s) => s.toast);
   return (
-    <aside className="side">
-      <div className="brand"><div className="brand-mark">N</div><div className="brand-name">NPSTX</div></div>
-      <div className="nav-label">Workspace</div>
+    <aside className="side" id="app-sidebar" aria-label="Main navigation">
+      <div className="side-head">
+        <span className="brand-mark"><Icon n="headset" s={18} /></span>
+        <span className="brand-name">Helpdesk</span>
+        <button type="button" className="side-btn side-collapse" onClick={onToggle} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+          <Icon n={collapsed ? 'expand' : 'collapse'} s={18} />
+        </button>
+      </div>
       <nav className="nav">
-        {NAV.map(([i, l]) =>
+        {PORTAL_MODE && (
+          <a href={PORTAL_URL} title="Back to the portal" className="portal-link">
+            <Icon n="portal" s={20} /><span>Portal</span>
+          </a>
+        )}
+        <div className="nav-label">Workspace</div>
+        {(PORTAL_MODE ? NAV.filter(([, l]) => l === 'Helpdesk') : NAV).map(([i, l]) =>
           l === 'Helpdesk' ? (
-            <Link key={l} to="/dashboard" className="on" title={l}>
-              <Icon n={i} s={18} /><span>{l}</span>
+            <Link key={l} to="/dashboard" className="on" title={l} onClick={onNavigate}>
+              <Icon n={i} s={20} /><span>{l}</span>
               {!!me?.counts.waiting && <em className="nb">{me.counts.waiting}</em>}
             </Link>
           ) : (
             <a key={l} href="#" className="nav-other" title={l} onClick={(e) => { e.preventDefault(); toast(`${l} is another NPSTX module. This app covers Helpdesk only.`); }}>
-              <Icon n={i} s={18} /><span>{l}</span>
+              <Icon n={i} s={20} /><span>{l}</span>
             </a>
           ),
         )}
       </nav>
-      <div className="side-foot">NPSTX HR platform · Helpdesk module v0.3 (mock)</div>
+      <div className="side-foot">
+        {me && (
+          <div className="side-user" title={`${me.name} · ${roleLabel(me.flags)}`}>
+            <Avatar name={me.name} />
+            <span className="side-user-t"><b>{me.name}</b><small>{roleLabel(me.flags)}</small></span>
+          </div>
+        )}
+        {PORTAL_MODE && (
+          <button type="button" className="side-btn side-signout" onClick={() => void portalSignOut()} title="Sign out" aria-label="Sign out">
+            <Icon n="logout" s={18} />
+          </button>
+        )}
+      </div>
     </aside>
   );
 }
@@ -57,7 +88,7 @@ function NotifPanel({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function Topbar({ onPersona }: { onPersona: (id: string) => void }) {
+export function Topbar({ onPersona, onMenu }: { onPersona: (id: string) => void; onMenu: () => void }) {
   const { data: me } = useMe();
   const loc = useLocation();
   const route = loc.pathname.split('/')[1] || 'dashboard';
@@ -73,7 +104,8 @@ export function Topbar({ onPersona }: { onPersona: (id: string) => void }) {
   const key = route === 'ticket' ? decodeURIComponent(loc.pathname.split('/')[2] ?? '') : '';
   return (
     <header className="top">
-      <div className="crumb">NPSTX &nbsp;›&nbsp; Helpdesk &nbsp;›&nbsp; <b>{route === 'ticket' ? key : CRUMB[route] ?? 'Dashboard'}</b></div>
+      <button type="button" className="icon-btn menu-btn" onClick={onMenu} aria-label="Open navigation" aria-controls="app-sidebar"><Icon n="menu" s={20} /></button>
+      <div className="crumb">Helpdesk &nbsp;›&nbsp; <b>{route === 'ticket' ? key : CRUMB[route] ?? 'Dashboard'}</b></div>
       <div className="top-right">
         {personas && (
           <div className="persona">
@@ -201,11 +233,20 @@ export function RoleStrip() {
 }
 
 export function Layout({ from, children, onPersona }: { from: string; children: ReactNode; onPersona: (id: string) => void }) {
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const [navOpen, setNavOpen] = useState(false);
+  const loc = useLocation();
+  useEffect(() => setNavOpen(false), [loc.pathname]);
+  const toggle = () => setCollapsed((c) => {
+    try { window.localStorage.setItem(COLLAPSED_KEY, c ? '0' : '1'); } catch { /* storage unavailable: keep it for this page only */ }
+    return !c;
+  });
   return (
-    <div className="app">
-      <Sidebar />
+    <div className={`app${collapsed ? ' collapsed' : ''}${navOpen ? ' nav-open' : ''}`}>
+      <Sidebar collapsed={collapsed} onToggle={toggle} onNavigate={() => setNavOpen(false)} />
+      {navOpen && <div className="side-scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />}
       <div className="main">
-        <Topbar onPersona={onPersona} />
+        <Topbar onPersona={onPersona} onMenu={() => setNavOpen(true)} />
         <main className="module">
           <ModuleHeader from={from} />
           <RoleStrip />

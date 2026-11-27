@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useUi, type TicketFilters } from '../store/ui';
 import { api, ApiError } from './client';
+import { PORTAL_MODE } from '../lib/portal';
 import type { Absences, Analytics, Config, Detail, Faq, ListItem, ListResponse, Me, Notification, Performance, Persona } from './types';
 
 const qs = (o: Record<string, unknown>) => {
@@ -35,7 +36,7 @@ export const usePerformance = (p: { hd: string; range: string; q: string; group:
 export const useMyPerformance = (range: string) =>
   useQuery({ queryKey: ['performance', uid(), 'me', range], queryFn: () => api<Performance>(`/performance/me?${qs({ range })}`), placeholderData: (prev) => prev, retry: false });
 export const usePersonas = () =>
-  useQuery({ queryKey: ['personas'], queryFn: () => api<{ defaultUserId: string; groups: { label: string; people: Persona[] }[] }>('/auth/personas'), retry: false });
+  useQuery({ queryKey: ['personas'], queryFn: () => api<{ defaultUserId: string; groups: { label: string; people: Persona[] }[] }>('/auth/personas'), retry: false, enabled: !PORTAL_MODE });
 export const useAbsences = (enabled: boolean) => useQuery({ queryKey: ['absences', uid()], queryFn: () => api<Absences>('/demo/absences'), enabled });
 
 /** Runs a mutation, shows its toast, and refreshes everything that may have changed. */
